@@ -1,20 +1,19 @@
-
 export enum FishRarity {
-  COMMON = 'COMMON',
-  UNCOMMON = 'UNCOMMON',
-  RARE = 'RARE',
-  LEGENDARY = 'LEGENDARY'
+  COMMON = "COMMON",
+  UNCOMMON = "UNCOMMON",
+  RARE = "RARE",
+  LEGENDARY = "LEGENDARY",
 }
 
-export type Language = 'en' | 'es' | 'zh';
+export type Language = "en" | "es" | "zh";
 
 export enum WeatherType {
-  CLEAR = 'CLEAR',
-  RAIN = 'RAIN',
-  SNOW = 'SNOW',
-  WIND = 'WIND',
-  FOG = 'FOG',
-  RAINBOW = 'RAINBOW'
+  CLEAR = "CLEAR",
+  RAIN = "RAIN",
+  SNOW = "SNOW",
+  WIND = "WIND",
+  FOG = "FOG",
+  RAINBOW = "RAINBOW",
 }
 
 export interface FishType {
@@ -47,6 +46,7 @@ export interface GameState {
   activePowerups: Record<string, number>; // powerupId -> expiration timestamp
   purchasedPowerups: string[]; // List of powerup IDs bought at least once
   usedPromoCodes: string[]; // Track used one-time codes
+  successfulPromoCodes: number; // Count of successful promo code uses (for achievements)
   weather: WeatherType;
   weatherExpiration?: number; // Timestamp when special weather ends
   currentCombo: number;
@@ -81,14 +81,15 @@ export interface Pet {
 }
 
 export enum AchievementCategory {
-  FISH = 'FISH',
-  TRASH = 'TRASH',
-  MYSTERY = 'MYSTERY',
-  MONEY = 'MONEY',
-  SECRET = 'SECRET',
-  WEATHER = 'WEATHER',
-  COMBO = 'COMBO',
-  NARWHAL = 'NARWHAL'
+  FISH = "FISH",
+  TRASH = "TRASH",
+  MYSTERY = "MYSTERY",
+  MONEY = "MONEY",
+  SECRET = "SECRET",
+  WEATHER = "WEATHER",
+  COMBO = "COMBO",
+  NARWHAL = "NARWHAL",
+  PROMO = "PROMO",
 }
 
 export interface Achievement {
@@ -118,7 +119,15 @@ export type FloatingText = {
   id: number;
 };
 
-export type ParticleType = 'RAIN' | 'SNOW' | 'LEAF' | 'WIND_LINE' | 'MUSIC' | 'MIST' | 'BUBBLE' | 'RAINBOW_SPARKLE';
+export type ParticleType =
+  | "RAIN"
+  | "SNOW"
+  | "LEAF"
+  | "WIND_LINE"
+  | "MUSIC"
+  | "MIST"
+  | "BUBBLE"
+  | "RAINBOW_SPARKLE";
 
 export type Particle = {
   x: number;
@@ -139,15 +148,15 @@ export enum ClawState {
   RETRACTING,
 }
 
-export type ClawDebuff = 'NONE' | 'NUMBED' | 'SEVERED';
+export type ClawDebuff = "NONE" | "NUMBED" | "SEVERED";
 
 export type ClawEntity = {
-    state: ClawState;
-    angle: number;
-    angleSpeed: number;
-    length: number;
-    xOffset: number; // Offset from center
-    caughtFish: EntityFish[];
-    numbedUntil: number; // Timestamp until which the claw is disabled (for any reason)
-    debuffType: ClawDebuff;
-}
+  state: ClawState;
+  angle: number;
+  angleSpeed: number;
+  length: number;
+  xOffset: number; // Offset from center
+  caughtFish: EntityFish[];
+  numbedUntil: number; // Timestamp until which the claw is disabled (for any reason)
+  debuffType: ClawDebuff;
+};

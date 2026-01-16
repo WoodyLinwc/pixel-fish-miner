@@ -699,6 +699,7 @@ export const INITIAL_GAME_STATE = {
   activePowerups: {},
   purchasedPowerups: [],
   usedPromoCodes: [], // Init empty
+  successfulPromoCodes: 0, // Track successful promo uses
   weather: WeatherType.CLEAR,
   weatherExpiration: undefined,
   currentCombo: 0,
@@ -939,5 +940,13 @@ export const ACHIEVEMENTS: Achievement[] = [
     category: AchievementCategory.NARWHAL,
     threshold: 1,
     icon: "🦄",
+  },
+
+  // Promo King
+  {
+    id: "promo_1",
+    category: AchievementCategory.PROMO,
+    threshold: 1,
+    icon: "🎫",
   },
 ];

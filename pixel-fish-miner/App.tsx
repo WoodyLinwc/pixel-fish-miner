@@ -47,6 +47,7 @@ const App: React.FC = () => {
           activePowerups: parsed.activePowerups || {},
           purchasedPowerups: parsed.purchasedPowerups || [],
           usedPromoCodes: parsed.usedPromoCodes || [], // Migration for new field
+          successfulPromoCodes: parsed.successfulPromoCodes || 0, // Migration for promo achievement
           weather: parsed.weather || WeatherType.CLEAR,
           weatherExpiration: parsed.weatherExpiration,
           currentCombo: parsed.currentCombo || 0,
@@ -210,6 +211,7 @@ const App: React.FC = () => {
     let totalWeatherFish = 0;
     const totalMoney = newState.lifetimeEarnings;
     const maxCombo = newState.maxCombo;
+    const totalPromoCodes = newState.successfulPromoCodes || 0;
 
     FISH_TYPES.forEach((fish) => {
       const count = newState.fishCaught[fish.id] || 0;
@@ -252,6 +254,9 @@ const App: React.FC = () => {
           break;
         case AchievementCategory.NARWHAL:
           achieved = (newState.fishCaught["narwhal"] || 0) >= ach.threshold;
+          break;
+        case AchievementCategory.PROMO:
+          achieved = totalPromoCodes >= ach.threshold;
           break;
       }
 
@@ -574,9 +579,30 @@ const App: React.FC = () => {
     const cleanCode = code.trim().toLowerCase();
     const t = TRANSLATIONS[language].promoMessages;
 
+    // Helper function to increment promo counter and check achievements
+    const incrementPromoCounter = (
+      updateState: (prev: GameState) => GameState
+    ) => {
+      setGameState((prev) => {
+        const updatedState = updateState(prev);
+        const stateWithPromo = {
+          ...updatedState,
+          successfulPromoCodes: (updatedState.successfulPromoCodes || 0) + 1,
+        };
+
+        // Check for promo achievements
+        const result = checkAchievements(stateWithPromo);
+        if (result.newUnlockedIds.length > 0) {
+          setAchievementQueue((q) => [...q, ...result.newUnlockedIds]);
+        }
+
+        return result.newState;
+      });
+    };
+
     // Weather Codes
     if (cleanCode === "rain") {
-      setGameState((prev) => ({
+      incrementPromoCounter((prev) => ({
         ...prev,
         weather: WeatherType.RAIN,
         weatherExpiration: undefined,
@@ -584,7 +610,7 @@ const App: React.FC = () => {
       return { success: true, message: t.weatherRain };
     }
     if (cleanCode === "snow") {
-      setGameState((prev) => ({
+      incrementPromoCounter((prev) => ({
         ...prev,
         weather: WeatherType.SNOW,
         weatherExpiration: undefined,
@@ -592,7 +618,7 @@ const App: React.FC = () => {
       return { success: true, message: t.weatherSnow };
     }
     if (cleanCode === "wind") {
-      setGameState((prev) => ({
+      incrementPromoCounter((prev) => ({
         ...prev,
         weather: WeatherType.WIND,
         weatherExpiration: undefined,
@@ -600,7 +626,7 @@ const App: React.FC = () => {
       return { success: true, message: t.weatherWind };
     }
     if (cleanCode === "fog") {
-      setGameState((prev) => ({
+      incrementPromoCounter((prev) => ({
         ...prev,
         weather: WeatherType.FOG,
         weatherExpiration: undefined,
@@ -616,7 +642,7 @@ const App: React.FC = () => {
       ) {
         return { success: false, message: t.promoUsed };
       }
-      setGameState((prev) => ({
+      incrementPromoCounter((prev) => ({
         ...prev,
         weather: WeatherType.RAINBOW,
         weatherExpiration: Date.now() + 60000, // 60 Seconds
@@ -628,11 +654,12 @@ const App: React.FC = () => {
     // Airplane Code
     if (cleanCode === "plane" || cleanCode === "airplane") {
       setLastPlaneRequestTime(Date.now());
+      incrementPromoCounter((prev) => prev);
       return { success: true, message: t.planeIncoming };
     }
 
     if (cleanCode === "normal") {
-      setGameState((prev) => ({
+      incrementPromoCounter((prev) => ({
         ...prev,
         weather: WeatherType.CLEAR,
         weatherExpiration: undefined,
@@ -642,7 +669,7 @@ const App: React.FC = () => {
 
     // Money Code
     if (cleanCode === "money") {
-      setGameState((prev) => ({
+      incrementPromoCounter((prev) => ({
         ...prev,
         money: prev.money + 500,
       }));
@@ -651,7 +678,7 @@ const App: React.FC = () => {
 
     // Cheat: Fish Frenzy
     if (cleanCode === "fish") {
-      setGameState((prev) => ({
+      incrementPromoCounter((prev) => ({
         ...prev,
         activePowerups: {
           ...prev.activePowerups,
@@ -663,7 +690,7 @@ const App: React.FC = () => {
 
     // Unlock Code: unlock
     if (cleanCode === "unlock") {
-      setGameState((prev) => {
+      incrementPromoCounter((prev) => {
         // Unlock all fish in bag (set count to 1)
         const newFishCaught = { ...prev.fishCaught };
         const newUnlockedFish = [...prev.unlockedFish];
@@ -691,7 +718,7 @@ const App: React.FC = () => {
 
     // Secret Codes
     if (cleanCode === "woody") {
-      setGameState((prev) => {
+      incrementPromoCounter((prev) => {
         const CHEAT_AMOUNT = 9999999;
         const newMoney = prev.money >= CHEAT_AMOUNT ? 0 : CHEAT_AMOUNT;
 

@@ -191,5 +191,6 @@ export const zh = {
     WEATHER: "捕获 {0} 条气象鱼",
     COMBO: "{0}连击",
     NARWHAL: "海中独角兽",
+    PROMO: "使用 {0} 个优惠码",
   },
 };

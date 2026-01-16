@@ -192,5 +192,6 @@ export const en = {
     WEATHER: "Catch {0} Weather Fish",
     COMBO: "Catch {0} in a row",
     NARWHAL: "Unicorn of the Sea",
+    PROMO: "Use {0} Promo Codes",
   },
 };

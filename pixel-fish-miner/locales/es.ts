@@ -193,5 +193,6 @@ export const es = {
     WEATHER: "Atrapa {0} Peces Clima",
     COMBO: "Racha de {0}x",
     NARWHAL: "Unicornio del Mar",
+    PROMO: "Usa {0} Códigos Promo",
   },
 };
