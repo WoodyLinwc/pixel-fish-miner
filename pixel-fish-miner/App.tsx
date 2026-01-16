@@ -759,8 +759,8 @@ const App: React.FC = () => {
     : null;
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center font-mono p-2 md:p-4">
-      <div className="w-full max-w-[1024px] flex flex-col shadow-[0_0_20px_rgba(0,0,0,0.5)]">
+    <div className="min-h-screen flex flex-col items-center justify-start md:justify-center font-mono p-2 md:p-4">
+      <div className="w-full max-w-[1024px] flex flex-col shadow-[0_0_20px_rgba(0,0,0,0.5)] mt-[20vh] md:mt-0">
         <StatsPanel
           gameState={gameState}
           onOpenStore={() => setIsStoreOpen(true)}
