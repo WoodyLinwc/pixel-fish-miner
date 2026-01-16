@@ -28,6 +28,7 @@ export const en = {
   totalTrash: "Total Trash",
   paused: "PAUSED",
   resume: "Click to Resume",
+  musicComingSoon: "🎵 Music feature coming soon!",
   promoMessages: {
     weatherRain: "Weather: Rain! 🌧️",
     weatherSnow: "Weather: Snow! ❄️",

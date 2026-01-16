@@ -28,6 +28,7 @@ export const zh = {
   totalTrash: "垃圾总数",
   paused: "暂停",
   resume: "点击继续",
+  musicComingSoon: "🎵 音乐功能即将推出！",
   promoMessages: {
     weatherRain: "天气：雨天！🌧️",
     weatherSnow: "天气：雪天！❄️",
