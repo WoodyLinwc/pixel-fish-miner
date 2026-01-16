@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Ocean blue background -->
+  <rect width="32" height="32" fill="#4dd0e1"/>
+  
+  <!-- Fish body (orange) -->
+  <rect x="8" y="12" width="16" height="8" fill="#ff6b35"/>
+  
+  <!-- Fish tail (darker orange) -->
+  <rect x="4" y="14" width="4" height="4" fill="#e63946"/>
+  
+  <!-- Fish eye (black) -->
+  <rect x="20" y="14" width="2" height="2" fill="#212121"/>
+  
+  <!-- Fish fins (darker orange) -->
+  <rect x="12" y="10" width="2" height="2" fill="#e63946"/>
+  <rect x="12" y="20" width="2" height="2" fill="#e63946"/>
+  
+  <!-- Bubbles (white) -->
+  <rect x="26" y="6" width="2" height="2" fill="#ffffff" opacity="0.8"/>
+  <rect x="28" y="10" width="2" height="2" fill="#ffffff" opacity="0.6"/>
+  <rect x="24" y="8" width="2" height="2" fill="#ffffff" opacity="0.7"/>
+</svg>
