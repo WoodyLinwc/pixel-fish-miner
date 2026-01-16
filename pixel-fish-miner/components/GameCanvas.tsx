@@ -1715,6 +1715,18 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       ctx.fillRect(-6, -26, 6, 4);
       ctx.fillRect(20, -26, 6, 4);
 
+      // Sushi Knife in Right Hand (held properly, pointing inward)
+      // Handle in hand
+      ctx.fillStyle = "#5d4037"; // Dark wood handle
+      ctx.fillRect(22, -25, 4, 3); // Handle held in hand
+      // Blade extending from handle toward left
+      ctx.fillStyle = "#b0bec5"; // Silver blade
+      ctx.fillRect(12, -26, 10, 2); // Blade main body
+      ctx.fillRect(10, -25, 2, 1); // Blade tip (pointed)
+      // Blade shine
+      ctx.fillStyle = "#eceff1"; // Highlight
+      ctx.fillRect(14, -25, 6, 1); // Shine on blade
+
       // Head
       ctx.fillStyle = "#ffccbc";
       ctx.fillRect(2, -58, 16, 14);
@@ -1810,66 +1822,51 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       ctx.fillStyle = "#d32f2f";
       ctx.fillRect(6, -93, 2, 2);
     } else if (equippedCostume === "sailor") {
-      // --- PIRATE ---
-      // Legs (One wooden)
-      ctx.fillStyle = "#283593"; // Dark pants
-      ctx.fillRect(0, -20, 8, 20); // Right leg (normal)
-      ctx.fillStyle = "#8d6e63"; // Wooden leg
-      ctx.fillRect(14, -20, 4, 20);
-
-      // Torso (Red/Black stripes or Vest)
-      ctx.fillStyle = "#b71c1c"; // Red Vest
-      ctx.fillRect(-2, -45, 24, 25);
-      ctx.fillStyle = "#212121"; // Black Shirt
-      ctx.fillRect(2, -45, 16, 25);
-
-      // Arms
-      ctx.fillStyle = "#ffccbc";
-      ctx.fillRect(-6, -42, 6, 20);
-      ctx.fillRect(20, -42, 6, 20);
-
-      // Head
-      ctx.fillStyle = "#ffccbc";
-      ctx.fillRect(2, -58, 16, 14);
-
-      // Bandana (Red)
-      ctx.fillStyle = "#d32f2f";
-      ctx.fillRect(0, -62, 20, 8);
-      ctx.fillRect(16, -60, 6, 4); // Knot
-
-      // Eye Patch
-      ctx.fillStyle = "black";
-      ctx.fillRect(10, -54, 4, 4);
-    } else if (equippedCostume === "sailor") {
-      // --- SAILOR ---
-      // Legs (White pants)
-      ctx.fillStyle = "#eceff1";
+      // --- SAILOR BOY ---
+      // Legs (Blue jeans/denim)
+      ctx.fillStyle = "#1976d2"; // Bright blue pants
       ctx.fillRect(0, -20, 8, 20);
       ctx.fillRect(12, -20, 8, 20);
 
-      // Torso (White shirt)
-      ctx.fillStyle = "#eceff1";
+      // Torso (White shirt with blue horizontal stripes - Breton style)
+      ctx.fillStyle = "#ffffff"; // White base
       ctx.fillRect(-2, -45, 24, 25);
 
-      // Collar (Blue)
-      ctx.fillStyle = "#1a237e";
-      ctx.fillRect(0, -45, 20, 8);
-      ctx.fillRect(8, -37, 4, 6); // Tie area
+      // Blue horizontal stripes
+      ctx.fillStyle = "#1565c0"; // Navy blue stripes
+      ctx.fillRect(-2, -43, 24, 3); // Stripe 1
+      ctx.fillRect(-2, -37, 24, 3); // Stripe 2
+      ctx.fillRect(-2, -31, 24, 3); // Stripe 3
+      ctx.fillRect(-2, -25, 24, 3); // Stripe 4
 
-      // Arms
-      ctx.fillStyle = "#ffccbc";
+      // Arms (White sleeves with stripes)
+      ctx.fillStyle = "#ffffff";
       ctx.fillRect(-6, -42, 6, 20);
       ctx.fillRect(20, -42, 6, 20);
+      // Blue stripes on arms
+      ctx.fillStyle = "#1565c0";
+      ctx.fillRect(-6, -40, 6, 2);
+      ctx.fillRect(-6, -34, 6, 2);
+      ctx.fillRect(20, -40, 6, 2);
+      ctx.fillRect(20, -34, 6, 2);
+      // Hands
+      ctx.fillStyle = "#ffccbc";
+      ctx.fillRect(-6, -22, 6, 4);
+      ctx.fillRect(20, -22, 6, 4);
 
       // Head
       ctx.fillStyle = "#ffccbc";
       ctx.fillRect(2, -58, 16, 14);
 
-      // Sailor Hat (White with little brim)
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(2, -64, 16, 6);
-      ctx.fillStyle = "#1a237e"; // Blue rim
-      ctx.fillRect(2, -60, 16, 2);
+      // Sailor Cap (White round cap with blue band)
+      ctx.fillStyle = "#ffffff"; // White cap top (round/flat style)
+      ctx.fillRect(0, -64, 20, 8); // Main cap
+      ctx.fillStyle = "#1565c0"; // Blue band
+      ctx.fillRect(0, -58, 20, 3); // Band around bottom
+      // Cap badge/anchor detail
+      ctx.fillStyle = "#ffca28"; // Gold anchor
+      ctx.fillRect(9, -62, 2, 4); // Anchor vertical
+      ctx.fillRect(7, -60, 6, 2); // Anchor horizontal
     } else if (equippedCostume === "captain") {
       // --- CAPTAIN ---
       // Legs (Dark Blue)
@@ -1895,6 +1892,17 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       ctx.fillStyle = "#ffccbc";
       ctx.fillRect(-6, -26, 6, 4);
       ctx.fillRect(20, -26, 6, 4);
+
+      // Tobacco Pipe in Right Hand (held properly)
+      // Pipe stem goes through/from hand
+      ctx.fillStyle = "#5d4037"; // Dark brown stem
+      ctx.fillRect(20, -25, 10, 2); // Stem extending from hand
+      // Pipe bowl at the end
+      ctx.fillStyle = "#8d6e63"; // Brown bowl
+      ctx.fillRect(30, -27, 4, 5); // Bowl
+      // Bowl opening/inside
+      ctx.fillStyle = "#4e342e"; // Darker inside
+      ctx.fillRect(31, -27, 2, 2); // Bowl opening
 
       // Head
       ctx.fillStyle = "#ffccbc";
