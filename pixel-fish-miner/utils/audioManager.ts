@@ -16,13 +16,10 @@ class AudioManager {
 
   private initAudio() {
     try {
-      console.log("🎵 Initializing Audio Manager...");
-
       // Initialize background music (MP3 format for maximum compatibility)
       this.bgMusic = new Audio("/sounds/background.mp3");
       this.bgMusic.loop = true;
       this.bgMusic.volume = this.musicVolume;
-      console.log("✅ Background music loaded");
 
       // Initialize sound effects (all MP3 for maximum compatibility)
       this.sounds.claw = new Audio("/sounds/claw.mp3");
@@ -36,46 +33,31 @@ class AudioManager {
         sound.volume = this.sfxVolume;
       });
 
-      console.log("✅ Sound effects loaded:", Object.keys(this.sounds));
       this.initialized = true;
     } catch (error) {
-      console.error("❌ Error initializing audio:", error);
+      console.error("Error initializing audio:", error);
     }
   }
 
   // Background Music Controls
   public startMusic() {
-    if (!this.initialized) {
-      console.warn("⚠️ Audio not initialized yet");
+    if (!this.initialized || !this.musicEnabled || !this.bgMusic) {
       return;
     }
 
-    if (!this.musicEnabled || !this.bgMusic) {
-      console.log("🔇 Music disabled or not loaded");
-      return;
-    }
-
-    console.log("🎵 Starting background music...");
-    this.bgMusic
-      .play()
-      .then(() => console.log("✅ Background music playing"))
-      .catch((error) => {
-        console.warn(
-          "⚠️ Background music play blocked (user interaction needed):",
-          error.message,
-        );
-      });
+    this.bgMusic.play().catch((error) => {
+      // Browser blocked auto-play (user interaction needed)
+      console.warn("Music play blocked:", error.message);
+    });
   }
 
   public stopMusic() {
     if (!this.bgMusic) return;
-    console.log("🔇 Stopping background music");
     this.bgMusic.pause();
     this.bgMusic.currentTime = 0;
   }
 
   public toggleMusic(enabled: boolean) {
-    console.log(`🎵 Music toggle: ${enabled}`);
     this.musicEnabled = enabled;
     if (enabled) {
       this.startMusic();
@@ -86,50 +68,38 @@ class AudioManager {
 
   // Sound Effects Controls
   public toggleSoundEffects(enabled: boolean) {
-    console.log(`🔊 Sound effects toggle: ${enabled}`);
     this.soundEffectsEnabled = enabled;
   }
 
   // Play specific sound effects
   public playClawRelease() {
-    console.log("🔊 Playing claw release sound");
     this.playSound("claw");
   }
 
   public playCatchNothing() {
-    console.log("🔊 Playing catch nothing sound");
     this.playSound("catchNothing");
   }
 
   public playMoneySound() {
-    console.log("🔊 Playing money sound");
     this.playSound("money");
   }
 
   public playPowerupSound() {
-    console.log("🔊 Playing powerup sound");
     this.playSound("powerup");
   }
 
   public playButtonSound() {
-    console.log("🔊 Playing button sound");
     this.playSound("button");
   }
 
   private playSound(soundKey: string) {
-    if (!this.initialized) {
-      console.warn("⚠️ Audio not initialized yet");
-      return;
-    }
-
-    if (!this.soundEffectsEnabled) {
-      console.log("🔇 Sound effects disabled");
+    if (!this.initialized || !this.soundEffectsEnabled) {
       return;
     }
 
     const sound = this.sounds[soundKey];
     if (!sound) {
-      console.error(`❌ Sound ${soundKey} not found in loaded sounds`);
+      console.error(`Sound ${soundKey} not found`);
       return;
     }
 
@@ -137,14 +107,11 @@ class AudioManager {
     try {
       const soundClone = sound.cloneNode() as HTMLAudioElement;
       soundClone.volume = this.sfxVolume;
-      soundClone
-        .play()
-        .then(() => console.log(`✅ ${soundKey} played successfully`))
-        .catch((error) => {
-          console.warn(`⚠️ Sound ${soundKey} play error:`, error.message);
-        });
+      soundClone.play().catch((error) => {
+        console.warn(`Sound ${soundKey} play error:`, error.message);
+      });
     } catch (error) {
-      console.error(`❌ Error playing sound ${soundKey}:`, error);
+      console.error(`Error playing sound ${soundKey}:`, error);
     }
   }
 
@@ -154,9 +121,6 @@ class AudioManager {
     if (this.bgMusic) {
       this.bgMusic.volume = this.musicVolume;
     }
-    console.log(
-      `🎵 Music volume set to ${Math.round(this.musicVolume * 100)}%`,
-    );
   }
 
   public setSFXVolume(volume: number) {
@@ -164,7 +128,6 @@ class AudioManager {
     Object.values(this.sounds).forEach((sound) => {
       sound.volume = this.sfxVolume;
     });
-    console.log(`🔊 SFX volume set to ${Math.round(this.sfxVolume * 100)}%`);
   }
 }
 
