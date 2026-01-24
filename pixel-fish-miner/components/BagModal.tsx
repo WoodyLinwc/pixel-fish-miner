@@ -4,6 +4,7 @@ import { GameState, Language, FishType, EntityFish } from "../types";
 import { TRANSLATIONS } from "../locales/translations";
 import { X, ShoppingBag } from "lucide-react";
 import { drawEntity } from "../utils/drawing";
+import { audioManager } from "../utils/audioManager";
 
 interface BagModalProps {
   isOpen: boolean;
@@ -33,7 +34,7 @@ const FishIcon: React.FC<{ type: FishType }> = ({ type }) => {
     const maxDim = Math.max(type.width, type.height);
     const scale = Math.min(
       availableWidth / type.width,
-      availableHeight / type.height
+      availableHeight / type.height,
     );
 
     ctx.save();
@@ -89,6 +90,11 @@ const BagModal: React.FC<BagModalProps> = ({
     }
   });
 
+  const handleClose = () => {
+    audioManager.playButtonSound();
+    onClose();
+  };
+
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-[2px] p-2 md:p-4">
       {/* Wood Frame */}
@@ -96,7 +102,7 @@ const BagModal: React.FC<BagModalProps> = ({
         {/* Inner Border */}
         <div className="border-2 border-[#c68c53] p-2 md:p-4 rounded h-full bg-[#e6c288] flex flex-col overflow-hidden">
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="absolute top-2 right-2 bg-[#d32f2f] text-white hover:bg-[#b71c1c] border-2 border-[#801313] rounded p-1 shadow-md active:translate-y-1 z-10"
           >
             <X size={20} />

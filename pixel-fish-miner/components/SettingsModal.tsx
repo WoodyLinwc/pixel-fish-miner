@@ -2,6 +2,7 @@ import React from "react";
 import { X, Music, Volume2, Globe, Award } from "lucide-react";
 import { Language } from "../types";
 import { TRANSLATIONS } from "../locales/translations";
+import { audioManager } from "../utils/audioManager";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -28,8 +29,30 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const t = TRANSLATIONS[language];
 
+  const handleClose = () => {
+    audioManager.playButtonSound();
+    onClose();
+  };
+
   const handleLanguageChange = (lang: Language) => {
+    audioManager.playButtonSound();
     setLanguage(lang);
+  };
+
+  const handleToggleMusic = () => {
+    audioManager.playButtonSound();
+    toggleMusic();
+  };
+
+  const handleToggleSoundEffects = () => {
+    // Don't play sound when toggling sound effects off
+    // (would be confusing to hear a sound when turning sounds off)
+    if (isSoundEffectsOn) {
+      toggleSoundEffects();
+    } else {
+      toggleSoundEffects();
+      audioManager.playButtonSound();
+    }
   };
 
   return (
@@ -39,7 +62,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
         {/* Inner Border */}
         <div className="border-2 border-[#c68c53] p-3 md:p-4 rounded h-full bg-[#e6c288] flex flex-col overflow-hidden">
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="absolute top-2 right-2 bg-[#d32f2f] text-white hover:bg-[#b71c1c] border-2 border-[#801313] rounded p-1 shadow-md active:translate-y-1 z-10"
           >
             <X size={20} />
@@ -61,7 +84,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                   </h3>
                 </div>
                 <button
-                  onClick={toggleMusic}
+                  onClick={handleToggleMusic}
                   className={`px-3 py-1 rounded border-2 transition-all shadow-[0_2px_0_rgba(0,0,0,0.2)] active:shadow-none active:translate-y-1 text-xs font-bold uppercase ${
                     isMusicOn
                       ? "bg-[#81c784] border-[#2e7d32] text-[#1b5e20]"
@@ -86,7 +109,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                   </h3>
                 </div>
                 <button
-                  onClick={toggleSoundEffects}
+                  onClick={handleToggleSoundEffects}
                   className={`px-3 py-1 rounded border-2 transition-all shadow-[0_2px_0_rgba(0,0,0,0.2)] active:shadow-none active:translate-y-1 text-xs font-bold uppercase ${
                     isSoundEffectsOn
                       ? "bg-[#81c784] border-[#2e7d32] text-[#1b5e20]"

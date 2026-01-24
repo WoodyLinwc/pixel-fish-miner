@@ -3,6 +3,7 @@ import { ACHIEVEMENTS, FISH_TYPES } from "../constants";
 import { AchievementCategory, GameState, Language } from "../types";
 import { TRANSLATIONS } from "../locales/translations";
 import { X, Trophy, CheckCircle, Lock } from "lucide-react";
+import { audioManager } from "../utils/audioManager";
 
 interface AchievementsModalProps {
   isOpen: boolean;
@@ -66,6 +67,11 @@ const AchievementsModal: React.FC<AchievementsModalProps> = ({
     }
   };
 
+  const handleClose = () => {
+    audioManager.playButtonSound();
+    onClose();
+  };
+
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-[2px] p-2 md:p-4">
       {/* Wood Frame */}
@@ -73,7 +79,7 @@ const AchievementsModal: React.FC<AchievementsModalProps> = ({
         {/* Inner Border */}
         <div className="border-2 border-[#c68c53] p-2 md:p-4 rounded h-full bg-[#e6c288] flex flex-col overflow-hidden">
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="absolute top-2 right-2 bg-[#d32f2f] text-white hover:bg-[#b71c1c] border-2 border-[#801313] rounded p-1 shadow-md active:translate-y-1 z-10"
           >
             <X size={20} />
@@ -96,13 +102,13 @@ const AchievementsModal: React.FC<AchievementsModalProps> = ({
 
               const percent = Math.min(
                 100,
-                Math.floor((currentProgress / ach.threshold) * 100)
+                Math.floor((currentProgress / ach.threshold) * 100),
               );
 
               // Format description
               let desc = t.achievementDesc[ach.category].replace(
                 "{0}",
-                ach.threshold.toString()
+                ach.threshold.toString(),
               );
 
               return (

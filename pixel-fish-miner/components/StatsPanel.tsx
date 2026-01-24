@@ -2,6 +2,7 @@ import React from "react";
 import { GameState, Language } from "../types";
 import { TRANSLATIONS } from "../locales/translations";
 import { Coins, ShoppingBag, Backpack, Trophy, Settings } from "lucide-react";
+import { audioManager } from "../utils/audioManager";
 
 interface StatsPanelProps {
   gameState: GameState;
@@ -33,7 +34,10 @@ const StatsPanel: React.FC<StatsPanelProps> = ({
           </span>
         </div>
         <button
-          onClick={onOpenStore}
+          onClick={() => {
+            audioManager.playButtonSound();
+            onOpenStore();
+          }}
           className="group relative bg-[#ff8a65] hover:bg-[#ff7043] text-[#3e2723] px-3 py-2 rounded-lg border-2 border-[#bf360c] shadow-[0_4px_0_#bf360c] active:shadow-none active:translate-y-1 transition-all text-xs font-bold uppercase flex items-center gap-2"
         >
           <ShoppingBag size={16} />
@@ -42,7 +46,10 @@ const StatsPanel: React.FC<StatsPanelProps> = ({
 
         {/* Bag Button */}
         <button
-          onClick={onOpenBag}
+          onClick={() => {
+            audioManager.playButtonSound();
+            onOpenBag();
+          }}
           className="group relative bg-[#81c784] hover:bg-[#66bb6a] text-[#1b5e20] px-3 py-2 rounded-lg border-2 border-[#2e7d32] shadow-[0_4px_0_#2e7d32] active:shadow-none active:translate-y-1 transition-all text-xs font-bold uppercase flex items-center gap-2"
         >
           <Backpack size={16} />
@@ -53,7 +60,10 @@ const StatsPanel: React.FC<StatsPanelProps> = ({
       {/* Right: Achievement and Settings */}
       <div className="flex items-center gap-2">
         <button
-          onClick={onOpenAchievements}
+          onClick={() => {
+            audioManager.playButtonSound();
+            onOpenAchievements();
+          }}
           className="group relative p-2 rounded-lg border-2 active:translate-y-1 transition-all shadow-[0_4px_0_rgba(0,0,0,0.2)] active:shadow-none bg-[#ffca28] border-[#f57f17] text-[#3e2723] hover:bg-[#ffb300]"
           title="Achievements"
         >
@@ -62,7 +72,10 @@ const StatsPanel: React.FC<StatsPanelProps> = ({
 
         {/* Settings Button */}
         <button
-          onClick={onOpenSettings}
+          onClick={() => {
+            audioManager.playButtonSound();
+            onOpenSettings();
+          }}
           className="p-2 rounded-lg border-2 active:translate-y-1 transition-all shadow-[0_4px_0_rgba(0,0,0,0.2)] active:shadow-none bg-[#e0e0e0] border-[#bdbdbd] text-[#5d4037] hover:bg-[#d6d6d6]"
           title="Settings"
         >

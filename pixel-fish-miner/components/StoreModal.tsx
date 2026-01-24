@@ -18,6 +18,7 @@ import {
   Minus,
   Sun,
 } from "lucide-react";
+import { audioManager } from "../utils/audioManager";
 
 interface StoreModalProps {
   isOpen: boolean;
@@ -61,12 +62,18 @@ const StoreModal: React.FC<StoreModalProps> = ({
   const getCost = (upgradeId: string, currentLevel: number) => {
     const upg = UPGRADES[upgradeId];
     return Math.floor(
-      upg.baseCost * Math.pow(upg.costMultiplier, currentLevel - 1)
+      upg.baseCost * Math.pow(upg.costMultiplier, currentLevel - 1),
     );
+  };
+
+  const handleClose = () => {
+    audioManager.playButtonSound();
+    onClose();
   };
 
   const handlePromoSubmit = () => {
     if (!promoCode.trim()) return;
+    audioManager.playButtonSound();
     const result = onApplyPromoCode(promoCode);
     setPromoFeedback(result);
 
@@ -84,6 +91,16 @@ const StoreModal: React.FC<StoreModalProps> = ({
     if (e.key === "Enter") {
       handlePromoSubmit();
     }
+  };
+
+  const handleEquipCostumeClick = (costumeId: string) => {
+    audioManager.playButtonSound();
+    onEquipCostume(costumeId);
+  };
+
+  const handleEquipPetClick = (petId: string) => {
+    audioManager.playButtonSound();
+    onEquipPet(petId);
   };
 
   const getCostumeIcon = (id: string) => {
@@ -238,7 +255,7 @@ const StoreModal: React.FC<StoreModalProps> = ({
         {/* Inner Border */}
         <div className="border-2 border-[#c68c53] p-2 md:p-4 rounded h-full bg-[#e6c288] flex flex-col overflow-hidden">
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="absolute top-2 right-2 bg-[#d32f2f] text-white hover:bg-[#b71c1c] border-2 border-[#801313] rounded p-1 shadow-md active:translate-y-1 z-10"
           >
             <X size={20} />
@@ -408,14 +425,14 @@ const StoreModal: React.FC<StoreModalProps> = ({
                           gameState.money <
                           getCost(
                             "fishDensity",
-                            gameState.fishDensityLevel || 1
+                            gameState.fishDensityLevel || 1,
                           )
                         }
                         className={`px-3 py-1 text-xs font-bold rounded border-b-4 active:border-b-0 active:translate-y-1 transition-all flex flex-col items-center min-w-[80px] ${
                           gameState.money >=
                           getCost(
                             "fishDensity",
-                            gameState.fishDensityLevel || 1
+                            gameState.fishDensityLevel || 1,
                           )
                             ? "bg-[#66bb6a] border-[#2e7d32] text-white hover:bg-[#4caf50]"
                             : "bg-[#cfd8dc] border-[#90a4ae] text-[#90a4ae] cursor-not-allowed"
@@ -426,7 +443,7 @@ const StoreModal: React.FC<StoreModalProps> = ({
                           $
                           {getCost(
                             "fishDensity",
-                            gameState.fishDensityLevel || 1
+                            gameState.fishDensityLevel || 1,
                           )}
                         </span>
                       </button>
@@ -553,7 +570,7 @@ const StoreModal: React.FC<StoreModalProps> = ({
                     <div>
                       {isUnlocked ? (
                         <button
-                          onClick={() => onEquipPet(pet.id)}
+                          onClick={() => handleEquipPetClick(pet.id)}
                           className={`px-3 py-1 text-xs font-bold rounded border-b-4 active:border-b-0 active:translate-y-1 transition-all min-w-[80px] ${
                             isEquipped
                               ? "bg-[#fbc02d] border-[#f57f17] text-[#3e2723] hover:bg-[#fdd835]" // Toggle off look
@@ -592,7 +609,7 @@ const StoreModal: React.FC<StoreModalProps> = ({
 
               {COSTUMES.map((costume) => {
                 const isUnlocked = gameState.unlockedCostumes.includes(
-                  costume.id
+                  costume.id,
                 );
                 const isEquipped = gameState.equippedCostume === costume.id;
 
@@ -624,7 +641,7 @@ const StoreModal: React.FC<StoreModalProps> = ({
                     <div>
                       {isUnlocked ? (
                         <button
-                          onClick={() => onEquipCostume(costume.id)}
+                          onClick={() => handleEquipCostumeClick(costume.id)}
                           disabled={isEquipped}
                           className={`px-3 py-1 text-xs font-bold rounded border-b-4 active:border-b-0 active:translate-y-1 transition-all min-w-[80px] ${
                             isEquipped
