@@ -34,6 +34,8 @@ interface GameCanvasProps {
   equippedPet: string | null; // Current pet ID
   lastPlaneRequestTime?: number; // Trigger for promo code plane
   onPassiveIncome: (amount: number) => void;
+  onClawRelease?: () => void; // Sound callback
+  onCatchNothing?: () => void; // Sound callback
 }
 
 // --- Day/Night Cycle Constants ---
@@ -65,6 +67,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   equippedPet,
   lastPlaneRequestTime,
   onPassiveIncome,
+  onClawRelease,
+  onCatchNothing,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const requestRef = useRef<number>(0);
@@ -187,11 +191,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       (f) =>
         f.type.id !== "shell" &&
         f.type.id !== "sea_cucumber" &&
-        f.type.id !== "coral"
+        f.type.id !== "coral",
     );
 
     const staticTypes = FISH_TYPES.filter(
-      (f) => f.id === "shell" || f.id === "sea_cucumber" || f.id === "coral"
+      (f) => f.id === "shell" || f.id === "sea_cucumber" || f.id === "coral",
     );
     const placedStaticItems: EntityFish[] = []; // Keep track locally to check collisions during generation
 
@@ -243,7 +247,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     color: string,
     x?: number,
     y?: number,
-    duration?: number
+    duration?: number,
   ) => {
     floatingTexts.current.push({
       x: x !== undefined ? x : GAME_WIDTH / 2 + 100,
@@ -261,7 +265,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       // CHEAT: Fish Frenzy - Force spawn special weather fish
       if ((activePowerups["fishFrenzy"] || 0) > Date.now()) {
         const specialFish = FISH_TYPES.filter(
-          (f) => f.requiredWeather && f.requiredWeather.length > 0
+          (f) => f.requiredWeather && f.requiredWeather.length > 0,
         );
         if (specialFish.length > 0) {
           return specialFish[Math.floor(Math.random() * specialFish.length)];
@@ -277,7 +281,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
       // Filter out static items from random spawning logic (Shell, Sea Cucumber, Coral)
       availableFish = availableFish.filter(
-        (f) => f.id !== "shell" && f.id !== "sea_cucumber" && f.id !== "coral"
+        (f) => f.id !== "shell" && f.id !== "sea_cucumber" && f.id !== "coral",
       );
 
       // Filter out supply_box (Event Only)
@@ -307,7 +311,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
       const totalWeight = availableFish.reduce(
         (acc, fish) => acc + (RARITY_WEIGHTS[fish.rarity] || 10),
-        0
+        0,
       );
       let random = Math.random() * totalWeight;
 
@@ -320,7 +324,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       }
       return availableFish[0];
     },
-    [weather, activePowerups]
+    [weather, activePowerups],
   );
 
   // Helper: Spawn a fish
@@ -349,7 +353,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           f.id !== "sea_cucumber" &&
           f.id !== "coral" &&
           f.id !== "narwhal" &&
-          f.id !== "supply_box"
+          f.id !== "supply_box",
       );
 
       // If trash is suppressed via Mystery Bag and we picked trash, force pick a standard fish
@@ -364,7 +368,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
       // Cap the number of trash items on screen.
       const currentTrashCount = fishes.current.filter(
-        (f) => f.type.isTrash
+        (f) => f.type.isTrash,
       ).length;
       // Increased trash cap from 12 to 25 to allow more trash
       if (type.isTrash && currentTrashCount >= 25) {
@@ -394,7 +398,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         facingRight: startLeft,
       });
     },
-    [getWeightedFishType, weather]
+    [getWeightedFishType, weather],
   );
 
   // Triggered when Mystery Bag is caught
@@ -447,7 +451,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
               `+$${amount}`,
               "#ffd700",
               GAME_WIDTH / 2 - 40,
-              SURFACE_Y - 50
+              SURFACE_Y - 50,
             );
           }
           lastPetIncomeTime.current = now;
@@ -464,7 +468,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       // --- Update Airplane Logic ---
       // Check if supply box exists
       const hasSupplyBox = fishes.current.some(
-        (f) => f.type.id === "supply_box"
+        (f) => f.type.id === "supply_box",
       );
 
       // Trigger via Promo Code
@@ -561,7 +565,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       });
       // Remove off-screen boats
       backgroundBoatsRef.current = backgroundBoatsRef.current.filter(
-        (b) => b.x > -200 && b.x < GAME_WIDTH + 200
+        (b) => b.x > -200 && b.x < GAME_WIDTH + 200,
       );
 
       // --- Update Seagulls ---
@@ -595,7 +599,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
       // Despawn
       seagullsRef.current = seagullsRef.current.filter(
-        (s) => s.x > -50 && s.x < GAME_WIDTH + 50
+        (s) => s.x > -50 && s.x < GAME_WIDTH + 50,
       );
 
       // --- Weather Particles ---
@@ -1007,7 +1011,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
                 // Remove from ocean (sort indices desc to splice correctly)
                 const sortedIndices = Array.from(caughtIndices).sort(
-                  (a, b) => b - a
+                  (a, b) => b - a,
                 );
                 sortedIndices.forEach((idx) => fishes.current.splice(idx, 1));
               } else {
@@ -1034,6 +1038,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
                 // Only shake on main claw hit for sanity
                 setIsShaking(true);
                 setTimeout(() => setIsShaking(false), 500);
+                // Play catch nothing sound
+                if (onCatchNothing) onCatchNothing();
               }
             }
           }
@@ -1047,7 +1053,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
               // Calculate total weight
               const totalWeight = claw.caughtFish.reduce(
                 (acc, f) => acc + f.type.weight,
-                0
+                0,
               );
               // Average weight damping or additive? Additive makes net catches heavy!
               // Let's damp slightly so 5 fish don't stop the claw entirely
@@ -1098,7 +1104,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
                   onFishCaught(caughtItem);
                   addFloatingText(
                     `SUPPLY DROP! +$${caughtItem.value}`,
-                    "#76ff03"
+                    "#76ff03",
                   );
                 } else {
                   // Normal Fish/Trash
@@ -1106,7 +1112,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
                   const color = caughtItem.isTrash ? "#795548" : "#e1f5fe";
                   addFloatingText(
                     `+1 ${caughtItem.name} ($${caughtItem.value})`,
-                    color
+                    color,
                   );
                 }
               });
@@ -1136,7 +1142,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       lastPlaneRequestTime,
       onPassiveIncome,
       equippedPet,
-    ]
+    ],
   );
 
   const render = useCallback(() => {
@@ -1394,7 +1400,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     ];
     let lightLevel = 1.0;
     if (currentHour >= 20 || currentHour < 4) lightLevel = 0.5;
-    else if (currentHour >= 18) lightLevel = 0.7; // Sunset
+    else if (currentHour >= 18)
+      lightLevel = 0.7; // Sunset
     else if (currentHour < 6) lightLevel = 0.6; // Dawn
 
     const bandSize = (GAME_HEIGHT - SURFACE_Y) / 5;
@@ -1485,7 +1492,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       GAME_WIDTH / 2 - 8,
       clawY.current - 10,
       16,
-      SURFACE_Y - clawY.current + 10
+      SURFACE_Y - clawY.current + 10,
     );
 
     // Draw extra gear if multi-claw active
@@ -1995,7 +2002,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           isDiamondHookActive,
           isSuperNetActive,
           visualTime,
-          clawY.current
+          clawY.current,
         );
       }
     });
@@ -2060,7 +2067,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           Math.floor(p.x - size / 2) + 0.5,
           Math.floor(p.y - size / 2) + 0.5,
           size,
-          size
+          size,
         );
 
         // Highlight
@@ -2097,7 +2104,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         2,
         glowX,
         glowY,
-        150
+        150,
       );
       gradient.addColorStop(0, "rgba(255, 235, 59, 0.5)"); // Bright core
       gradient.addColorStop(0.1, "rgba(255, 235, 59, 0.2)"); // Soft Halo
@@ -2285,7 +2292,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     // Trash Suppression Timer
     if (trashSuppressionUntil.current > visualTime && !isSuperBaitActive) {
       const remaining = Math.ceil(
-        (trashSuppressionUntil.current - visualTime) / 1000
+        (trashSuppressionUntil.current - visualTime) / 1000,
       );
 
       ctx.save();
@@ -2326,7 +2333,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       render();
       requestRef.current = requestAnimationFrame(tick);
     },
-    [update, render]
+    [update, render],
   );
 
   useEffect(() => {
@@ -2348,6 +2355,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           const isDisabled = claw.numbedUntil > Date.now();
           if (isActive && !isDisabled && claw.state === ClawState.IDLE) {
             claw.state = ClawState.SHOOTING;
+            // Play claw release sound
+            if (onClawRelease) onClawRelease();
           }
         });
       }
@@ -2360,6 +2369,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         const isDisabled = claw.numbedUntil > Date.now();
         if (isActive && !isDisabled && claw.state === ClawState.IDLE) {
           claw.state = ClawState.SHOOTING;
+          // Play claw release sound
+          if (onClawRelease) onClawRelease();
         }
       });
     };
@@ -2382,9 +2393,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
   return (
     <div
-      className={`relative overflow-hidden bg-[#29b6f6] max-w-full ${
-        isShaking ? "animate-shake" : ""
-      }`}
+      className={`relative overflow-hidden bg-[#29b6f6] max-w-full ${isShaking ? "animate-shake" : ""}`}
     >
       <canvas
         ref={canvasRef}

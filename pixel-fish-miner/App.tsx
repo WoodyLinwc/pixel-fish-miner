@@ -4,6 +4,7 @@ import StatsPanel from "./components/StatsPanel";
 import StoreModal from "./components/StoreModal";
 import BagModal from "./components/BagModal";
 import AchievementsModal from "./components/AchievementsModal";
+import SettingsModal from "./components/SettingsModal";
 import AchievementToast from "./components/AchievementToast";
 import PowerupBar from "./components/PowerupBar";
 import {
@@ -24,6 +25,7 @@ import {
 } from "./constants";
 import { TRANSLATIONS } from "./locales/translations";
 import { Play } from "lucide-react";
+import { audioManager } from "./utils/audioManager";
 
 const App: React.FC = () => {
   // --- Persistence ---
@@ -75,10 +77,12 @@ const App: React.FC = () => {
   const [isStoreOpen, setIsStoreOpen] = useState(false);
   const [isBagOpen, setIsBagOpen] = useState(false);
   const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAutoPaused, setIsAutoPaused] = useState(false);
 
   // Music State (Placeholder)
   const [isMusicOn, setIsMusicOn] = useState(false);
+  const [isSoundEffectsOn, setIsSoundEffectsOn] = useState(true);
   const [showMusicNotification, setShowMusicNotification] = useState(false);
 
   // Queue for unlocked achievements to show popup one by one
@@ -98,6 +102,15 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem("pixel-fish-miner-lang", language);
   }, [language]);
+
+  // Sync audio manager with music/sound effects settings
+  useEffect(() => {
+    audioManager.toggleMusic(isMusicOn);
+  }, [isMusicOn]);
+
+  useEffect(() => {
+    audioManager.toggleSoundEffects(isSoundEffectsOn);
+  }, [isSoundEffectsOn]);
 
   // Handle visibility change (Tab switching)
   useEffect(() => {
@@ -282,6 +295,9 @@ const App: React.FC = () => {
   // --- Actions ---
 
   const handleFishCaught = useCallback((fish: FishType) => {
+    // Play money sound
+    audioManager.playMoneySound();
+
     setGameState((prev) => {
       const newCount = (prev.fishCaught[fish.id] || 0) + 1;
       const newMoney = prev.money + fish.value;
@@ -369,10 +385,13 @@ const App: React.FC = () => {
         currentLevel = prev.fishDensityLevel || 1;
 
       const cost = Math.floor(
-        upg.baseCost * Math.pow(upg.costMultiplier, currentLevel - 1)
+        upg.baseCost * Math.pow(upg.costMultiplier, currentLevel - 1),
       );
 
       if (prev.money >= cost && currentLevel < upg.maxLevel) {
+        // Play purchase sound
+        audioManager.playPowerupSound();
+
         const newState = { ...prev, money: prev.money - cost };
 
         if (upgradeId === "clawSpeed") {
@@ -406,7 +425,7 @@ const App: React.FC = () => {
         // Example: At Lvl 2, you paid Base * Mult^0. Refund that.
         // Exponent is (CurrentLevel - 2)
         const refund = Math.floor(
-          upg.baseCost * Math.pow(upg.costMultiplier, currentLevel - 2)
+          upg.baseCost * Math.pow(upg.costMultiplier, currentLevel - 2),
         );
 
         const newState = { ...prev, money: prev.money + refund };
@@ -429,7 +448,7 @@ const App: React.FC = () => {
   const handleBuyPowerup = (powerupId: string) => {
     // Find powerup key from id
     const powerupKey = Object.keys(POWERUPS).find(
-      (key) => POWERUPS[key].id === powerupId
+      (key) => POWERUPS[key].id === powerupId,
     );
     if (!powerupKey) return;
 
@@ -440,6 +459,9 @@ const App: React.FC = () => {
       const cost = hasBoughtBefore ? powerup.cost : 0; // First purchase is free
 
       if (prev.money >= cost) {
+        // Play purchase sound
+        audioManager.playPowerupSound();
+
         return {
           ...prev,
           money: prev.money - cost,
@@ -459,7 +481,7 @@ const App: React.FC = () => {
   const handleActivatePowerup = (powerupId: string) => {
     // Find powerup key from id
     const powerupKey = Object.keys(POWERUPS).find(
-      (key) => POWERUPS[key].id === powerupId
+      (key) => POWERUPS[key].id === powerupId,
     );
     if (!powerupKey) return;
 
@@ -575,14 +597,14 @@ const App: React.FC = () => {
   };
 
   const handleApplyPromoCode = (
-    code: string
+    code: string,
   ): { success: boolean; message: string } => {
     const cleanCode = code.trim().toLowerCase();
     const t = TRANSLATIONS[language].promoMessages;
 
     // Helper function to increment promo counter and check achievements
     const incrementPromoCounter = (
-      updateState: (prev: GameState) => GameState
+      updateState: (prev: GameState) => GameState,
     ) => {
       setGameState((prev) => {
         const updatedState = updateState(prev);
@@ -767,14 +789,8 @@ const App: React.FC = () => {
           onOpenStore={() => setIsStoreOpen(true)}
           onOpenBag={() => setIsBagOpen(true)}
           onOpenAchievements={() => setIsAchievementsOpen(true)}
+          onOpenSettings={() => setIsSettingsOpen(true)}
           language={language}
-          setLanguage={setLanguage}
-          isMusicOn={isMusicOn}
-          toggleMusic={() => {
-            setIsMusicOn((p) => !p);
-            setShowMusicNotification(true);
-            setTimeout(() => setShowMusicNotification(false), 3000);
-          }}
         />
 
         {/* Game Area - Connected to StatsPanel (top) and Footer (bottom) */}
@@ -787,7 +803,11 @@ const App: React.FC = () => {
             clawThrowSpeedMultiplier={clawThrowSpeedMultiplier}
             fishDensityLevel={gameState.fishDensityLevel || 1}
             paused={
-              isStoreOpen || isBagOpen || isAchievementsOpen || isAutoPaused
+              isStoreOpen ||
+              isBagOpen ||
+              isAchievementsOpen ||
+              isSettingsOpen ||
+              isAutoPaused
             }
             activePowerups={gameState.activePowerups}
             weather={gameState.weather}
@@ -797,6 +817,8 @@ const App: React.FC = () => {
             equippedCostume={gameState.equippedCostume}
             equippedPet={gameState.equippedPet}
             lastPlaneRequestTime={lastPlaneRequestTime}
+            onClawRelease={() => audioManager.playClawRelease()}
+            onCatchNothing={() => audioManager.playCatchNothing()}
           />
 
           {/* Auto Pause Overlay */}
@@ -857,6 +879,18 @@ const App: React.FC = () => {
             language={language}
           />
 
+          {/* Settings Overlay */}
+          <SettingsModal
+            isOpen={isSettingsOpen}
+            onClose={() => setIsSettingsOpen(false)}
+            language={language}
+            setLanguage={setLanguage}
+            isMusicOn={isMusicOn}
+            toggleMusic={() => setIsMusicOn((p) => !p)}
+            isSoundEffectsOn={isSoundEffectsOn}
+            toggleSoundEffects={() => setIsSoundEffectsOn((p) => !p)}
+          />
+
           {/* Achievement Popup Toast */}
           {currentAchievement && (
             <AchievementToast
@@ -865,17 +899,6 @@ const App: React.FC = () => {
               onComplete={handleAchievementToastComplete}
               language={language}
             />
-          )}
-
-          {/* Music Coming Soon Notification */}
-          {showMusicNotification && (
-            <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[110] animate-slide-up">
-              <div className="bg-[#5d4037] border-4 border-[#8d6e63] rounded-lg px-6 py-3 shadow-[0_8px_16px_rgba(0,0,0,0.5)]">
-                <p className="text-white text-sm font-bold text-center whitespace-nowrap">
-                  {t.musicComingSoon}
-                </p>
-              </div>
-            </div>
           )}
         </div>
 
