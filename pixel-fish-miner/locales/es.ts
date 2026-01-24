@@ -36,6 +36,8 @@ export const es = {
   soundEffectsDesc: "Activar/desactivar efectos de sonido",
   language: "Idioma",
   credits: "Créditos",
+  creator: "Creador",
+  techStack: "Tecnologías",
   music: "Música",
   on: "SÍ",
   off: "NO",

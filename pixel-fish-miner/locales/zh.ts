@@ -36,6 +36,8 @@ export const zh = {
   soundEffectsDesc: "切换游戏音效",
   language: "语言",
   credits: "制作人员",
+  creator: "创作者",
+  techStack: "技术栈",
   music: "音乐",
   on: "开",
   off: "关",

@@ -175,8 +175,54 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                   {t.credits || "Credits"}
                 </h3>
               </div>
-              <div className="space-y-2 text-[10px] text-[#6d4c41] leading-relaxed">
+              <div className="space-y-3 text-[10px] text-[#6d4c41] leading-relaxed">
+                {/* Creator Section */}
                 <div>
+                  <p className="font-bold text-[#5d4037] mb-1">
+                    👨‍💻 {t.creator || "Creator"}:
+                  </p>
+                  <p className="ml-2">
+                    <span className="font-semibold">Woody Lin</span>
+                  </p>
+                  <p className="ml-2">
+                    <span className="font-semibold">林万程</span>
+                  </p>
+                </div>
+
+                {/* Tech Stack Section */}
+                <div className="border-t border-[#c68c53] pt-2">
+                  <p className="font-bold text-[#5d4037] mb-1">
+                    🛠️ {t.techStack || "Tech Stack"}:
+                  </p>
+                  <div className="ml-2 space-y-1">
+                    <p>
+                      • <span className="font-semibold">React 19</span> - UI
+                      Framework
+                    </p>
+                    <p>
+                      • <span className="font-semibold">TypeScript</span> -
+                      Language
+                    </p>
+                    <p>
+                      • <span className="font-semibold">HTML5 Canvas</span> -
+                      Graphics
+                    </p>
+                    <p>
+                      • <span className="font-semibold">Tailwind CSS</span> -
+                      Styling
+                    </p>
+                    <p>
+                      • <span className="font-semibold">Vite</span> - Build Tool
+                    </p>
+                    <p>
+                      • <span className="font-semibold">Lucide React</span> -
+                      Icons
+                    </p>
+                  </div>
+                </div>
+
+                {/* Music Section */}
+                <div className="border-t border-[#c68c53] pt-2">
                   <p className="font-bold text-[#5d4037] mb-1">
                     🎵 {t.music || "Music"}:
                   </p>
@@ -191,6 +237,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     Source: OpenGameArt.org
                   </p>
                 </div>
+
+                {/* Sound Effects Section */}
                 <div className="border-t border-[#c68c53] pt-2">
                   <p className="font-bold text-[#5d4037] mb-1">
                     🔊 {t.soundEffects || "Sound Effects"}:

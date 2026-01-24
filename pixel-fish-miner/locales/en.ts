@@ -36,6 +36,8 @@ export const en = {
   soundEffectsDesc: "Toggle game sound effects",
   language: "Language",
   credits: "Credits",
+  creator: "Creator",
+  techStack: "Tech Stack",
   music: "Music",
   on: "ON",
   off: "OFF",
