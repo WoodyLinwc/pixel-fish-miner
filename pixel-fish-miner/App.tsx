@@ -89,6 +89,10 @@ const App: React.FC = () => {
     return savedSfxPref !== null ? savedSfxPref === "true" : true; // Default to true (ON)
   });
 
+  // Track if user has interacted with the page (for auto-play)
+  const hasInteractedRef = useRef(false);
+  const musicStartAttemptedRef = useRef(false);
+
   // Persist Music Preferences
   useEffect(() => {
     localStorage.setItem("pixel-fish-miner-music", String(isMusicOn));
@@ -119,11 +123,49 @@ const App: React.FC = () => {
   // Sync audio manager with music/sound effects settings
   useEffect(() => {
     audioManager.toggleMusic(isMusicOn);
+
+    // Try to start music if enabled and user has interacted
+    if (
+      isMusicOn &&
+      hasInteractedRef.current &&
+      !musicStartAttemptedRef.current
+    ) {
+      musicStartAttemptedRef.current = true;
+      audioManager.startMusic();
+    }
   }, [isMusicOn]);
 
   useEffect(() => {
     audioManager.toggleSoundEffects(isSoundEffectsOn);
   }, [isSoundEffectsOn]);
+
+  // Set up user interaction listener to enable music auto-play
+  useEffect(() => {
+    const handleFirstInteraction = () => {
+      if (!hasInteractedRef.current) {
+        hasInteractedRef.current = true;
+
+        // If music is enabled, try to start it
+        if (isMusicOn && !musicStartAttemptedRef.current) {
+          musicStartAttemptedRef.current = true;
+          audioManager.startMusic();
+        }
+      }
+    };
+
+    // Listen for any user interaction
+    window.addEventListener("click", handleFirstInteraction, { once: true });
+    window.addEventListener("keydown", handleFirstInteraction, { once: true });
+    window.addEventListener("touchstart", handleFirstInteraction, {
+      once: true,
+    });
+
+    return () => {
+      window.removeEventListener("click", handleFirstInteraction);
+      window.removeEventListener("keydown", handleFirstInteraction);
+      window.removeEventListener("touchstart", handleFirstInteraction);
+    };
+  }, [isMusicOn]);
 
   // Handle visibility change (Tab switching)
   useEffect(() => {
