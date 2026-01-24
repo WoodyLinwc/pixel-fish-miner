@@ -80,10 +80,23 @@ const App: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAutoPaused, setIsAutoPaused] = useState(false);
 
-  // Music State (Placeholder)
-  const [isMusicOn, setIsMusicOn] = useState(false);
-  const [isSoundEffectsOn, setIsSoundEffectsOn] = useState(true);
-  const [showMusicNotification, setShowMusicNotification] = useState(false);
+  const [isMusicOn, setIsMusicOn] = useState(() => {
+    const savedMusicPref = localStorage.getItem("pixel-fish-miner-music");
+    return savedMusicPref !== null ? savedMusicPref === "true" : true; // Default to true (ON)
+  });
+  const [isSoundEffectsOn, setIsSoundEffectsOn] = useState(() => {
+    const savedSfxPref = localStorage.getItem("pixel-fish-miner-sfx");
+    return savedSfxPref !== null ? savedSfxPref === "true" : true; // Default to true (ON)
+  });
+
+  // Persist Music Preferences
+  useEffect(() => {
+    localStorage.setItem("pixel-fish-miner-music", String(isMusicOn));
+  }, [isMusicOn]);
+
+  useEffect(() => {
+    localStorage.setItem("pixel-fish-miner-sfx", String(isSoundEffectsOn));
+  }, [isSoundEffectsOn]);
 
   // Queue for unlocked achievements to show popup one by one
   const [achievementQueue, setAchievementQueue] = useState<string[]>([]);
