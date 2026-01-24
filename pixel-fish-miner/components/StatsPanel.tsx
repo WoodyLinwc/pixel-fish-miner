@@ -34,7 +34,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({
         </div>
         <button
           onClick={onOpenStore}
-          className="group relative bg-[#ff8a65] hover:bg-[#ff7043] text-[#3e2723] px-3 py-1 rounded-lg border-2 border-[#bf360c] shadow-[0_4px_0_#bf360c] active:shadow-none active:translate-y-1 transition-all text-xs font-bold uppercase flex items-center gap-2"
+          className="group relative bg-[#ff8a65] hover:bg-[#ff7043] text-[#3e2723] px-3 py-2 rounded-lg border-2 border-[#bf360c] shadow-[0_4px_0_#bf360c] active:shadow-none active:translate-y-1 transition-all text-xs font-bold uppercase flex items-center gap-2"
         >
           <ShoppingBag size={16} />
           <span>{t.shopBtn}</span>
