@@ -182,10 +182,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     👨‍💻 {t.creator || "Creator"}:
                   </p>
                   <p className="ml-2">
-                    <span className="font-semibold">Woody Lin</span>
-                  </p>
-                  <p className="ml-2">
-                    <span className="font-semibold">林万程</span>
+                    <span className="font-semibold">Woody Lin 林万程</span>
                   </p>
                 </div>
 
