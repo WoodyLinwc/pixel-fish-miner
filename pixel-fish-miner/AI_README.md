@@ -115,13 +115,17 @@ Rendering logic is modularized to keep `GameCanvas` clean.
 - **`BagModal.tsx`**: Encyclopedia. Renders fish icons dynamically using `drawEntity` on mini-canvases. Shows caught count and total stats.
 - **`SlotMachineModal.tsx`**: Casino-style mini-game. Bet money, spin reels with fish symbols, win multipliers. Features:
   - **5 reels** (modern slot machine format)
+  - **Sequential stopping**: Reels stop one-by-one from left to right (400ms delay)
+  - Gold ring highlights on stopped reels
+  - **Consecutive matching only**: Must match from leftmost reel
   - 7 fish symbol emojis (🐟 🐠 🦈 🐡 🦞 🦑 🐙)
   - Bet amounts: $25, $50, $100, $250, $500
-  - **3-tier payout**: 50x bet (1%), 10x bet (9%), 2x bet (20%), lose (70%)
+  - **3-tier payout**: 50x (5 consecutive), 10x (4 consecutive), 2x (3 consecutive)
   - Expected RTP: ~130% (player-favorable)
   - Animated spinning with sound effects
   - Interactive lever on the right side
-  - Payout table without percentages (cleaner UI)
+  - Messages display for 5 seconds (longer visibility)
+  - Payout table shows "consecutive from left" rule
   - Mobile-optimized with scrollable content
 - **`AchievementsModal.tsx`**: Displays achievement progress with visual progress bars.
 - **`SettingsModal.tsx`**:
@@ -224,24 +228,31 @@ Rendering logic is modularized to keep `GameCanvas` clean.
 - **Mechanics**:
   - Player selects bet amount ($25-$500)
   - 5 reels spin showing random fish symbols
-  - Spinning animation lasts 1.5-2.5 seconds
+  - **Reels stop sequentially** from left to right (400ms delay between each)
+  - Each stopped reel gets a gold ring highlight
   - Result determined with weighted randomness
 - **Symbols**: 7 fish emojis (🐟 🐠 🦈 🐡 🦞 🦑 🐙)
+- **Winning Condition**: **Consecutive matches from LEFT to RIGHT only**
+  - Must start from the first (leftmost) reel
+  - Matches must be adjacent/consecutive
+  - Example WIN: 🐟🐟🐟🦈🐠 (3 consecutive from left)
+  - Example LOSE: 🐟🦈🐟🐟🐟 (not consecutive from left)
 - **Payouts** (3 tiers):
-  - 5 matching symbols (all 5): 50x bet (1% chance) - MEGA JACKPOT 💎💎
-  - 4 matching symbols: 10x bet (9% chance) - JACKPOT 💎
-  - 3 matching symbols: 2x bet (20% chance) - WIN ✨
-  - No match: Lose bet (70% chance) 😔
+  - 5 consecutive: 50x bet (1% chance) - MEGA JACKPOT 💎💎
+  - 4 consecutive: 10x bet (9% chance) - JACKPOT 💎
+  - 3 consecutive: 2x bet (20% chance) - WIN ✨
+  - Less than 3 consecutive: Lose bet (70% chance) 😔
 - **Expected Return**: ~130% RTP (Return to Player) = (0.01×50 + 0.09×10 + 0.20×2) = 1.30
 - **Note**: High RTP favors the player - this is a fun/generous slot machine!
 - **Implementation**:
-  - State management tracks bet amount, spinning status, results
+  - State management tracks bet amount, spinning status, stopped reels
   - Money deducted immediately on spin
   - Winnings added on completion with sound effects
   - Game pauses while slot machine is open
   - Interactive lever animates when pulled
-  - Payout table displayed without showing percentages
-- **UI**: Modal matches game's wood/pixel aesthetic, 5 reels fit horizontally, lever positioned on right side
+  - Messages display for 5 seconds (longer than before)
+  - Payout table shows "consecutive from left" rule
+- **UI**: Modal matches game's wood/pixel aesthetic, 5 reels with sequential stop animation, lever positioned on right side
 
 ---
 

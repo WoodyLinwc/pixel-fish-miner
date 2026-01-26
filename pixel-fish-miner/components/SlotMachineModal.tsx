@@ -15,11 +15,11 @@ interface SlotMachineModalProps {
 
 const SYMBOLS = ["🐟", "🐠", "🦈", "🐡", "🦞", "🦑", "🐙"];
 
-// Final payout: Lose 70%, 2x 20%, 10x 9%, 50x 1%
+// Payout: Lose 70%, 2x 20%, 10x 9%, 50x 1%
 const PAYOUTS = {
-  fifty: 50, // 1% chance
-  ten: 10, // 9% chance
-  two: 2, // 20% chance
+  fifty: 50, // 1% chance - 5 consecutive
+  ten: 10, // 9% chance - 4 consecutive
+  two: 2, // 20% chance - 3 consecutive
   none: 0, // 70% chance
 };
 
@@ -32,6 +32,13 @@ const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
   language,
 }) => {
   const [reels, setReels] = useState<string[]>(["🐟", "🐟", "🐟", "🐟", "🐟"]);
+  const [stoppedReels, setStoppedReels] = useState<boolean[]>([
+    false,
+    false,
+    false,
+    false,
+    false,
+  ]);
   const [spinning, setSpinning] = useState(false);
   const [betAmount, setBetAmount] = useState(50);
   const [message, setMessage] = useState<string>("");
@@ -48,35 +55,45 @@ const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
     }
   };
 
-  const generateResult = (): { reels: string[]; multiplier: number } => {
-    const random = Math.random();
+  // Check for consecutive matching symbols from left to right
+  const checkConsecutiveWin = (reelResults: string[]): number => {
+    let consecutiveCount = 1;
+    const firstSymbol = reelResults[0];
 
-    // 1% chance for 50x (5 matching symbols - MEGA JACKPOT)
-    if (random < 0.01) {
-      const symbol = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
-      return {
-        reels: [symbol, symbol, symbol, symbol, symbol],
-        multiplier: PAYOUTS.fifty,
-      };
+    for (let i = 1; i < reelResults.length; i++) {
+      if (reelResults[i] === firstSymbol) {
+        consecutiveCount++;
+      } else {
+        break; // Stop at first non-match
+      }
     }
 
-    // 9% chance for 10x (4 matching symbols)
+    if (consecutiveCount >= 5) return PAYOUTS.fifty;
+    if (consecutiveCount >= 4) return PAYOUTS.ten;
+    if (consecutiveCount >= 3) return PAYOUTS.two;
+    return PAYOUTS.none;
+  };
+
+  const generateResult = (): string[] => {
+    const random = Math.random();
+
+    // 1% chance for 50x (5 consecutive matching)
+    if (random < 0.01) {
+      const symbol = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+      return [symbol, symbol, symbol, symbol, symbol];
+    }
+
+    // 9% chance for 10x (4 consecutive matching)
     if (random < 0.1) {
-      // 0.01 + 0.09 = 0.10
       const symbol = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
       const different = SYMBOLS.filter((s) => s !== symbol)[
         Math.floor(Math.random() * (SYMBOLS.length - 1))
       ];
-      const positions = [symbol, symbol, symbol, symbol, different];
-      return {
-        reels: positions.sort(() => Math.random() - 0.5),
-        multiplier: PAYOUTS.ten,
-      };
+      return [symbol, symbol, symbol, symbol, different];
     }
 
-    // 20% chance for 2x (3 matching symbols)
+    // 20% chance for 2x (3 consecutive matching)
     if (random < 0.3) {
-      // 0.10 + 0.20 = 0.30
       const symbol = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
       const result = [symbol, symbol, symbol];
 
@@ -86,31 +103,24 @@ const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
         result.push(newSymbol);
       }
 
-      return {
-        reels: result.sort(() => Math.random() - 0.5),
-        multiplier: PAYOUTS.two,
-      };
+      return result;
     }
 
-    // 70% chance for no match (lose)
+    // 70% chance for no consecutive match (lose)
     const result: string[] = [];
-    const usedSymbols = new Set<string>();
-
-    while (result.length < 5) {
+    for (let i = 0; i < 5; i++) {
       const symbol = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
       result.push(symbol);
-      usedSymbols.add(symbol);
-
-      // If we've used all symbols, we can repeat
-      if (usedSymbols.size === SYMBOLS.length) {
-        usedSymbols.clear();
-      }
     }
 
-    return {
-      reels: result,
-      multiplier: PAYOUTS.none,
-    };
+    // Make sure first 3 aren't all the same (to avoid accidental wins)
+    if (result[0] === result[1] && result[1] === result[2]) {
+      result[2] = SYMBOLS.filter((s) => s !== result[0])[
+        Math.floor(Math.random() * (SYMBOLS.length - 1))
+      ];
+    }
+
+    return result;
   };
 
   const handleLeverPull = () => {
@@ -118,7 +128,7 @@ const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
 
     if (money < betAmount) {
       setMessage(t.notEnoughMoney || "Not enough money!");
-      setTimeout(() => setMessage(""), 2000);
+      setTimeout(() => setMessage(""), 3000);
       return;
     }
 
@@ -127,51 +137,79 @@ const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
     setSpinning(true);
     setMessage("");
     setLeverPulled(true);
+    setStoppedReels([false, false, false, false, false]);
     audioManager.playButtonSound();
 
     setTimeout(() => setLeverPulled(false), 300);
 
-    const spinInterval = setInterval(() => {
-      setReels([
-        SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)],
-        SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)],
-        SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)],
-        SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)],
-        SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)],
-      ]);
-    }, 100);
+    // Generate final result
+    const finalResult = generateResult();
 
-    const spinDuration = 1500 + Math.random() * 1000;
+    // Start spinning all reels
+    const spinIntervals: NodeJS.Timeout[] = [];
+    reels.forEach((_, index) => {
+      const interval = setInterval(() => {
+        setReels((prev) => {
+          const newReels = [...prev];
+          newReels[index] = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+          return newReels;
+        });
+      }, 100);
+      spinIntervals.push(interval);
+    });
 
-    setTimeout(() => {
-      clearInterval(spinInterval);
+    // Stop reels one by one with 400ms delay
+    const stopReel = (index: number) => {
+      setTimeout(
+        () => {
+          clearInterval(spinIntervals[index]);
+          setReels((prev) => {
+            const newReels = [...prev];
+            newReels[index] = finalResult[index];
+            return newReels;
+          });
+          setStoppedReels((prev) => {
+            const newStopped = [...prev];
+            newStopped[index] = true;
+            return newStopped;
+          });
 
-      const { reels: result, multiplier } = generateResult();
-      setReels(result);
+          // After last reel stops, check for win
+          if (index === 4) {
+            setTimeout(() => {
+              const multiplier = checkConsecutiveWin(finalResult);
+              const winnings = betAmount * multiplier;
 
-      setTimeout(() => {
-        const winnings = betAmount * multiplier;
+              if (winnings > 0) {
+                onWin(winnings);
+                audioManager.playPowerupSound();
 
-        if (winnings > 0) {
-          onWin(winnings);
-          audioManager.playPowerupSound();
+                if (multiplier === PAYOUTS.fifty) {
+                  setMessage(`💎💎 MEGA JACKPOT! +$${winnings} 💎💎`);
+                } else if (multiplier === PAYOUTS.ten) {
+                  setMessage(`💎 JACKPOT! +$${winnings}`);
+                } else {
+                  setMessage(`✨ WIN! +$${winnings}`);
+                }
+              } else {
+                audioManager.playCatchNothing();
+                setMessage("😔 Try Again!");
+              }
 
-          if (multiplier === PAYOUTS.fifty) {
-            setMessage(`💎💎 MEGA JACKPOT! +$${winnings} 💎💎`);
-          } else if (multiplier === PAYOUTS.ten) {
-            setMessage(`💎 JACKPOT! +$${winnings}`);
-          } else {
-            setMessage(`✨ WIN! +$${winnings}`);
+              setSpinning(false);
+              // Show message for 5 seconds
+              setTimeout(() => setMessage(""), 5000);
+            }, 500);
           }
-        } else {
-          audioManager.playCatchNothing();
-          setMessage("😔 Try Again!");
-        }
+        },
+        800 + index * 400,
+      ); // Each reel stops 400ms after the previous
+    };
 
-        setSpinning(false);
-        setTimeout(() => setMessage(""), 3000);
-      }, 500);
-    }, spinDuration);
+    // Stop each reel sequentially
+    for (let i = 0; i < 5; i++) {
+      stopReel(i);
+    }
   };
 
   const betOptions = [25, 50, 100, 250, 500];
@@ -205,8 +243,12 @@ const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
                       {reels.map((symbol, index) => (
                         <div
                           key={index}
-                          className={`bg-[#fff3e0] border-3 border-[#8d6e63] rounded-lg w-14 h-14 md:w-20 md:h-20 flex items-center justify-center text-2xl md:text-4xl shadow-lg ${
-                            spinning ? "animate-pulse" : ""
+                          className={`bg-[#fff3e0] border-3 border-[#8d6e63] rounded-lg w-14 h-14 md:w-20 md:h-20 flex items-center justify-center text-2xl md:text-4xl shadow-lg transition-all ${
+                            spinning && !stoppedReels[index]
+                              ? "animate-pulse"
+                              : ""
+                          } ${
+                            stoppedReels[index] ? "ring-2 ring-[#fbc02d]" : ""
                           }`}
                         >
                           {symbol}
@@ -214,7 +256,7 @@ const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
                       ))}
                     </div>
 
-                    {/* Message Display - Fixed Height */}
+                    {/* Message Display - Fixed Height, longer duration */}
                     <div className="text-center h-8 flex items-center justify-center mb-3">
                       {message && (
                         <div className="bg-[#fff3e0] border-2 border-[#8d6e63] rounded px-3 py-1 inline-block animate-fade-in">
@@ -225,18 +267,21 @@ const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
                       )}
                     </div>
 
-                    {/* Payout Info - 3 tiers only */}
+                    {/* Payout Info - Consecutive matches only */}
                     <div className="bg-[#e6c288] border-2 border-[#c68c53] rounded p-2 text-[10px] md:text-xs">
+                      <div className="text-center text-[#5d4037] font-bold mb-2 text-[9px] md:text-[11px]">
+                        ⭐ Consecutive matches from left ⭐
+                      </div>
                       <div className="flex justify-between text-[#5d4037] font-bold mb-1">
-                        <span>💎 5 Match:</span>
+                        <span>💎 5 in a row:</span>
                         <span className="text-[#e91e63]">50x Bet</span>
                       </div>
                       <div className="flex justify-between text-[#5d4037] font-bold mb-1">
-                        <span>💎 4 Match:</span>
+                        <span>💎 4 in a row:</span>
                         <span className="text-[#9c27b0]">10x Bet</span>
                       </div>
                       <div className="flex justify-between text-[#5d4037] font-bold">
-                        <span>🎰 3 Match:</span>
+                        <span>🎰 3 in a row:</span>
                         <span className="text-[#f57c00]">2x Bet</span>
                       </div>
                     </div>
