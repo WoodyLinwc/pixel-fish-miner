@@ -12,6 +12,7 @@ This project is a React-based arcade game inspired by "Gold Miner," styled with 
 - **State Management:** React `useState` for UI/Persistence, `useRef` for high-frequency game loop data.
 - **Persistence:** `localStorage` (Keys: `pixel-fish-miner-save`, `pixel-fish-miner-lang`, `pixel-fish-miner-music`, `pixel-fish-miner-sfx`).
 - **Audio:** HTML5 Audio API (managed via `audioManager.ts`).
+- **Encryption:** XOR cipher + Base64 encoding for save file export/import (`encryption.ts`).
 
 ---
 
@@ -86,14 +87,19 @@ Rendering logic is modularized to keep `GameCanvas` clean.
 ### 4. Data Models (`types.ts` & `constants.ts`)
 
 - **`types.ts`**:
-  - `GameState`: Inventory, Upgrades, Unlocks, Active Effects, Settings.
+  - `GameState`: Inventory, Upgrades, Unlocks, Active Effects, Settings. Includes `trashFilterLevel` for upgrade progression.
+  - `FishType`: Fish properties including optional `showInBag` flag to hide from encyclopedia (used for Crab).
   - `WeatherType`: `CLEAR`, `RAIN`, `SNOW`, `WIND`, `FOG`, `RAINBOW`.
   - `ClawDebuff`: Status effects - `NONE`, `SEVERED`, `NUMBED`.
   - `ClawState`: `IDLE`, `SHOOTING`, `RETRACTING`.
 - **`constants.ts`**: **Game Balance.**
   - `GAME_WIDTH`: 800px, `GAME_HEIGHT`: 600px, `SURFACE_Y`: 200px (water line).
-  - `FISH_TYPES`: ~40 entities including fish, trash, static decor, and event items.
-  - `UPGRADES`: Claw Speed (retract speed), Claw Strength (throw speed), Fish Density (spawn rate/count).
+  - `FISH_TYPES`: ~40 entities including fish, trash, static decor, and event items. Crab has `showInBag: false` (uncatchable, hidden from encyclopedia).
+  - `UPGRADES`:
+    - Claw Speed ($200 base) - Retract speed multiplier.
+    - Claw Strength ($200 base) - Throw speed multiplier.
+    - Fish Density ($400 base) - Spawn rate and max fish count.
+    - Trash Filter ($400 base) - Reduces trash spawn rate (Level 1: 0%, Level 20: 95% reduction).
   - `POWERUPS`:
     - `multiClaw` (5 claws, 30s), `superBait` (No trash, fast spawn, 30s)
     - `diamondHook` (Fast retract, 30s), `superNet` (Radius catch, 30s)
@@ -108,7 +114,11 @@ Rendering logic is modularized to keep `GameCanvas` clean.
 - **`StoreModal.tsx`**: The main progression hub. Tabs for Upgrades, Powerups, Pets, Costumes, Promo Codes.
 - **`BagModal.tsx`**: Encyclopedia. Renders fish icons dynamically using `drawEntity` on mini-canvases. Shows caught count and total stats.
 - **`AchievementsModal.tsx`**: Displays achievement progress with visual progress bars.
-- **`SettingsModal.tsx`**: Music/SFX toggles, Language selection (EN/ES/ZH), Credits.
+- **`SettingsModal.tsx`**:
+  - Music/SFX toggles, Language selection (EN/ES/ZH).
+  - **Import/Export Save**: Download encrypted `.fishsave` files or upload to restore progress across devices.
+  - Credits section with creator info and tech stack.
+  - Mobile-optimized with scrollable content (`max-h-[75vh]`).
 - **`PowerupBar.tsx`**: Bottom-right UI to activate inventory powerups. Shows count badges and active timers.
 - **`AchievementToast.tsx`**: Pop-up notification for unlocks (4s duration, slides in from right).
 
@@ -240,6 +250,67 @@ All successful promo codes increment `successfulPromoCodes` counter for achievem
 
 ---
 
+## Save Import/Export System
+
+### Overview
+
+Players can download their game progress as an encrypted `.fishsave` file and upload it to restore progress on different devices.
+
+### Encryption (`utils/encryption.ts`)
+
+- **Method**: XOR cipher + Checksum verification + Base64 encoding.
+- **Purpose**: Prevents casual save editing, detects file tampering.
+- **Security Level**: Good enough to stop 95% of users from cheating (not military-grade).
+- **Key Functions**:
+  - `encryptSaveData(jsonString)`: Adds checksum, XOR encrypts, Base64 encodes.
+  - `decryptSaveData(base64String)`: Base64 decodes, XOR decrypts, verifies checksum, validates JSON.
+  - `downloadSaveFile(encrypted, filename)`: Creates blob and triggers browser download.
+
+### Encryption Flow
+
+1. **Export**:
+   - Serialize `gameState` to JSON
+   - Calculate checksum and prepend to data
+   - XOR encrypt with secret key
+   - Encode to Base64
+   - Download as `pixel-fish-miner-YYYY-MM-DD.fishsave`
+
+2. **Import**:
+   - User selects `.fishsave` file
+   - Read file as text
+   - Decode from Base64
+   - XOR decrypt
+   - Verify checksum (detects tampering)
+   - Parse and validate JSON structure
+   - Merge with `INITIAL_GAME_STATE` for migration safety
+   - Save to localStorage and reload page
+
+### UI Implementation (SettingsModal.tsx)
+
+- **Export Button**: Blue button with download icon, shows success feedback.
+- **Import Button**: Green button with upload icon, opens file picker filtered to `.fishsave`.
+- **Feedback**: Success/error messages appear for 3 seconds.
+- **Auto-reload**: Page reloads after successful import to apply changes.
+
+### Error Handling
+
+Import will fail and show error if:
+
+- File is not valid Base64
+- Checksum verification fails (tampered data)
+- Not valid JSON after decryption
+- Missing required GameState fields (corrupted structure)
+- File was modified in text editor
+
+### Use Cases
+
+- **Cross-device play**: Export from PC, import on mobile
+- **Backup**: Save progress before risky gameplay
+- **Recovery**: Restore after browser data cleared
+- **Sharing**: Share max-level saves with friends (not synced)
+
+---
+
 ## Developer Notes
 
 ### Canvas Coordinate System
@@ -278,15 +349,22 @@ To add new content:
    - Add translation in `locales/en.ts`, `es.ts`, `zh.ts`.
    - Create draw function in appropriate `utils/fish/*.ts` file.
    - Export from `utils/drawFish.ts`.
+   - Use `showInBag: false` to hide from encyclopedia if needed.
 2. **New Powerup**:
    - Add to `POWERUPS` in `constants.ts`.
    - Add translation.
    - Implement logic in `GameCanvas.tsx` and `StoreModal.tsx`.
-3. **New Costume**:
+3. **New Upgrade**:
+   - Add to `UPGRADES` in `constants.ts`.
+   - Add translation for all languages.
+   - Update `GameState` type with new level property.
+   - Add to `handleBuyUpgrade` and `handleDowngradeUpgrade` in `App.tsx`.
+   - Implement effect logic (e.g., Trash Filter modifies spawn logic in `getWeightedFishType`).
+4. **New Costume**:
    - Add to `COSTUMES` in `constants.ts`.
    - Add translation.
    - Implement draw logic in `GameCanvas.tsx` (fisherman rendering section).
-4. **New Pet**:
+5. **New Pet**:
    - Add to `PETS` in `constants.ts`.
    - Add translation.
    - Implement draw function in `utils/drawPet.ts`.
@@ -298,3 +376,5 @@ To add new content:
 - **Trash Suppression**: Mystery Bag creates 20s period where trash doesn't spawn (separate from Super Bait).
 - **Combo Pause**: Combo timer pauses when any modal is open.
 - **Weather Priority**: Fog and Rainbow override normal day/night sky colors.
+- **Crab Hidden**: Pinchy Crab appears in gameplay (cuts line) but is hidden from Bag/Encyclopedia (`showInBag: false`).
+- **Trash Filter**: Progressively reduces trash spawn rate. Formula: `((level-1)/19)*0.95` gives 0-95% reduction across 20 levels.
