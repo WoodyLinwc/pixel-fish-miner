@@ -41,6 +41,13 @@ export const es = {
   music: "Música",
   on: "SÍ",
   off: "NO",
+  saveData: "Datos de Guardado",
+  saveDataDesc: "Descarga o sube tu progreso de juego encriptado",
+  exportSave: "Exportar",
+  importSave: "Importar",
+  exportSuccess: "¡Archivo guardado descargado!",
+  importSuccess: "¡Guardado cargado con éxito! Recargando...",
+  importError: "¡Archivo de guardado inválido o corrupto!",
   promoMessages: {
     weatherRain: "Clima: ¡Lluvia! 🌧️",
     weatherSnow: "Clima: ¡Nieve! ❄️",

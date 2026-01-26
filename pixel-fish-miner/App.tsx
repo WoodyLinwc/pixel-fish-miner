@@ -26,6 +26,11 @@ import {
 import { TRANSLATIONS } from "./locales/translations";
 import { Play } from "lucide-react";
 import { audioManager } from "./utils/audioManager";
+import {
+  encryptSaveData,
+  decryptSaveData,
+  downloadSaveFile,
+} from "./utils/encryption";
 
 const App: React.FC = () => {
   // --- Persistence ---
@@ -662,6 +667,62 @@ const App: React.FC = () => {
     });
   };
 
+  // Export save data as encrypted file
+  const handleExportSave = () => {
+    try {
+      const saveData = JSON.stringify(gameState);
+      const encrypted = encryptSaveData(saveData);
+      const timestamp = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+      downloadSaveFile(encrypted, `pixel-fish-miner-${timestamp}.fishsave`);
+    } catch (error) {
+      console.error("Failed to export save:", error);
+    }
+  };
+
+  // Import save data from encrypted file
+  const handleImportSave = (encryptedData: string): boolean => {
+    try {
+      const decrypted = decryptSaveData(encryptedData);
+      if (!decrypted) {
+        return false; // Invalid or tampered file
+      }
+
+      const parsed = JSON.parse(decrypted);
+
+      // Validate it has expected GameState structure
+      if (
+        typeof parsed.money !== "number" ||
+        !Array.isArray(parsed.achievements)
+      ) {
+        return false;
+      }
+
+      // Merge with INITIAL_GAME_STATE to ensure all fields exist
+      const migratedState = {
+        ...INITIAL_GAME_STATE,
+        ...parsed,
+        clawSpeedLevel: parsed.clawSpeedLevel || 1,
+        clawStrengthLevel: parsed.clawStrengthLevel || 1,
+        fishDensityLevel: parsed.fishDensityLevel || 1,
+        trashFilterLevel: parsed.trashFilterLevel || 1,
+        achievements: parsed.achievements || [],
+        lifetimeEarnings: parsed.lifetimeEarnings || parsed.money || 0,
+      };
+
+      // Save to localStorage and update state
+      localStorage.setItem(
+        "pixel-fish-miner-save",
+        JSON.stringify(migratedState),
+      );
+      setGameState(migratedState);
+
+      return true;
+    } catch (error) {
+      console.error("Failed to import save:", error);
+      return false;
+    }
+  };
+
   const handleApplyPromoCode = (
     code: string,
   ): { success: boolean; message: string } => {
@@ -951,11 +1012,13 @@ const App: React.FC = () => {
             isOpen={isSettingsOpen}
             onClose={() => setIsSettingsOpen(false)}
             language={language}
-            setLanguage={setLanguage}
+            onChangeLanguage={setLanguage}
             isMusicOn={isMusicOn}
-            toggleMusic={() => setIsMusicOn((p) => !p)}
+            onToggleMusic={() => setIsMusicOn((p) => !p)}
             isSoundEffectsOn={isSoundEffectsOn}
-            toggleSoundEffects={() => setIsSoundEffectsOn((p) => !p)}
+            onToggleSoundEffects={() => setIsSoundEffectsOn((p) => !p)}
+            onExportSave={handleExportSave}
+            onImportSave={handleImportSave}
           />
 
           {/* Achievement Popup Toast */}

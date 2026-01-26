@@ -1,30 +1,39 @@
-import React from "react";
-import { X, Music, Volume2, Globe, Award } from "lucide-react";
+import React, { useState } from "react";
 import { Language } from "../types";
 import { TRANSLATIONS } from "../locales/translations";
+import { X, Music, Volume2, Globe, Download, Upload } from "lucide-react";
 import { audioManager } from "../utils/audioManager";
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  language: Language;
-  setLanguage: (lang: Language) => void;
   isMusicOn: boolean;
-  toggleMusic: () => void;
+  onToggleMusic: () => void;
   isSoundEffectsOn: boolean;
-  toggleSoundEffects: () => void;
+  onToggleSoundEffects: () => void;
+  language: Language;
+  onChangeLanguage: (lang: Language) => void;
+  onExportSave: () => void;
+  onImportSave: (encryptedData: string) => boolean;
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen,
   onClose,
-  language,
-  setLanguage,
   isMusicOn,
-  toggleMusic,
+  onToggleMusic,
   isSoundEffectsOn,
-  toggleSoundEffects,
+  onToggleSoundEffects,
+  language,
+  onChangeLanguage,
+  onExportSave,
+  onImportSave,
 }) => {
+  const [importFeedback, setImportFeedback] = useState<{
+    success: boolean;
+    message: string;
+  } | null>(null);
+
   if (!isOpen) return null;
 
   const t = TRANSLATIONS[language];
@@ -34,33 +43,78 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
     onClose();
   };
 
+  const handleMusicToggle = () => {
+    audioManager.playButtonSound();
+    onToggleMusic();
+  };
+
+  const handleSfxToggle = () => {
+    audioManager.playButtonSound();
+    onToggleSoundEffects();
+  };
+
   const handleLanguageChange = (lang: Language) => {
     audioManager.playButtonSound();
-    setLanguage(lang);
+    onChangeLanguage(lang);
   };
 
-  const handleToggleMusic = () => {
+  const handleExport = () => {
     audioManager.playButtonSound();
-    toggleMusic();
+    onExportSave();
+    setImportFeedback({
+      success: true,
+      message: t.exportSuccess || "Save file downloaded!",
+    });
+    setTimeout(() => setImportFeedback(null), 3000);
   };
 
-  const handleToggleSoundEffects = () => {
-    // Don't play sound when toggling sound effects off
-    // (would be confusing to hear a sound when turning sounds off)
-    if (isSoundEffectsOn) {
-      toggleSoundEffects();
-    } else {
-      toggleSoundEffects();
-      audioManager.playButtonSound();
-    }
+  const handleImport = () => {
+    audioManager.playButtonSound();
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".fishsave";
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        const success = onImportSave(text);
+
+        if (success) {
+          setImportFeedback({
+            success: true,
+            message:
+              t.importSuccess || "Save loaded successfully! Reloading...",
+          });
+          // Reload page after 1 second to apply changes
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        } else {
+          setImportFeedback({
+            success: false,
+            message: t.importError || "Invalid or corrupted save file!",
+          });
+          setTimeout(() => setImportFeedback(null), 3000);
+        }
+      } catch (error) {
+        setImportFeedback({
+          success: false,
+          message: t.importError || "Failed to read save file!",
+        });
+        setTimeout(() => setImportFeedback(null), 3000);
+      }
+    };
+    input.click();
   };
 
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-[2px] p-2 md:p-4">
+    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-[2px] p-4">
       {/* Wood Frame */}
-      <div className="bg-[#e6c288] border-[6px] border-[#8d5524] rounded-lg w-full max-w-md shadow-[0_10px_20px_rgba(0,0,0,0.5)] relative animate-fade-in p-1 max-h-[75vh] md:max-h-[80vh] flex flex-col">
+      <div className="bg-[#e6c288] border-[6px] border-[#8d5524] rounded-lg w-full max-w-md shadow-[0_10px_20px_rgba(0,0,0,0.5)] relative animate-fade-in p-1">
         {/* Inner Border */}
-        <div className="border-2 border-[#c68c53] p-3 md:p-4 rounded h-full bg-[#e6c288] flex flex-col overflow-hidden">
+        <div className="border-2 border-[#c68c53] p-4 rounded bg-[#e6c288]">
           <button
             onClick={handleClose}
             className="absolute top-2 right-2 bg-[#d32f2f] text-white hover:bg-[#b71c1c] border-2 border-[#801313] rounded p-1 shadow-md active:translate-y-1 z-10"
@@ -68,186 +122,182 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
             <X size={20} />
           </button>
 
-          <h2 className="text-2xl text-[#5d4037] mb-4 text-center uppercase tracking-widest flex items-center justify-center gap-3 drop-shadow-sm font-bold shrink-0">
-            ⚙️ {t.settings || "Settings"}
+          <h2 className="text-2xl text-[#5d4037] mb-4 text-center uppercase tracking-widest drop-shadow-sm font-bold">
+            {t.settings}
           </h2>
 
-          {/* Scrollable Content */}
-          <div className="flex-1 overflow-y-auto space-y-4 pr-2">
-            {/* Background Music Section */}
-            <div className="bg-[#f5deb3] border-2 border-[#c68c53] rounded-lg p-3">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Music size={20} className="text-[#5d4037]" />
-                  <h3 className="text-sm font-bold text-[#5d4037] uppercase">
-                    {t.backgroundMusic || "Background Music"}
-                  </h3>
-                </div>
-                <button
-                  onClick={handleToggleMusic}
-                  className={`px-3 py-1 rounded border-2 transition-all shadow-[0_2px_0_rgba(0,0,0,0.2)] active:shadow-none active:translate-y-1 text-xs font-bold uppercase ${
-                    isMusicOn
-                      ? "bg-[#81c784] border-[#2e7d32] text-[#1b5e20]"
-                      : "bg-[#e0e0e0] border-[#bdbdbd] text-[#757575]"
-                  }`}
-                >
-                  {isMusicOn ? t.on || "ON" : t.off || "OFF"}
-                </button>
-              </div>
-              <p className="text-[10px] text-[#6d4c41] leading-tight">
-                {t.backgroundMusicDesc || "Toggle ocean background music"}
-              </p>
-            </div>
-
-            {/* Sound Effects Section */}
-            <div className="bg-[#f5deb3] border-2 border-[#c68c53] rounded-lg p-3">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Volume2 size={20} className="text-[#5d4037]" />
-                  <h3 className="text-sm font-bold text-[#5d4037] uppercase">
-                    {t.soundEffects || "Sound Effects"}
-                  </h3>
-                </div>
-                <button
-                  onClick={handleToggleSoundEffects}
-                  className={`px-3 py-1 rounded border-2 transition-all shadow-[0_2px_0_rgba(0,0,0,0.2)] active:shadow-none active:translate-y-1 text-xs font-bold uppercase ${
-                    isSoundEffectsOn
-                      ? "bg-[#81c784] border-[#2e7d32] text-[#1b5e20]"
-                      : "bg-[#e0e0e0] border-[#bdbdbd] text-[#757575]"
-                  }`}
-                >
-                  {isSoundEffectsOn ? t.on || "ON" : t.off || "OFF"}
-                </button>
-              </div>
-              <p className="text-[10px] text-[#6d4c41] leading-tight">
-                {t.soundEffectsDesc ||
-                  "Toggle game sound effects (claw, money, etc.)"}
-              </p>
-            </div>
-
-            {/* Language Section */}
-            <div className="bg-[#f5deb3] border-2 border-[#c68c53] rounded-lg p-3">
-              <div className="flex items-center gap-2 mb-2">
-                <Globe size={20} className="text-[#5d4037]" />
-                <h3 className="text-sm font-bold text-[#5d4037] uppercase">
-                  {t.language || "Language"}
-                </h3>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleLanguageChange("en")}
-                  className={`flex-1 py-2 rounded border-2 transition-all shadow-[0_2px_0_rgba(0,0,0,0.2)] active:shadow-none active:translate-y-1 text-xs font-bold uppercase ${
-                    language === "en"
-                      ? "bg-[#81c784] border-[#2e7d32] text-[#1b5e20]"
-                      : "bg-[#e0e0e0] border-[#bdbdbd] text-[#757575] hover:bg-[#d6d6d6]"
-                  }`}
-                >
-                  English
-                </button>
-                <button
-                  onClick={() => handleLanguageChange("es")}
-                  className={`flex-1 py-2 rounded border-2 transition-all shadow-[0_2px_0_rgba(0,0,0,0.2)] active:shadow-none active:translate-y-1 text-xs font-bold uppercase ${
-                    language === "es"
-                      ? "bg-[#81c784] border-[#2e7d32] text-[#1b5e20]"
-                      : "bg-[#e0e0e0] border-[#bdbdbd] text-[#757575] hover:bg-[#d6d6d6]"
-                  }`}
-                >
-                  Español
-                </button>
-                <button
-                  onClick={() => handleLanguageChange("zh")}
-                  className={`flex-1 py-2 rounded border-2 transition-all shadow-[0_2px_0_rgba(0,0,0,0.2)] active:shadow-none active:translate-y-1 text-xs font-bold uppercase ${
-                    language === "zh"
-                      ? "bg-[#81c784] border-[#2e7d32] text-[#1b5e20]"
-                      : "bg-[#e0e0e0] border-[#bdbdbd] text-[#757575] hover:bg-[#d6d6d6]"
-                  }`}
-                >
-                  中文
-                </button>
-              </div>
-            </div>
-
-            {/* Credits Section */}
-            <div className="bg-[#fff8e1] border-2 border-[#c68c53] rounded-lg p-3">
-              <div className="flex items-center gap-2 mb-2">
-                <Award size={20} className="text-[#5d4037]" />
-                <h3 className="text-sm font-bold text-[#5d4037] uppercase">
-                  {t.credits || "Credits"}
-                </h3>
-              </div>
-              <div className="space-y-3 text-[10px] text-[#6d4c41] leading-relaxed">
-                {/* Creator Section */}
-                <div>
-                  <p className="font-bold text-[#5d4037] mb-1">
-                    👨‍💻 {t.creator || "Creator"}:
-                  </p>
-                  <p className="ml-2">
-                    <span className="font-semibold">Woody Lin 林万程</span>
-                  </p>
-                </div>
-
-                {/* Tech Stack Section */}
-                <div className="border-t border-[#c68c53] pt-2">
-                  <p className="font-bold text-[#5d4037] mb-1">
-                    🛠️ {t.techStack || "Tech Stack"}:
-                  </p>
-                  <div className="ml-2 space-y-1">
-                    <p>
-                      • <span className="font-semibold">React 19</span> - UI
-                      Framework
-                    </p>
-                    <p>
-                      • <span className="font-semibold">TypeScript</span> -
-                      Language
-                    </p>
-                    <p>
-                      • <span className="font-semibold">HTML5 Canvas</span> -
-                      Graphics
-                    </p>
-                    <p>
-                      • <span className="font-semibold">Tailwind CSS</span> -
-                      Styling
-                    </p>
-                    <p>
-                      • <span className="font-semibold">Vite</span> - Build Tool
-                    </p>
-                    <p>
-                      • <span className="font-semibold">Lucide React</span> -
-                      Icons
+          {/* Settings Options */}
+          <div className="space-y-4">
+            {/* Background Music */}
+            <div className="bg-[#fff3e0] p-3 rounded border-2 border-[#a1887f] shadow-sm">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Music size={24} className="text-[#5d4037]" />
+                  <div>
+                    <h3 className="text-sm font-bold text-[#3e2723]">
+                      {t.backgroundMusic}
+                    </h3>
+                    <p className="text-[10px] text-[#6d4c41]">
+                      {t.backgroundMusicDesc}
                     </p>
                   </div>
                 </div>
+                <button
+                  onClick={handleMusicToggle}
+                  className={`px-4 py-2 rounded font-bold text-xs border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
+                    isMusicOn
+                      ? "bg-[#66bb6a] border-[#2e7d32] text-white"
+                      : "bg-[#cfd8dc] border-[#90a4ae] text-[#5d4037]"
+                  }`}
+                >
+                  {isMusicOn ? t.on : t.off}
+                </button>
+              </div>
+            </div>
 
-                {/* Music Section */}
-                <div className="border-t border-[#c68c53] pt-2">
-                  <p className="font-bold text-[#5d4037] mb-1">
-                    🎵 {t.music || "Music"}:
-                  </p>
-                  <p className="ml-2">
-                    <span className="font-semibold">Background Music</span> by{" "}
-                    <span className="text-[#d32f2f]">leohpaz</span>
-                  </p>
-                  <p className="ml-2 text-[9px] text-[#8d6e63]">
-                    Licensed under CC-BY 4.0 & CC-BY 3.0
-                  </p>
-                  <p className="ml-2 text-[9px] text-[#8d6e63]">
-                    Source: OpenGameArt.org
-                  </p>
+            {/* Sound Effects */}
+            <div className="bg-[#fff3e0] p-3 rounded border-2 border-[#a1887f] shadow-sm">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Volume2 size={24} className="text-[#5d4037]" />
+                  <div>
+                    <h3 className="text-sm font-bold text-[#3e2723]">
+                      {t.soundEffects}
+                    </h3>
+                    <p className="text-[10px] text-[#6d4c41]">
+                      {t.soundEffectsDesc}
+                    </p>
+                  </div>
                 </div>
+                <button
+                  onClick={handleSfxToggle}
+                  className={`px-4 py-2 rounded font-bold text-xs border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
+                    isSoundEffectsOn
+                      ? "bg-[#66bb6a] border-[#2e7d32] text-white"
+                      : "bg-[#cfd8dc] border-[#90a4ae] text-[#5d4037]"
+                  }`}
+                >
+                  {isSoundEffectsOn ? t.on : t.off}
+                </button>
+              </div>
+            </div>
 
-                {/* Sound Effects Section */}
-                <div className="border-t border-[#c68c53] pt-2">
-                  <p className="font-bold text-[#5d4037] mb-1">
-                    🔊 {t.soundEffects || "Sound Effects"}:
-                  </p>
-                  <p className="ml-2 text-[9px]">
-                    Licensed under CC0 (Public Domain)
-                  </p>
-                  <p className="ml-2 text-[9px] text-[#8d6e63]">
-                    Source: OpenGameArt.org & Freesound.org
-                  </p>
+            {/* Language */}
+            <div className="bg-[#fff3e0] p-3 rounded border-2 border-[#a1887f] shadow-sm">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Globe size={24} className="text-[#5d4037]" />
+                  <div>
+                    <h3 className="text-sm font-bold text-[#3e2723]">
+                      {t.language}
+                    </h3>
+                  </div>
+                </div>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => handleLanguageChange("en")}
+                    className={`px-3 py-2 rounded font-bold text-xs border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
+                      language === "en"
+                        ? "bg-[#66bb6a] border-[#2e7d32] text-white"
+                        : "bg-[#cfd8dc] border-[#90a4ae] text-[#5d4037]"
+                    }`}
+                  >
+                    EN
+                  </button>
+                  <button
+                    onClick={() => handleLanguageChange("es")}
+                    className={`px-3 py-2 rounded font-bold text-xs border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
+                      language === "es"
+                        ? "bg-[#66bb6a] border-[#2e7d32] text-white"
+                        : "bg-[#cfd8dc] border-[#90a4ae] text-[#5d4037]"
+                    }`}
+                  >
+                    ES
+                  </button>
+                  <button
+                    onClick={() => handleLanguageChange("zh")}
+                    className={`px-3 py-2 rounded font-bold text-xs border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
+                      language === "zh"
+                        ? "bg-[#66bb6a] border-[#2e7d32] text-white"
+                        : "bg-[#cfd8dc] border-[#90a4ae] text-[#5d4037]"
+                    }`}
+                  >
+                    中文
+                  </button>
                 </div>
               </div>
+            </div>
+
+            {/* Import/Export Save */}
+            <div className="bg-[#fff3e0] p-3 rounded border-2 border-[#a1887f] shadow-sm">
+              <h3 className="text-sm font-bold text-[#3e2723] mb-2">
+                {t.saveData || "Save Data"}
+              </h3>
+              <p className="text-[10px] text-[#6d4c41] mb-3">
+                {t.saveDataDesc ||
+                  "Download or upload your encrypted game progress"}
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleExport}
+                  className="flex-1 bg-[#42a5f5] border-[#1976d2] text-white hover:bg-[#1e88e5] px-3 py-2 rounded font-bold text-xs border-b-4 active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center gap-2"
+                >
+                  <Download size={14} />
+                  {t.exportSave || "Export"}
+                </button>
+                <button
+                  onClick={handleImport}
+                  className="flex-1 bg-[#66bb6a] border-[#2e7d32] text-white hover:bg-[#4caf50] px-3 py-2 rounded font-bold text-xs border-b-4 active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center gap-2"
+                >
+                  <Upload size={14} />
+                  {t.importSave || "Import"}
+                </button>
+              </div>
+              {importFeedback && (
+                <div
+                  className={`mt-2 p-2 rounded text-xs font-bold text-center ${
+                    importFeedback.success
+                      ? "bg-[#c8e6c9] text-[#2e7d32]"
+                      : "bg-[#ffcdd2] text-[#c62828]"
+                  }`}
+                >
+                  {importFeedback.message}
+                </div>
+              )}
+            </div>
+
+            {/* Credits */}
+            <div className="bg-[#fff3e0] p-3 rounded border-2 border-[#a1887f] shadow-sm">
+              <h3 className="text-sm font-bold text-[#3e2723] mb-2 flex items-center gap-2">
+                👨‍💻 {t.creator}
+              </h3>
+              <p className="text-xs text-[#6d4c41] mb-3">Woody Lin / 林万程</p>
+
+              <h3 className="text-sm font-bold text-[#3e2723] mb-2 flex items-center gap-2">
+                🛠️ {t.techStack}
+              </h3>
+              <div className="grid grid-cols-2 gap-2 text-[10px] text-[#6d4c41] mb-3">
+                <div>• React 19</div>
+                <div>• TypeScript</div>
+                <div>• HTML5 Canvas</div>
+                <div>• Tailwind CSS</div>
+                <div>• Vite</div>
+                <div>• Lucide React</div>
+              </div>
+
+              <h3 className="text-sm font-bold text-[#3e2723] mb-1 flex items-center gap-2">
+                🎵 {t.music}
+              </h3>
+              <p className="text-[10px] text-[#6d4c41] mb-2">
+                Background music by leohpaz (CC-BY 4.0 & 3.0, OpenGameArt.org)
+              </p>
+
+              <h3 className="text-sm font-bold text-[#3e2723] mb-1 flex items-center gap-2">
+                🔊 Sound Effects
+              </h3>
+              <p className="text-[10px] text-[#6d4c41]">
+                CC0 Public Domain (OpenGameArt.org & Freesound.org)
+              </p>
             </div>
           </div>
         </div>

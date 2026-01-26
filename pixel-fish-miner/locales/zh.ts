@@ -41,6 +41,13 @@ export const zh = {
   music: "音乐",
   on: "开",
   off: "关",
+  saveData: "存档数据",
+  saveDataDesc: "下载或上传您的加密游戏进度",
+  exportSave: "导出",
+  importSave: "导入",
+  exportSuccess: "存档文件已下载！",
+  importSuccess: "存档加载成功！重新加载中...",
+  importError: "存档文件无效或已损坏！",
   promoMessages: {
     weatherRain: "天气：雨天！🌧️",
     weatherSnow: "天气：雪天！❄️",

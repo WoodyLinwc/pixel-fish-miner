@@ -41,6 +41,13 @@ export const en = {
   music: "Music",
   on: "ON",
   off: "OFF",
+  saveData: "Save Data",
+  saveDataDesc: "Download or upload your encrypted game progress",
+  exportSave: "Export",
+  importSave: "Import",
+  exportSuccess: "Save file downloaded!",
+  importSuccess: "Save loaded successfully! Reloading...",
+  importError: "Invalid or corrupted save file!",
   promoMessages: {
     weatherRain: "Weather: Rain! 🌧️",
     weatherSnow: "Weather: Snow! ❄️",
