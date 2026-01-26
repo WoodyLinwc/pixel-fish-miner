@@ -110,11 +110,11 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-[2px] p-4">
+    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-[2px] p-2 md:p-4">
       {/* Wood Frame */}
-      <div className="bg-[#e6c288] border-[6px] border-[#8d5524] rounded-lg w-full max-w-md shadow-[0_10px_20px_rgba(0,0,0,0.5)] relative animate-fade-in p-1">
+      <div className="bg-[#e6c288] border-[6px] border-[#8d5524] rounded-lg w-full max-w-md shadow-[0_10px_20px_rgba(0,0,0,0.5)] relative animate-fade-in p-1 max-h-[75vh] md:max-h-[80vh] flex flex-col">
         {/* Inner Border */}
-        <div className="border-2 border-[#c68c53] p-4 rounded bg-[#e6c288]">
+        <div className="border-2 border-[#c68c53] p-2 md:p-4 rounded bg-[#e6c288] flex flex-col overflow-hidden h-full">
           <button
             onClick={handleClose}
             className="absolute top-2 right-2 bg-[#d32f2f] text-white hover:bg-[#b71c1c] border-2 border-[#801313] rounded p-1 shadow-md active:translate-y-1 z-10"
@@ -122,14 +122,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
             <X size={20} />
           </button>
 
-          <h2 className="text-2xl text-[#5d4037] mb-4 text-center uppercase tracking-widest drop-shadow-sm font-bold">
+          <h2 className="text-2xl text-[#5d4037] mb-2 text-center uppercase tracking-widest drop-shadow-sm font-bold">
             {t.settings}
           </h2>
 
-          {/* Settings Options */}
-          <div className="space-y-4">
+          {/* Settings Options - Scrollable */}
+          <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar flex-1">
             {/* Background Music */}
-            <div className="bg-[#fff3e0] p-3 rounded border-2 border-[#a1887f] shadow-sm">
+            <div className="bg-[#fff3e0] p-2 md:p-2 md:p-3 rounded border-2 border-[#a1887f] shadow-sm">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Music size={24} className="text-[#5d4037]" />
@@ -156,7 +156,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
 
             {/* Sound Effects */}
-            <div className="bg-[#fff3e0] p-3 rounded border-2 border-[#a1887f] shadow-sm">
+            <div className="bg-[#fff3e0] p-2 md:p-3 rounded border-2 border-[#a1887f] shadow-sm">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Volume2 size={24} className="text-[#5d4037]" />
@@ -183,7 +183,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
 
             {/* Language */}
-            <div className="bg-[#fff3e0] p-3 rounded border-2 border-[#a1887f] shadow-sm">
+            <div className="bg-[#fff3e0] p-2 md:p-3 rounded border-2 border-[#a1887f] shadow-sm">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Globe size={24} className="text-[#5d4037]" />
@@ -229,7 +229,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
 
             {/* Import/Export Save */}
-            <div className="bg-[#fff3e0] p-3 rounded border-2 border-[#a1887f] shadow-sm">
+            <div className="bg-[#fff3e0] p-2 md:p-3 rounded border-2 border-[#a1887f] shadow-sm">
               <h3 className="text-sm font-bold text-[#3e2723] mb-2">
                 {t.saveData || "Save Data"}
               </h3>
@@ -267,7 +267,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
 
             {/* Credits */}
-            <div className="bg-[#fff3e0] p-3 rounded border-2 border-[#a1887f] shadow-sm">
+            <div className="bg-[#fff3e0] p-2 md:p-3 rounded border-2 border-[#a1887f] shadow-sm">
               <h3 className="text-sm font-bold text-[#3e2723] mb-2 flex items-center gap-2">
                 👨‍💻 {t.creator}
               </h3>
