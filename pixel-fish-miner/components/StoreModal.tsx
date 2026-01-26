@@ -251,7 +251,7 @@ const StoreModal: React.FC<StoreModalProps> = ({
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-[2px] p-2 md:p-4">
       {/* Wood Frame */}
-      <div className="bg-[#e6c288] border-[6px] border-[#8d5524] rounded-lg w-full max-w-2xl shadow-[0_10px_20px_rgba(0,0,0,0.5)] relative animate-fade-in p-1 max-h-[75vh] md:max-h-[90vh] flex flex-col">
+      <div className="bg-[#e6c288] border-[6px] border-[#8d5524] rounded-lg w-full max-w-2xl shadow-[0_10px_20px_rgba(0,0,0,0.5)] relative animate-fade-in p-1 max-h-[75vh] md:max-h-[80vh] flex flex-col">
         {/* Inner Border */}
         <div className="border-2 border-[#c68c53] p-2 md:p-4 rounded h-full bg-[#e6c288] flex flex-col overflow-hidden">
           <button
@@ -261,13 +261,13 @@ const StoreModal: React.FC<StoreModalProps> = ({
             <X size={20} />
           </button>
 
-          <h2 className="text-2xl text-[#5d4037] mb-4 text-center uppercase tracking-widest flex items-center justify-center gap-3 drop-shadow-sm font-bold shrink-0">
+          <h2 className="text-2xl text-[#5d4037] mb-2 text-center uppercase tracking-widest flex items-center justify-center gap-3 drop-shadow-sm font-bold shrink-0">
             <ShoppingCart size={28} />
             {t.shopTitle}
           </h2>
 
           <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {/* --- UPGRADES --- */}
               {/* Speed Upgrade */}
               <div className="bg-[#fff3e0] p-3 rounded border-2 border-[#a1887f] shadow-inner relative group">
