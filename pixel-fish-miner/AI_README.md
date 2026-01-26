@@ -110,9 +110,19 @@ Rendering logic is modularized to keep `GameCanvas` clean.
 
 ### 5. UI Components
 
-- **`StatsPanel.tsx`**: Top HUD. Displays money, Shop/Bag/Achievement/Settings buttons.
+- **`StatsPanel.tsx`**: Top HUD. Displays money, Shop/Bag/Slots/Achievement/Settings buttons.
 - **`StoreModal.tsx`**: The main progression hub. Tabs for Upgrades, Powerups, Pets, Costumes, Promo Codes.
 - **`BagModal.tsx`**: Encyclopedia. Renders fish icons dynamically using `drawEntity` on mini-canvases. Shows caught count and total stats.
+- **`SlotMachineModal.tsx`**: Casino-style mini-game. Bet money, spin reels with fish symbols, win multipliers. Features:
+  - **5 reels** (modern slot machine format)
+  - 7 fish symbol emojis (🐟 🐠 🦈 🐡 🦞 🦑 🐙)
+  - Bet amounts: $25, $50, $100, $250, $500
+  - **3-tier payout**: 50x bet (1%), 10x bet (9%), 2x bet (20%), lose (70%)
+  - Expected RTP: ~130% (player-favorable)
+  - Animated spinning with sound effects
+  - Interactive lever on the right side
+  - Payout table without percentages (cleaner UI)
+  - Mobile-optimized with scrollable content
 - **`AchievementsModal.tsx`**: Displays achievement progress with visual progress bars.
 - **`SettingsModal.tsx`**:
   - Music/SFX toggles, Language selection (EN/ES/ZH).
@@ -206,6 +216,32 @@ Rendering logic is modularized to keep `GameCanvas` clean.
   - Pulsating scale animation.
   - Color changes: Yellow (3+), Orange (10+), Red (50+), Purple (100+).
 - **Achievements**: Track max combo reached.
+
+### Slot Machine System
+
+- **Concept**: Casino-style gambling mini-game accessible from top HUD.
+- **Format**: Modern 5-reel slot machine (industry standard)
+- **Mechanics**:
+  - Player selects bet amount ($25-$500)
+  - 5 reels spin showing random fish symbols
+  - Spinning animation lasts 1.5-2.5 seconds
+  - Result determined with weighted randomness
+- **Symbols**: 7 fish emojis (🐟 🐠 🦈 🐡 🦞 🦑 🐙)
+- **Payouts** (3 tiers):
+  - 5 matching symbols (all 5): 50x bet (1% chance) - MEGA JACKPOT 💎💎
+  - 4 matching symbols: 10x bet (9% chance) - JACKPOT 💎
+  - 3 matching symbols: 2x bet (20% chance) - WIN ✨
+  - No match: Lose bet (70% chance) 😔
+- **Expected Return**: ~130% RTP (Return to Player) = (0.01×50 + 0.09×10 + 0.20×2) = 1.30
+- **Note**: High RTP favors the player - this is a fun/generous slot machine!
+- **Implementation**:
+  - State management tracks bet amount, spinning status, results
+  - Money deducted immediately on spin
+  - Winnings added on completion with sound effects
+  - Game pauses while slot machine is open
+  - Interactive lever animates when pulled
+  - Payout table displayed without showing percentages
+- **UI**: Modal matches game's wood/pixel aesthetic, 5 reels fit horizontally, lever positioned on right side
 
 ---
 

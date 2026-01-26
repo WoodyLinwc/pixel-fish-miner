@@ -8,6 +8,7 @@ interface StatsPanelProps {
   gameState: GameState;
   onOpenStore: () => void;
   onOpenBag: () => void;
+  onOpenSlotMachine: () => void;
   onOpenAchievements: () => void;
   onOpenSettings: () => void;
   language: Language;
@@ -17,6 +18,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({
   gameState,
   onOpenStore,
   onOpenBag,
+  onOpenSlotMachine,
   onOpenAchievements,
   onOpenSettings,
   language,
@@ -25,7 +27,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({
 
   return (
     <div className="w-full bg-[#d2a679] border-8 border-[#5d4037] border-b-0 p-3 flex flex-col md:flex-row items-center justify-between gap-4 select-none shadow-inner relative">
-      {/* Left: Money & Button */}
+      {/* Left: Money & Buttons */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2 bg-[#ffecb3] text-[#5d4037] px-3 py-1 rounded-lg border-2 border-[#8d6e63] shadow-inner min-w-[100px]">
           <Coins size={20} className="text-[#fbc02d]" />
@@ -54,6 +56,18 @@ const StatsPanel: React.FC<StatsPanelProps> = ({
         >
           <Backpack size={16} />
           <span>{t.bagBtn}</span>
+        </button>
+
+        {/* Slot Machine Button */}
+        <button
+          onClick={() => {
+            audioManager.playButtonSound();
+            onOpenSlotMachine();
+          }}
+          className="group relative bg-[#ffd54f] hover:bg-[#ffca28] text-[#3e2723] px-3 py-2 rounded-lg border-2 border-[#f57f17] shadow-[0_4px_0_#f57f17] active:shadow-none active:translate-y-1 transition-all text-xs font-bold uppercase flex items-center gap-2"
+        >
+          <Coins size={16} />
+          <span>{t.slotMachineBtn}</span>
         </button>
       </div>
 

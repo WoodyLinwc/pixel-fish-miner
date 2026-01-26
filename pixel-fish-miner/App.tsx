@@ -5,6 +5,7 @@ import StoreModal from "./components/StoreModal";
 import BagModal from "./components/BagModal";
 import AchievementsModal from "./components/AchievementsModal";
 import SettingsModal from "./components/SettingsModal";
+import SlotMachineModal from "./components/SlotMachineModal";
 import AchievementToast from "./components/AchievementToast";
 import PowerupBar from "./components/PowerupBar";
 import {
@@ -82,6 +83,7 @@ const App: React.FC = () => {
 
   const [isStoreOpen, setIsStoreOpen] = useState(false);
   const [isBagOpen, setIsBagOpen] = useState(false);
+  const [isSlotMachineOpen, setIsSlotMachineOpen] = useState(false);
   const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAutoPaused, setIsAutoPaused] = useState(false);
@@ -723,6 +725,23 @@ const App: React.FC = () => {
     }
   };
 
+  // Slot Machine handlers
+  const handleSlotBet = (betAmount: number) => {
+    setGameState((prev) => ({
+      ...prev,
+      money: prev.money - betAmount,
+    }));
+  };
+
+  const handleSlotWin = (winAmount: number) => {
+    setGameState((prev) => ({
+      ...prev,
+      money: prev.money + winAmount,
+      lifetimeEarnings: prev.lifetimeEarnings + winAmount,
+    }));
+    audioManager.playMoneySound();
+  };
+
   const handleApplyPromoCode = (
     code: string,
   ): { success: boolean; message: string } => {
@@ -940,6 +959,7 @@ const App: React.FC = () => {
           gameState={gameState}
           onOpenStore={() => setIsStoreOpen(true)}
           onOpenBag={() => setIsBagOpen(true)}
+          onOpenSlotMachine={() => setIsSlotMachineOpen(true)}
           onOpenAchievements={() => setIsAchievementsOpen(true)}
           onOpenSettings={() => setIsSettingsOpen(true)}
           language={language}
@@ -958,6 +978,7 @@ const App: React.FC = () => {
             paused={
               isStoreOpen ||
               isBagOpen ||
+              isSlotMachineOpen ||
               isAchievementsOpen ||
               isSettingsOpen ||
               isAutoPaused
@@ -1021,6 +1042,16 @@ const App: React.FC = () => {
             isOpen={isBagOpen}
             onClose={() => setIsBagOpen(false)}
             gameState={gameState}
+            language={language}
+          />
+
+          {/* Slot Machine Overlay */}
+          <SlotMachineModal
+            isOpen={isSlotMachineOpen}
+            onClose={() => setIsSlotMachineOpen(false)}
+            money={gameState.money}
+            onBet={handleSlotBet}
+            onWin={handleSlotWin}
             language={language}
           />
 
