@@ -866,6 +866,31 @@ const App: React.FC = () => {
       return { success: true, message: t.unlockAll };
     }
 
+    // Reset Code - DANGEROUS!
+    if (cleanCode === "reset") {
+      const confirmed = window.confirm(
+        "⚠️ WARNING: This will DELETE ALL your progress!\n\n" +
+          "Your money, fish, achievements, upgrades, costumes, and pets will be PERMANENTLY LOST.\n\n" +
+          "This action is IRREVERSIBLE!\n\n" +
+          "Are you absolutely sure you want to reset?",
+      );
+
+      if (!confirmed) {
+        return { success: false, message: "Reset cancelled" };
+      }
+
+      // Clear localStorage and reset to initial state
+      localStorage.removeItem("pixel-fish-miner-save");
+      setGameState(INITIAL_GAME_STATE);
+
+      // Show message and reload after a moment
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+
+      return { success: true, message: "Game reset! Reloading..." };
+    }
+
     // Secret Codes
     if (cleanCode === "woody") {
       incrementPromoCounter((prev) => {

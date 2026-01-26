@@ -224,6 +224,7 @@ Entered in the Store Modal input field:
 - **`plane`** / **`airplane`**: Summons a Supply Drop airplane immediately.
 - **`unlock`**: Unlocks all fish in the Encyclopedia (sets caught count to 1).
 - **`woody`**: Secret code - Toggles max money ($9,999,999) on/off + Secret Achievement unlock.
+- **`reset`**: **⚠️ DANGEROUS** - Deletes all progress with confirmation dialog. Clears localStorage and reloads game.
 
 All successful promo codes increment `successfulPromoCodes` counter for achievement tracking.
 
