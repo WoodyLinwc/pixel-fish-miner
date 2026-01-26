@@ -388,7 +388,7 @@ const StoreModal: React.FC<StoreModalProps> = ({
               </div>
 
               {/* Fish Density Upgrade */}
-              <div className="bg-[#fff3e0] p-3 rounded border-2 border-[#a1887f] shadow-inner relative col-span-1 md:col-span-2">
+              <div className="bg-[#fff3e0] p-3 rounded border-2 border-[#a1887f] shadow-inner relative col-span-1">
                 <div className="absolute top-2 right-2 text-[#29b6f6]">
                   <Magnet size={20} />
                 </div>
@@ -444,6 +444,91 @@ const StoreModal: React.FC<StoreModalProps> = ({
                           {getCost(
                             "fishDensity",
                             gameState.fishDensityLevel || 1,
+                          )}
+                        </span>
+                      </button>
+                    ) : (
+                      <span className="text-[#388e3c] font-bold px-4 py-2 text-xs border-2 border-[#388e3c] rounded bg-[#e8f5e9]">
+                        {t.soldOut}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Trash Filter Upgrade */}
+              <div className="bg-[#fff3e0] p-3 rounded border-2 border-[#a1887f] shadow-inner relative col-span-1">
+                <div className="absolute top-2 right-2 text-[#66bb6a]">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M3 6h18" />
+                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                    <line x1="10" x2="10" y1="11" y2="17" />
+                    <line x1="14" x2="14" y1="11" y2="17" />
+                  </svg>
+                </div>
+                <h3 className="text-sm text-[#3e2723] font-bold mb-1">
+                  {t.upgrades.trashFilter.name}
+                </h3>
+                <p className="text-[#6d4c41] text-[10px] mb-2 min-h-[30px] leading-tight">
+                  {t.upgrades.trashFilter.description}
+                </p>
+
+                <div className="flex justify-between items-end mt-2">
+                  <div className="text-xs font-bold text-[#8d6e63]">
+                    {t.lvl} {gameState.trashFilterLevel || 1}{" "}
+                    <span className="text-[#bdbdbd]">/</span>{" "}
+                    {UPGRADES.trashFilter.maxLevel}
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    {(gameState.trashFilterLevel || 1) > 1 && (
+                      <button
+                        onClick={() => onDowngrade("trashFilter")}
+                        className="w-6 h-full flex items-center justify-center bg-[#d7ccc8] hover:bg-[#bcaaa4] text-[#5d4037] border-2 border-[#8d6e63] rounded shadow-[0_2px_0_#8d6e63] active:shadow-none active:translate-y-1"
+                        title={t.decrease}
+                      >
+                        <Minus size={12} strokeWidth={4} />
+                      </button>
+                    )}
+
+                    {(gameState.trashFilterLevel || 1) <
+                    UPGRADES.trashFilter.maxLevel ? (
+                      <button
+                        onClick={() => onBuy("trashFilter")}
+                        disabled={
+                          gameState.money <
+                          getCost(
+                            "trashFilter",
+                            gameState.trashFilterLevel || 1,
+                          )
+                        }
+                        className={`px-3 py-1 text-xs font-bold rounded border-b-4 active:border-b-0 active:translate-y-1 transition-all flex flex-col items-center min-w-[80px] ${
+                          gameState.money >=
+                          getCost(
+                            "trashFilter",
+                            gameState.trashFilterLevel || 1,
+                          )
+                            ? "bg-[#66bb6a] border-[#2e7d32] text-white hover:bg-[#4caf50]"
+                            : "bg-[#cfd8dc] border-[#90a4ae] text-[#90a4ae] cursor-not-allowed"
+                        }`}
+                      >
+                        <span>{t.increase}</span>
+                        <span className="text-[#fffde7] drop-shadow-md">
+                          $
+                          {getCost(
+                            "trashFilter",
+                            gameState.trashFilterLevel || 1,
                           )}
                         </span>
                       </button>

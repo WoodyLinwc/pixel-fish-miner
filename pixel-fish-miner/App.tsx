@@ -42,6 +42,7 @@ const App: React.FC = () => {
           clawSpeedLevel: parsed.clawSpeedLevel || 1,
           clawStrengthLevel: parsed.clawStrengthLevel || 1,
           fishDensityLevel: parsed.fishDensityLevel || 1,
+          trashFilterLevel: parsed.trashFilterLevel || 1,
           // If achievements or lifetimeEarnings are missing from save, default them
           achievements: parsed.achievements || [],
           lifetimeEarnings: parsed.lifetimeEarnings || parsed.money || 0,
@@ -438,6 +439,8 @@ const App: React.FC = () => {
         currentLevel = prev.clawStrengthLevel || 1;
       if (upgradeId === "fishDensity")
         currentLevel = prev.fishDensityLevel || 1;
+      if (upgradeId === "trashFilter")
+        currentLevel = prev.trashFilterLevel || 1;
 
       const cost = Math.floor(
         upg.baseCost * Math.pow(upg.costMultiplier, currentLevel - 1),
@@ -458,6 +461,9 @@ const App: React.FC = () => {
         if (upgradeId === "fishDensity") {
           newState.fishDensityLevel = (prev.fishDensityLevel || 1) + 1;
         }
+        if (upgradeId === "trashFilter") {
+          newState.trashFilterLevel = (prev.trashFilterLevel || 1) + 1;
+        }
         return newState;
       }
       return prev;
@@ -474,6 +480,8 @@ const App: React.FC = () => {
         currentLevel = prev.clawStrengthLevel || 1;
       if (upgradeId === "fishDensity")
         currentLevel = prev.fishDensityLevel || 1;
+      if (upgradeId === "trashFilter")
+        currentLevel = prev.trashFilterLevel || 1;
 
       if (currentLevel > 1) {
         // Refund calculation: Cost of previous level (level - 2 for array index/exponent logic)
@@ -493,6 +501,9 @@ const App: React.FC = () => {
         }
         if (upgradeId === "fishDensity") {
           newState.fishDensityLevel = (prev.fishDensityLevel || 1) - 1;
+        }
+        if (upgradeId === "trashFilter") {
+          newState.trashFilterLevel = (prev.trashFilterLevel || 1) - 1;
         }
         return newState;
       }
@@ -857,6 +868,7 @@ const App: React.FC = () => {
             clawSpeedMultiplier={clawSpeedMultiplier}
             clawThrowSpeedMultiplier={clawThrowSpeedMultiplier}
             fishDensityLevel={gameState.fishDensityLevel || 1}
+            trashFilterLevel={gameState.trashFilterLevel || 1}
             paused={
               isStoreOpen ||
               isBagOpen ||

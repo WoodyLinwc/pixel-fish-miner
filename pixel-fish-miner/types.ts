@@ -31,6 +31,7 @@ export interface FishType {
   isTrash?: boolean; // Identifies if the item is trash
   requiredWeather?: WeatherType[]; // Only spawns during these weather conditions
   isNightOnly?: boolean; // Only spawns during night hours
+  showInBag?: boolean; // Optional flag to hide from bag/encyclopedia (default: true)
 }
 
 export interface GameState {
@@ -42,6 +43,7 @@ export interface GameState {
   clawSpeedLevel: number;
   clawStrengthLevel: number; // Could affect ability to catch heavy items
   fishDensityLevel: number; // Increases max fish on screen
+  trashFilterLevel: number; // Reduces trash spawn rate
   inventory: Record<string, number>; // itemId -> quantity owned
   activePowerups: Record<string, number>; // powerupId -> expiration timestamp
   purchasedPowerups: string[]; // List of powerup IDs bought at least once

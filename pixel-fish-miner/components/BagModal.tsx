@@ -82,6 +82,9 @@ const BagModal: React.FC<BagModalProps> = ({
   let totalTrash = 0;
 
   FISH_TYPES.forEach((fish) => {
+    // Skip crab in totals since it can't be caught
+    if (fish.id === "crab") return;
+
     const count = gameState.fishCaught[fish.id] || 0;
     if (fish.isTrash) {
       totalTrash += count;
@@ -128,59 +131,61 @@ const BagModal: React.FC<BagModalProps> = ({
           </div>
 
           <div className="overflow-y-auto pr-2 custom-scrollbar grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
-            {FISH_TYPES.map((fish) => {
-              const count = gameState.fishCaught[fish.id] || 0;
-              const isUnlocked = gameState.unlockedFish.includes(fish.id);
-              const fishName = t.fish[fish.id] || fish.name;
+            {FISH_TYPES.filter((fish) => fish.showInBag !== false).map(
+              (fish) => {
+                const count = gameState.fishCaught[fish.id] || 0;
+                const isUnlocked = gameState.unlockedFish.includes(fish.id);
+                const fishName = t.fish[fish.id] || fish.name;
 
-              if (!isUnlocked && count === 0) {
-                // Render locked state
+                if (!isUnlocked && count === 0) {
+                  // Render locked state
+                  return (
+                    <div
+                      key={fish.id}
+                      className="bg-[#d7ccc8] opacity-50 p-3 rounded border-2 border-[#a1887f] flex items-center gap-4 select-none"
+                    >
+                      <div className="w-12 h-12 bg-[#bcaaa4] rounded flex items-center justify-center text-[#8d6e63] font-bold text-xl">
+                        ?
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-[#8d6e63]">???</h4>
+                        <p className="text-xs text-[#8d6e63]">{t.caught}: 0</p>
+                      </div>
+                    </div>
+                  );
+                }
+
+                // Render Unlocked State
                 return (
                   <div
                     key={fish.id}
-                    className="bg-[#d7ccc8] opacity-50 p-3 rounded border-2 border-[#a1887f] flex items-center gap-4 select-none"
+                    className="bg-[#fff3e0] p-3 rounded border-2 border-[#a1887f] shadow-sm flex items-center gap-4 relative"
                   >
-                    <div className="w-12 h-12 bg-[#bcaaa4] rounded flex items-center justify-center text-[#8d6e63] font-bold text-xl">
-                      ?
+                    <div className="w-12 h-12 flex items-center justify-center relative overflow-hidden shrink-0">
+                      {/* Actual sprite rendering */}
+                      <FishIcon type={fish} />
                     </div>
-                    <div className="flex-1">
-                      <h4 className="font-bold text-[#8d6e63]">???</h4>
-                      <p className="text-xs text-[#8d6e63]">{t.caught}: 0</p>
+                    <div className="flex-1 min-w-0">
+                      <h4
+                        className={`font-bold text-sm truncate ${
+                          fish.isTrash ? "text-[#795548]" : "text-[#3e2723]"
+                        }`}
+                      >
+                        {fishName}
+                      </h4>
+                      <div className="flex justify-between items-end mt-1">
+                        <span className="text-xs text-[#5d4037] bg-[#ffe0b2] px-2 py-0.5 rounded border border-[#ffcc80] whitespace-nowrap">
+                          {t.caught}: <span className="font-bold">{count}</span>
+                        </span>
+                        <span className="text-xs text-[#388e3c] font-bold ml-2">
+                          ${fish.value}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 );
-              }
-
-              // Render Unlocked State
-              return (
-                <div
-                  key={fish.id}
-                  className="bg-[#fff3e0] p-3 rounded border-2 border-[#a1887f] shadow-sm flex items-center gap-4 relative"
-                >
-                  <div className="w-12 h-12 flex items-center justify-center relative overflow-hidden shrink-0">
-                    {/* Actual sprite rendering */}
-                    <FishIcon type={fish} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4
-                      className={`font-bold text-sm truncate ${
-                        fish.isTrash ? "text-[#795548]" : "text-[#3e2723]"
-                      }`}
-                    >
-                      {fishName}
-                    </h4>
-                    <div className="flex justify-between items-end mt-1">
-                      <span className="text-xs text-[#5d4037] bg-[#ffe0b2] px-2 py-0.5 rounded border border-[#ffcc80] whitespace-nowrap">
-                        {t.caught}: <span className="font-bold">{count}</span>
-                      </span>
-                      <span className="text-xs text-[#388e3c] font-bold ml-2">
-                        ${fish.value}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+              },
+            )}
           </div>
         </div>
       </div>

@@ -108,6 +108,10 @@ export const en = {
       name: "Sonar Lure",
       description: "Attracts more fish to the area.",
     },
+    trashFilter: {
+      name: "Trash Filter",
+      description: "Reduces trash spawn rate. Higher levels = cleaner waters!",
+    },
   },
   powerups: {
     multiClaw: {

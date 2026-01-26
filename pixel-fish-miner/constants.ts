@@ -399,6 +399,7 @@ export const FISH_TYPES: FishType[] = [
     height: 20,
     minDepth: 0.3,
     maxDepth: 0.8,
+    showInBag: false, // Don't show in bag since it can't be caught
   },
   {
     id: "electric_jelly",
@@ -536,6 +537,14 @@ export const UPGRADES: Record<string, Upgrade> = {
     name: "Sonar Lure",
     description: "Attracts more fish to the area. Increases max fish count.",
     baseCost: 200,
+    costMultiplier: 1.5,
+    maxLevel: 20,
+  },
+  trashFilter: {
+    id: "trashFilter",
+    name: "Trash Filter",
+    description: "Reduces the amount of trash in the water.",
+    baseCost: 125,
     costMultiplier: 1.5,
     maxLevel: 20,
   },
@@ -695,6 +704,7 @@ export const INITIAL_GAME_STATE = {
   clawSpeedLevel: 1,
   clawStrengthLevel: 1,
   fishDensityLevel: 1,
+  trashFilterLevel: 1,
   inventory: {},
   activePowerups: {},
   purchasedPowerups: [],

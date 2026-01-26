@@ -108,6 +108,11 @@ export const es = {
       name: "Sonar de Pesca",
       description: "Atrae más peces al área.",
     },
+    trashFilter: {
+      name: "Filtro de Basura",
+      description:
+        "Reduce la tasa de basura. ¡Niveles más altos = aguas más limpias!",
+    },
   },
   powerups: {
     multiClaw: {

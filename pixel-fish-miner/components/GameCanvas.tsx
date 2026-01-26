@@ -22,6 +22,7 @@ interface GameCanvasProps {
   clawSpeedMultiplier: number;
   clawThrowSpeedMultiplier: number;
   fishDensityLevel: number;
+  trashFilterLevel: number;
   onFishCaught: (fish: FishType) => void;
   paused: boolean;
   activePowerups: Record<string, number>; // Map of powerup ID to expiration time
@@ -55,6 +56,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   clawSpeedMultiplier,
   clawThrowSpeedMultiplier,
   fishDensityLevel,
+  trashFilterLevel,
   onFishCaught,
   paused,
   activePowerups,
@@ -279,6 +281,18 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         availableFish = availableFish.filter((f) => !f.isTrash);
       }
 
+      // Apply Trash Filter reduction based on level
+      // Level 1 = 100% trash, Level 20 = 5% trash (95% reduction)
+      if (!isSuperBaitActive && trashFilterLevel > 1) {
+        const trashReductionPercent = ((trashFilterLevel - 1) / 19) * 0.95; // 0% to 95%
+        const randomValue = Math.random();
+
+        // Filter out trash based on reduction percentage
+        if (randomValue < trashReductionPercent) {
+          availableFish = availableFish.filter((f) => !f.isTrash);
+        }
+      }
+
       // Filter out static items from random spawning logic (Shell, Sea Cucumber, Coral)
       availableFish = availableFish.filter(
         (f) => f.id !== "shell" && f.id !== "sea_cucumber" && f.id !== "coral",
@@ -324,7 +338,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       }
       return availableFish[0];
     },
-    [weather, activePowerups],
+    [weather, activePowerups, trashFilterLevel],
   );
 
   // Helper: Spawn a fish

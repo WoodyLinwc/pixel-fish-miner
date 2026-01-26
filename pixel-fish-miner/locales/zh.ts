@@ -108,6 +108,10 @@ export const zh = {
       name: "声呐诱饵",
       description: "吸引更多鱼群到该区域。",
     },
+    trashFilter: {
+      name: "垃圾过滤器",
+      description: "降低垃圾生成率。等级越高 = 水域越干净！",
+    },
   },
   powerups: {
     multiClaw: {
