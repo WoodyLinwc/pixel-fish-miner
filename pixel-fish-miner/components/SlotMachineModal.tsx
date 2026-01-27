@@ -15,7 +15,7 @@ interface SlotMachineModalProps {
 
 const SYMBOLS = ["🐟", "🐠", "🦈", "🐡", "🦞", "🦑", "🐙"];
 
-// New win rate: Lose 75%, 3-row 20%, 4-row 4%, 5-row 1%
+// Win rate: Lose 75%, 3-row 20%, 4-row 4%, 5-row 1%
 const PAYOUTS = {
   fifty: 50, // 1% chance - 5 consecutive
   ten: 10, // 4% chance - 4 consecutive
@@ -217,81 +217,81 @@ const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
   const betOptions = [25, 50, 100, 250, 500];
 
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-[2px] p-2 md:p-4">
-      <div className="bg-[#e6c288] border-[6px] border-[#8d5524] rounded-lg w-full max-w-2xl shadow-[0_10px_20px_rgba(0,0,0,0.5)] relative animate-fade-in p-1 max-h-[75vh] md:max-h-[80vh] flex flex-col">
-        <div className="border-2 border-[#c68c53] p-2 md:p-4 rounded h-full bg-[#e6c288] flex flex-col overflow-hidden">
+    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-[2px] p-2">
+      {/* Wood Frame - Mobile optimized */}
+      <div className="bg-[#e6c288] border-4 md:border-6 border-[#8d5524] rounded-lg w-full max-w-md md:max-w-2xl shadow-[0_10px_20px_rgba(0,0,0,0.5)] relative animate-fade-in p-1 max-h-[90vh] flex flex-col">
+        {/* Inner Border */}
+        <div className="border-2 border-[#c68c53] p-2 rounded h-full bg-[#e6c288] flex flex-col overflow-hidden">
+          {/* Close Button */}
           <button
             onClick={handleClose}
             disabled={spinning}
-            className={`absolute top-2 right-2 bg-[#d32f2f] text-white hover:bg-[#b71c1c] border-2 border-[#801313] rounded p-1 shadow-md active:translate-y-1 z-10 ${
+            className={`absolute top-1 right-1 md:top-2 md:right-2 bg-[#d32f2f] text-white hover:bg-[#b71c1c] border-2 border-[#801313] rounded p-1 shadow-md active:translate-y-1 z-10 ${
               spinning ? "opacity-50 cursor-not-allowed" : ""
             }`}
           >
-            <X size={20} />
+            <X size={18} className="md:w-5 md:h-5" />
           </button>
 
-          <h2 className="text-2xl text-[#5d4037] mb-2 md:mb-4 text-center uppercase tracking-widest drop-shadow-sm font-bold shrink-0">
+          {/* Title */}
+          <h2 className="text-lg md:text-2xl text-[#5d4037] mb-2 text-center uppercase tracking-widest drop-shadow-sm font-bold shrink-0">
             🎰 {t.slotMachine || "Slot Machine"}
           </h2>
 
-          <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-            <div className="grid grid-cols-1 gap-3">
+          {/* Scrollable Content */}
+          <div className="flex-1 overflow-y-auto pr-1 md:pr-2 custom-scrollbar">
+            <div className="grid grid-cols-1 gap-2">
               {/* 5-Reel Slot Machine Display */}
-              <div className="bg-[#8d5524] border-4 border-[#5d4037] rounded-lg p-3 md:p-4 shadow-inner">
-                <div className="flex items-center justify-between gap-3">
-                  {/* Left: 5 Reels */}
-                  <div className="flex-1">
-                    <div className="flex justify-center gap-1 md:gap-2 mb-3">
-                      {reels.map((symbol, index) => (
-                        <div
-                          key={index}
-                          className={`bg-[#fff3e0] border-3 border-[#8d6e63] rounded-lg w-14 h-14 md:w-20 md:h-20 flex items-center justify-center text-2xl md:text-4xl shadow-lg transition-all ${
-                            spinning && !stoppedReels[index]
-                              ? "animate-pulse"
-                              : ""
-                          } ${
-                            stoppedReels[index] ? "ring-2 ring-[#fbc02d]" : ""
-                          }`}
-                        >
-                          {symbol}
-                        </div>
-                      ))}
+              <div className="bg-[#8d5524] border-3 md:border-4 border-[#5d4037] rounded-lg p-2 md:p-3 shadow-inner">
+                {/* Reels - Sequential stopping animation */}
+                <div className="flex justify-center gap-1 mb-2">
+                  {reels.map((symbol, index) => (
+                    <div
+                      key={index}
+                      className={`bg-[#fff3e0] border-2 md:border-3 border-[#8d6e63] rounded w-12 h-12 md:w-16 md:h-16 flex items-center justify-center text-xl md:text-3xl shadow-lg transition-all ${
+                        spinning && !stoppedReels[index] ? "animate-pulse" : ""
+                      } ${stoppedReels[index] ? "ring-2 ring-[#fbc02d]" : ""}`}
+                    >
+                      {symbol}
                     </div>
+                  ))}
+                </div>
 
-                    {/* Message Display - Fixed Height, longer duration */}
-                    <div className="text-center h-8 flex items-center justify-center mb-3">
-                      {message && (
-                        <div className="bg-[#fff3e0] border-2 border-[#8d6e63] rounded px-3 py-1 inline-block animate-fade-in">
-                          <p className="text-xs md:text-sm font-bold text-[#5d4037]">
-                            {message}
-                          </p>
-                        </div>
-                      )}
+                {/* Message Display - Fixed Height, longer duration */}
+                <div className="text-center h-6 md:h-8 flex items-center justify-center mb-2">
+                  {message && (
+                    <div className="bg-[#fff3e0] border-2 border-[#8d6e63] rounded px-2 py-1 inline-block animate-fade-in">
+                      <p className="text-[10px] md:text-xs font-bold text-[#5d4037]">
+                        {message}
+                      </p>
                     </div>
+                  )}
+                </div>
 
-                    {/* Payout Info */}
-                    <div className="bg-[#e6c288] border-2 border-[#c68c53] rounded p-2 text-[10px] md:text-xs">
-                      <div className="flex justify-between text-[#5d4037] font-bold mb-1">
-                        <span>💎 5 in a row:</span>
-                        <span className="text-[#e91e63]">50x Bet</span>
-                      </div>
-                      <div className="flex justify-between text-[#5d4037] font-bold mb-1">
-                        <span>💲 4 in a row:</span>
-                        <span className="text-[#9c27b0]">10x Bet</span>
-                      </div>
-                      <div className="flex justify-between text-[#5d4037] font-bold">
-                        <span>🎰 3 in a row:</span>
-                        <span className="text-[#f57c00]">2x Bet</span>
-                      </div>
+                {/* Payout Info + Lever Container */}
+                <div className="flex items-start gap-2">
+                  {/* Payout Info */}
+                  <div className="flex-1 bg-[#e6c288] border-2 border-[#c68c53] rounded p-1.5 md:p-2 text-[9px] md:text-xs">
+                    <div className="flex justify-between text-[#5d4037] font-bold mb-0.5 md:mb-1">
+                      <span>💎 5 in a row:</span>
+                      <span className="text-[#e91e63]">50x</span>
+                    </div>
+                    <div className="flex justify-between text-[#5d4037] font-bold mb-0.5 md:mb-1">
+                      <span>💲 4 in a row:</span>
+                      <span className="text-[#9c27b0]">10x</span>
+                    </div>
+                    <div className="flex justify-between text-[#5d4037] font-bold">
+                      <span>🎰 3 in a row:</span>
+                      <span className="text-[#f57c00]">2x</span>
                     </div>
                   </div>
 
-                  {/* Right: Lever */}
+                  {/* Lever - Right Side */}
                   <div className="flex flex-col items-center shrink-0">
                     <button
                       onClick={handleLeverPull}
                       disabled={spinning || money < betAmount}
-                      className={`w-10 md:w-12 h-28 md:h-32 relative ${
+                      className={`w-8 md:w-10 h-20 md:h-24 relative ${
                         spinning || money < betAmount
                           ? "cursor-not-allowed opacity-50"
                           : "cursor-pointer hover:brightness-110"
@@ -299,20 +299,20 @@ const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
                     >
                       {/* Lever Handle (Red Ball) */}
                       <div
-                        className={`absolute top-0 left-1/2 -translate-x-1/2 w-8 md:w-10 h-8 md:h-10 rounded-full bg-[#d32f2f] border-2 md:border-3 border-[#801313] shadow-lg transition-transform duration-300 ${
-                          leverPulled ? "translate-y-16 md:translate-y-20" : ""
+                        className={`absolute top-0 left-1/2 -translate-x-1/2 w-6 md:w-8 h-6 md:h-8 rounded-full bg-[#d32f2f] border-2 border-[#801313] shadow-lg transition-transform duration-300 ${
+                          leverPulled ? "translate-y-12 md:translate-y-14" : ""
                         }`}
                       ></div>
                       {/* Lever Arm */}
                       <div
-                        className={`absolute top-8 md:top-10 left-1/2 -translate-x-1/2 w-2 bg-[#5d4037] shadow-md transition-all duration-300 ${
-                          leverPulled ? "h-8 md:h-10" : "h-16 md:h-20"
+                        className={`absolute top-6 md:top-8 left-1/2 -translate-x-1/2 w-1.5 bg-[#5d4037] shadow-md transition-all duration-300 ${
+                          leverPulled ? "h-6 md:h-8" : "h-12 md:h-14"
                         }`}
                       ></div>
                       {/* Base */}
-                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 md:w-8 h-4 md:h-5 bg-[#8d5524] border-2 border-[#5d4037] rounded-b"></div>
+                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-5 md:w-6 h-3 md:h-4 bg-[#8d5524] border-2 border-[#5d4037] rounded-b"></div>
                     </button>
-                    <p className="text-[10px] md:text-xs text-[#5d4037] font-bold mt-1 whitespace-nowrap uppercase">
+                    <p className="text-[8px] md:text-[10px] text-[#5d4037] font-bold mt-1 whitespace-nowrap uppercase">
                       Pull
                     </p>
                   </div>
@@ -320,11 +320,11 @@ const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
               </div>
 
               {/* Bet Selection */}
-              <div className="bg-[#fff3e0] p-3 rounded border-2 border-[#a1887f] shadow-sm">
-                <p className="text-sm font-bold text-[#5d4037] mb-2 text-center">
+              <div className="bg-[#fff3e0] p-2 rounded border-2 border-[#a1887f] shadow-sm">
+                <p className="text-xs md:text-sm font-bold text-[#5d4037] mb-1 text-center">
                   {t.selectBet || "Select Bet"}:
                 </p>
-                <div className="flex gap-2 justify-center flex-wrap">
+                <div className="flex gap-1 md:gap-2 justify-center flex-wrap">
                   {betOptions.map((amount) => (
                     <button
                       key={amount}
@@ -335,7 +335,7 @@ const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
                         }
                       }}
                       disabled={spinning || money < amount}
-                      className={`px-3 py-2 rounded font-bold text-sm border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
+                      className={`px-2 py-1 md:px-3 md:py-2 rounded font-bold text-xs md:text-sm border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
                         betAmount === amount
                           ? "bg-[#fbc02d] border-[#f57f17] text-[#5d4037]"
                           : money >= amount
@@ -350,12 +350,14 @@ const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
               </div>
 
               {/* Current Balance */}
-              <div className="bg-[#fff3e0] p-3 rounded border-2 border-[#a1887f] shadow-sm">
+              <div className="bg-[#fff3e0] p-2 rounded border-2 border-[#a1887f] shadow-sm">
                 <div className="text-center">
-                  <p className="text-xs text-[#6d4c41] mb-1">
+                  <p className="text-[10px] md:text-xs text-[#6d4c41] mb-0.5">
                     {t.wallet || "Wallet"}
                   </p>
-                  <p className="text-2xl font-bold text-[#388e3c]">${money}</p>
+                  <p className="text-lg md:text-2xl font-bold text-[#388e3c]">
+                    ${money}
+                  </p>
                 </div>
               </div>
             </div>
