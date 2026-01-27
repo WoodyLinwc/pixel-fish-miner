@@ -65,12 +65,14 @@ The bridge between React state and the HTML5 Canvas API.
     - **Particles**: Rain, Snow, Wind Leaves, Fog Mist, Rainbow Sparkles, Bubbles, Music Notes.
     - **Ambient**: Background boats (parallax), Seagulls, Sun/Moon/Stars, Clouds.
 
-### 3. Canvas Rendering (`utils/`)
+### 3. Rendering System (`utils/`)
 
-Rendering logic is modularized to keep `GameCanvas` clean.
+Rendering logic is modularized to keep `GameCanvas` clean and maintainable.
 
+#### Core Drawing Files
+
+- **`utils/drawing.ts`**: Barrel export file that re-exports all drawing utilities.
 - **`utils/drawHelpers.ts`**: Color interpolation utilities (`hexToRgb`, `lerp`, `lerpColor`).
-- **`utils/drawEnvironment.ts`**: Calculates sky/overlay colors based on Hour and Weather.
 - **`utils/drawClaw.ts`**: Renders the rope (normal/severed/electric), claw mechanism, and "Net" visual if Super Net is active.
 - **`utils/drawPet.ts`**: Renders pixel art for pets (Goldfish, Parrot, Cat, Dog, Penguin, Ghost Crab, Pelican) with idle animations.
 - **`utils/drawAirplane.ts`**: Renders the supply drop airplane (cargo plane design) with day/night lighting.
@@ -84,31 +86,112 @@ Rendering logic is modularized to keep `GameCanvas` clean.
   - `fish/trash.ts`: Old Boot, Rusty Can, Plastic Bottle, Straw
   - Uses `canvas` path drawing commands (rects, arcs, lines, paths) to create pixel art procedurally.
 
-### 4. Data Models (`types.ts` & `constants.ts`)
+#### Environment Rendering System (`utils/environment/`)
 
-- **`types.ts`**:
-  - `GameState`: Inventory, Upgrades, Unlocks, Active Effects, Settings. Includes `trashFilterLevel` for upgrade progression.
-  - `FishType`: Fish properties including optional `showInBag` flag to hide from encyclopedia (used for Crab).
-  - `WeatherType`: `CLEAR`, `RAIN`, `SNOW`, `WIND`, `FOG`, `RAINBOW`.
-  - `ClawDebuff`: Status effects - `NONE`, `SEVERED`, `NUMBED`.
-  - `ClawState`: `IDLE`, `SHOOTING`, `RETRACTING`.
-- **`constants.ts`**: **Game Balance.**
-  - `GAME_WIDTH`: 800px, `GAME_HEIGHT`: 600px, `SURFACE_Y`: 200px (water line).
-  - `FISH_TYPES`: ~40 entities including fish, trash, static decor, and event items. Crab has `showInBag: false` (uncatchable, hidden from encyclopedia).
-  - `UPGRADES`:
-    - Claw Speed ($200 base) - Retract speed multiplier.
-    - Claw Strength ($200 base) - Throw speed multiplier.
-    - Fish Density ($400 base) - Spawn rate and max fish count.
-    - Trash Filter ($400 base) - Reduces trash spawn rate (Level 1: 0%, Level 20: 95% reduction).
-  - `POWERUPS`:
-    - `multiClaw` (5 claws, 30s), `superBait` (No trash, fast spawn, 30s)
-    - `diamondHook` (Fast retract, 30s), `superNet` (Radius catch, 30s)
-    - `magicConch` (Random Weather, 60s), `rainbowBulb` (Rainbow Weather, 60s - unlocked via promo)
-  - `COSTUMES`: Fisherman (default), Sailor, Diver, Pirate, Lifeguard, Sushi Master, Captain.
-  - `PETS`: Goldfish ($50, $1/30s), Parrot ($100, $1/30s), Cat ($300, $2/30s), Dog ($500, $3/30s), Penguin ($200, $1/30s), Ghost Crab ($400, $2/30s), Pelican ($600, $3/30s).
-  - `ACHIEVEMENTS`: Trophies for Fish, Money, Trash, Combo, Weather, Narwhal, Promo Codes, Secrets.
+The environment rendering has been extracted into a modular folder structure for better organization and maintainability.
 
-### 4.5. Costume System (`utils/costumes/`)
+- **`utils/environment/index.ts`**: Main export barrel that re-exports all environment modules and types.
+
+- **`utils/environment/colors.ts`**: Environment color calculation system
+  - Exports `getEnvironmentColors(hour, weather)` function
+  - Calculates sky gradients based on time of day (Night, Dawn, Day, Dusk)
+  - Returns colors for sky (top/bottom), overlays (darkness, weather effects)
+  - Handles special weather cases (Fog, Rainbow override normal day/night cycle)
+  - Color transitions use `lerpColor` from `drawHelpers.ts` for smooth blending
+
+- **`utils/environment/sky.ts`**: Sky and celestial body rendering
+  - `drawSkyGradient()`: Draws gradient background from skyTop to skyBot
+  - `drawSun()`: Renders sun with glow (visible 5 AM - 7 PM, arc movement)
+  - `drawMoon()`: Renders moon with crater (visible 6 PM - 6 AM, arc movement)
+  - `drawStars()`: Renders blinking stars at night with fade-in/fade-out during dawn/dusk
+
+- **`utils/environment/clouds.ts`**: Cloud rendering system
+  - Exports `Cloud` type interface
+  - `drawClouds()`: Renders moving clouds with pixel art style
+  - Cloud color changes based on time (night/day) and weather (stormy, fog)
+  - Simple two-layer pixel art design (main body + smaller top detail)
+
+- **`utils/environment/seagulls.ts`**: Seagull rendering and animation
+  - Exports `Seagull` type interface
+  - `drawSeagull()`: Renders individual seagull with flapping animation
+  - 4-state wing animation cycle (Up, Mid, Down, Mid)
+  - Flips sprite based on movement direction
+  - `drawSeagulls()`: Batch renders all active seagulls
+
+- **`utils/environment/boats.ts`**: Background boat rendering (parallax effect)
+  - Exports `BackgroundBoat` type interface
+  - Renders two types: SMALL (sailboat) and BIG (cargo ship)
+  - Cargo ship features animated smoke puffs
+  - Variable scale for depth perception
+  - Flips sprite based on movement direction
+  - `drawBackgroundBoats()`: Batch renders all boats
+
+- **`utils/environment/water.ts`**: Water rendering system
+  - `drawWaterBands()`: Renders 5 depth layers with different blue shades
+  - `drawWaves()`: Animated wave surface with sine wave motion
+  - Wave speed increases during Wind weather
+  - `drawWaterSparkles()`: Renders blinking sparkles on water surface (daytime only)
+  - Sparkles only appear when light level > 0.6
+
+- **`utils/environment/rainbow.ts`**: Rainbow weather effect
+  - `drawRainbow()`: Renders rainbow arc across sky during Rainbow weather
+  - 5-color arc (red, yellow, green, blue, purple)
+  - Semi-transparent (40% opacity)
+  - Positioned above horizon with fixed radius
+
+**Usage Pattern:**
+
+```typescript
+// In GameCanvas.tsx render function:
+import {
+  getEnvironmentColors,
+  drawSkyGradient,
+  drawSun,
+  drawMoon,
+  drawStars,
+  drawClouds,
+  drawSeagulls,
+  drawBackgroundBoats,
+  drawWaterBands,
+  drawWaves,
+  drawWaterSparkles,
+  drawRainbow,
+} from "../utils/drawing";
+
+// Calculate colors
+const { skyTop, skyBot, overlay } = getEnvironmentColors(currentHour, weather);
+
+// Draw environment layers
+drawSkyGradient(ctx, GAME_WIDTH, SURFACE_Y, { skyTop, skyBot });
+drawSun(ctx, currentHour, GAME_WIDTH, SURFACE_Y);
+drawMoon(ctx, currentHour, GAME_WIDTH, SURFACE_Y);
+drawStars(ctx, starsRef.current, currentHour, visualTime);
+drawClouds(ctx, cloudsRef.current, currentHour, weather);
+if (weather === WeatherType.RAINBOW) {
+  drawRainbow(ctx, GAME_WIDTH, SURFACE_Y);
+}
+drawSeagulls(ctx, seagullsRef.current);
+drawBackgroundBoats(ctx, backgroundBoatsRef.current, visualTime);
+drawWaterBands(ctx, GAME_WIDTH, GAME_HEIGHT, SURFACE_Y);
+drawWaves(ctx, GAME_WIDTH, SURFACE_Y, visualTime, weather);
+drawWaterSparkles(
+  ctx,
+  GAME_WIDTH,
+  GAME_HEIGHT,
+  SURFACE_Y,
+  lightLevel,
+  visualTime,
+);
+```
+
+**Technical Notes:**
+
+- All drawing functions use `ctx.save()` and `ctx.restore()` to prevent style bleeding
+- Functions accept explicit parameters rather than relying on closure (makes them testable)
+- Rendering order matters: Sky → Celestial → Clouds → Rainbow → Seagulls → Boats → Water
+- Each module is self-contained with no external dependencies except types
+
+### 4. Costume System (`utils/costumes/`)
 
 The fisherman costume rendering has been extracted into modular files for better maintainability.
 
@@ -155,7 +238,31 @@ drawFishermanCostume(ctx, manX, manY, equippedCostume);
   - Each costume function is self-contained with no external dependencies
   - Uses pixel art style with `ctx.fillRect()` for all rendering
 
-### 5. UI Components
+### 5. Data Models (`types.ts` & `constants.ts`)
+
+- **`types.ts`**:
+  - `GameState`: Inventory, Upgrades, Unlocks, Active Effects, Settings. Includes `trashFilterLevel` for upgrade progression.
+  - `FishType`: Fish properties including optional `showInBag` flag to hide from encyclopedia (used for Crab).
+  - `WeatherType`: `CLEAR`, `RAIN`, `SNOW`, `WIND`, `FOG`, `RAINBOW`.
+  - `ClawDebuff`: Status effects - `NONE`, `SEVERED`, `NUMBED`.
+  - `ClawState`: `IDLE`, `SHOOTING`, `RETRACTING`.
+- **`constants.ts`**: **Game Balance.**
+  - `GAME_WIDTH`: 800px, `GAME_HEIGHT`: 600px, `SURFACE_Y`: 200px (water line).
+  - `FISH_TYPES`: ~40 entities including fish, trash, static decor, and event items. Crab has `showInBag: false` (uncatchable, hidden from encyclopedia).
+  - `UPGRADES`:
+    - Claw Speed ($200 base) - Retract speed multiplier.
+    - Claw Strength ($200 base) - Throw speed multiplier.
+    - Fish Density ($400 base) - Spawn rate and max fish count.
+    - Trash Filter ($400 base) - Reduces trash spawn rate (Level 1: 0%, Level 20: 95% reduction).
+  - `POWERUPS`:
+    - `multiClaw` (5 claws, 30s), `superBait` (No trash, fast spawn, 30s)
+    - `diamondHook` (Fast retract, 30s), `superNet` (Radius catch, 30s)
+    - `magicConch` (Random Weather, 60s), `rainbowBulb` (Rainbow Weather, 60s - unlocked via promo)
+  - `COSTUMES`: Fisherman (default), Sailor, Diver, Pirate, Lifeguard, Sushi Master, Captain.
+  - `PETS`: Goldfish ($50, $1/30s), Parrot ($100, $1/30s), Cat ($300, $2/30s), Dog ($500, $3/30s), Penguin ($200, $1/30s), Ghost Crab ($400, $2/30s), Pelican ($600, $3/30s).
+  - `ACHIEVEMENTS`: Trophies for Fish, Money, Trash, Combo, Weather, Narwhal, Promo Codes, Secrets.
+
+### 6. UI Components
 
 - **`StatsPanel.tsx`**: Top HUD. Displays money, Shop/Bag/Slots/Achievement/Settings buttons.
 - **`StoreModal.tsx`**: The main progression hub. Tabs for Upgrades, Powerups, Pets, Costumes, Promo Codes.
@@ -167,8 +274,8 @@ drawFishermanCostume(ctx, manX, manY, equippedCostume);
   - **Consecutive matching only**: Must match from leftmost reel
   - 7 fish symbol emojis (🐟 🐠 🦈 🐡 🦞 🦑 🐙)
   - Bet amounts: $25, $50, $100, $250, $500
-  - **3-tier payout**: 50x (5 consecutive), 10x (4 consecutive), 2x (3 consecutive)
-  - Expected RTP: ~130% (player-favorable)
+  - **3-tier payout**: 20x (5 consecutive), 5x (4 consecutive), 2x (3 consecutive)
+  - Expected RTP: ~50% (player-favorable but challenging)
   - Animated spinning with sound effects
   - Interactive lever on the right side
   - Messages display for 5 seconds (longer visibility)
@@ -183,12 +290,12 @@ drawFishermanCostume(ctx, manX, manY, equippedCostume);
 - **`PowerupBar.tsx`**: Bottom-right UI to activate inventory powerups. Shows count badges and active timers.
 - **`AchievementToast.tsx`**: Pop-up notification for unlocks (4s duration, slides in from right).
 
-### 6. Localization (`locales/`)
+### 7. Localization (`locales/`)
 
 - **`translations.ts`**: Central export for all language dictionaries.
 - **`en.ts`**, **`es.ts`**, **`zh.ts`**: Translation objects for English, Spanish, Chinese.
 
-### 7. Audio System (`utils/audioManager.ts`)
+### 8. Audio System (`utils/audioManager.ts`)
 
 - **Singleton Pattern**: Single `audioManager` instance exported.
 - **Background Music**: Loops ocean ambience (`background.mp3`), controlled by user toggle.
@@ -434,6 +541,7 @@ Import will fail and show error if:
 - **Fish Spawning**: Capped at calculated max (baseMaxFish + density level bonuses).
 - **Trash Cap**: Maximum 25 trash items on screen simultaneously.
 - **Canvas Clearing**: Full canvas cleared every frame (no retained mode).
+- **Modular Rendering**: Environment, fish, costumes, etc. are in separate files to reduce function size and improve maintainability.
 
 ### Extension Points
 
@@ -445,16 +553,19 @@ To add new content:
    - Create draw function in appropriate `utils/fish/*.ts` file.
    - Export from `utils/drawFish.ts`.
    - Use `showInBag: false` to hide from encyclopedia if needed.
+
 2. **New Powerup**:
    - Add to `POWERUPS` in `constants.ts`.
    - Add translation.
    - Implement logic in `GameCanvas.tsx` and `StoreModal.tsx`.
+
 3. **New Upgrade**:
    - Add to `UPGRADES` in `constants.ts`.
    - Add translation for all languages.
    - Update `GameState` type with new level property.
    - Add to `handleBuyUpgrade` and `handleDowngradeUpgrade` in `App.tsx`.
    - Implement effect logic (e.g., Trash Filter modifies spawn logic in `getWeightedFishType`).
+
 4. **New Costume**:
    - Create new file in `utils/costumes/` using camelCase (e.g., `astronaut.ts`)
    - Export draw function: `export const drawAstronautCostume = (ctx: CanvasRenderingContext2D) => { ... }`
@@ -463,10 +574,18 @@ To add new content:
    - Import and add case in `utils/costumes/index.ts` switch statement
    - Render using `ctx.fillRect()` for pixel art style
    - All coordinates relative to translated position (fisherman base)
+
 5. **New Pet**:
    - Add to `PETS` in `constants.ts`.
    - Add translation.
    - Implement draw function in `utils/drawPet.ts`.
+
+6. **New Environment Element**:
+   - Determine which module it belongs to (sky, water, ambient objects)
+   - Add draw function to appropriate file in `utils/environment/`
+   - Export from `utils/environment/index.ts`
+   - Call from `GameCanvas.tsx` render function in correct layer order
+   - Follow pattern: accept explicit parameters, use `ctx.save()`/`ctx.restore()`
 
 ### Known Quirks
 
@@ -477,3 +596,4 @@ To add new content:
 - **Weather Priority**: Fog and Rainbow override normal day/night sky colors.
 - **Crab Hidden**: Pinchy Crab appears in gameplay (cuts line) but is hidden from Bag/Encyclopedia (`showInBag: false`).
 - **Trash Filter**: Progressively reduces trash spawn rate. Formula: `((level-1)/19)*0.95` gives 0-95% reduction across 20 levels.
+- **Rendering Order**: Matters for layering - Sky → Celestial → Clouds → Rainbow → Airplane → Seagulls → Boats → Water → Boat → Fisherman → Fish → Claws → Particles → Overlays.
