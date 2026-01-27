@@ -108,6 +108,53 @@ Rendering logic is modularized to keep `GameCanvas` clean.
   - `PETS`: Goldfish ($50, $1/30s), Parrot ($100, $1/30s), Cat ($300, $2/30s), Dog ($500, $3/30s), Penguin ($200, $1/30s), Ghost Crab ($400, $2/30s), Pelican ($600, $3/30s).
   - `ACHIEVEMENTS`: Trophies for Fish, Money, Trash, Combo, Weather, Narwhal, Promo Codes, Secrets.
 
+### 4.5. Costume System (`utils/costumes/`)
+
+The fisherman costume rendering has been extracted into modular files for better maintainability.
+
+- **`utils/costumes/index.ts`**: Main export that routes costume rendering based on `costumeId`
+  - Exports `drawFishermanCostume(ctx, x, y, costumeId)` function
+  - Handles `ctx.save()`, `ctx.translate()`, and `ctx.restore()` for positioning
+  - Switch statement routes to appropriate costume renderer
+
+- **Individual Costume Files**:
+  - `fisherman.ts`: Default costume - yellow hat, red vest with stripes, grey beard
+  - `sailor.ts`: Breton striped shirt, blue pants, white sailor cap with gold anchor
+  - `diver.ts`: Black wetsuit with cyan stripes, diving mask, yellow snorkel, air tank
+  - `pirate.ts`: Red/black vest, wooden leg, hook hand, bandana, eye patch, pistol
+  - `lifeguard.ts`: Red uniform with white cross, red shorts, lifebuoy, drink cup, visor cap, whistle
+  - `sushiMaster.ts`: White chef coat with black lapels, traditional headband with red emblem, sushi knife, mustache, plate with sushi tower on head
+  - `captain.ts`: Dark blue uniform with gold buttons, white beard, captain's hat with gold badge, tobacco pipe
+
+- **File Naming Convention**:
+  - Files use **camelCase** (e.g., `sushiMaster.ts`)
+  - Costume IDs in constants use **snake_case** (e.g., `"sushi_master"`)
+  - Function names use **camelCase** (e.g., `drawSushiMasterCostume()`)
+
+- **Usage in GameCanvas**:
+
+```typescript
+import { drawFishermanCostume } from "../utils/costumes";
+
+// In render function:
+const manX = GAME_WIDTH / 2 + 40;
+const manY = boatY;
+drawFishermanCostume(ctx, manX, manY, equippedCostume);
+```
+
+- **Adding New Costumes**:
+  1. Create new file in `utils/costumes/` (e.g., `ninja.ts`)
+  2. Export function: `export const drawNinjaCostume = (ctx: CanvasRenderingContext2D) => { ... }`
+  3. Add case to `index.ts` switch statement
+  4. Add costume definition to `COSTUMES` in `constants.ts`
+  5. Add translations to all language files
+
+- **Technical Notes**:
+  - All drawing assumes `ctx` is already translated to `(manX, manY)` position
+  - Coordinates are relative to the fisherman's base position (boat deck)
+  - Each costume function is self-contained with no external dependencies
+  - Uses pixel art style with `ctx.fillRect()` for all rendering
+
 ### 5. UI Components
 
 - **`StatsPanel.tsx`**: Top HUD. Displays money, Shop/Bag/Slots/Achievement/Settings buttons.
@@ -409,9 +456,13 @@ To add new content:
    - Add to `handleBuyUpgrade` and `handleDowngradeUpgrade` in `App.tsx`.
    - Implement effect logic (e.g., Trash Filter modifies spawn logic in `getWeightedFishType`).
 4. **New Costume**:
-   - Add to `COSTUMES` in `constants.ts`.
-   - Add translation.
-   - Implement draw logic in `GameCanvas.tsx` (fisherman rendering section).
+   - Create new file in `utils/costumes/` using camelCase (e.g., `astronaut.ts`)
+   - Export draw function: `export const drawAstronautCostume = (ctx: CanvasRenderingContext2D) => { ... }`
+   - Add to `COSTUMES` in `constants.ts` with snake_case ID (e.g., `"astronaut"`)
+   - Add translation for all languages in `locales/`
+   - Import and add case in `utils/costumes/index.ts` switch statement
+   - Render using `ctx.fillRect()` for pixel art style
+   - All coordinates relative to translated position (fisherman base)
 5. **New Pet**:
    - Add to `PETS` in `constants.ts`.
    - Add translation.
