@@ -27,11 +27,20 @@ import {
   drawWaves,
   drawWaterSparkles,
   drawRainbow,
-  drawBoat, // NEW
-  drawLamp, // NEW
-  drawLampGlow, // NEW
-  drawCrane, // NEW
-  drawFloatingTexts, // NEW
+  drawBoat,
+  drawLamp,
+  drawLampGlow,
+  drawCrane,
+  drawFloatingTexts,
+  checkFishCollision, // NEW
+  getNetCatch, // NEW
+  checkWallCollision, // NEW
+  drawPowerupTimers, // NEW
+  drawRainbowTimer, // NEW
+  drawTrashSuppressionTimer, // NEW
+  drawCombo, // NEW
+  drawLightingOverlay, // NEW
+  drawWeatherOverlay, // NEW
 } from "../utils/drawing";
 import { drawFishermanCostume } from "../utils/costumes";
 
@@ -972,21 +981,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
           // Check Fish Collision First
           if (claw.caughtFish.length === 0) {
-            let hitFishIndex = -1;
-
-            // Find first collision
-            for (let i = 0; i < fishes.current.length; i++) {
-              const f = fishes.current[i];
-              const dx = tipX - f.x;
-              const dy = tipY - f.y;
-              if (
-                Math.abs(dx) < f.type.width / 1.5 &&
-                Math.abs(dy) < f.type.height / 1.5
-              ) {
-                hitFishIndex = i;
-                break;
-              }
-            }
+            const hitFishIndex = checkFishCollision(tipX, tipY, fishes.current);
 
             if (hitFishIndex !== -1) {
               const primaryCaught = fishes.current[hitFishIndex];
@@ -1010,40 +1005,21 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
               if (isSuperNetActive) {
                 // Radius catch
                 const catchRadius = 150;
-                const caughtIndices = new Set<number>();
-                const fishesToCatch: EntityFish[] = [];
-
-                fishes.current.forEach((f, idx) => {
-                  const dx = tipX - f.x;
-                  const dy = tipY - f.y;
-                  const dist = Math.sqrt(dx * dx + dy * dy);
-
-                  // Don't catch crabs in the net, they cut it! (or just ignore them to be nice)
-                  // Let's safe-guard: ignore crabs for net expansion to avoid insta-snip logic complication
-                  if (dist < catchRadius && f.type.id !== "crab") {
-                    caughtIndices.add(idx);
-                    fishesToCatch.push(f);
-                  }
-                });
+                const { fish: fishesToCatch, indices: sortedIndices } =
+                  getNetCatch(tipX, tipY, fishes.current, catchRadius);
 
                 // Ensure primary hit is included if it wasn't a crab
                 if (
                   primaryCaught.type.id !== "crab" &&
                   !fishesToCatch.includes(primaryCaught)
                 ) {
-                  // It should be included by radius logic since distance is ~0, but just in case
                   fishesToCatch.push(primaryCaught);
-                  // Need index
-                  caughtIndices.add(hitFishIndex);
                 }
 
                 // Add to claw
                 claw.caughtFish = fishesToCatch;
 
-                // Remove from ocean (sort indices desc to splice correctly)
-                const sortedIndices = Array.from(caughtIndices).sort(
-                  (a, b) => b - a,
-                );
+                // Remove from ocean (indices already sorted descending)
                 sortedIndices.forEach((idx) => fishes.current.splice(idx, 1));
               } else {
                 // Normal Catch
@@ -1060,12 +1036,18 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             claw.caughtFish.length === 0 &&
             claw.state === ClawState.SHOOTING
           ) {
-            const hitWall = tipX < 0 || tipX > GAME_WIDTH || tipY > GAME_HEIGHT;
-            const hitMax = claw.length >= clawMaxLength.current;
+            const hitWallOrMax = checkWallCollision(
+              tipX,
+              tipY,
+              claw.length,
+              clawMaxLength.current,
+              GAME_WIDTH,
+              GAME_HEIGHT,
+            );
 
-            if (hitWall || hitMax) {
+            if (hitWallOrMax) {
               claw.state = ClawState.RETRACTING;
-              if (hitWall && index === 0) {
+              if (hitWallOrMax && index === 0) {
                 // Only shake on main claw hit for sanity
                 setIsShaking(true);
                 setTimeout(() => setIsShaking(false), 500);
@@ -1402,8 +1384,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     });
 
     // --- GLOBAL OVERLAY (Lighting + Weather) ---
-    ctx.fillStyle = overlay;
-    ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    drawLightingOverlay(ctx, overlay, GAME_WIDTH, GAME_HEIGHT);
 
     // --- LAMP LIGHT GLOW (Rendered ON TOP of darkness) ---
     if (isLampOn) {
@@ -1411,198 +1392,47 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     }
 
     // Weather Specific Overlays
-    if (weather === WeatherType.RAIN) {
-      ctx.fillStyle = rainOverlay;
-      ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-    } else if (weather === WeatherType.SNOW) {
-      ctx.fillStyle = snowOverlay;
-      ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-    } else if (weather === WeatherType.WIND) {
-      ctx.fillStyle = windOverlay;
-      ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-    } else if (weather === WeatherType.FOG) {
-      ctx.fillStyle = fogOverlay;
-      ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-    }
+    drawWeatherOverlay(
+      ctx,
+      weather,
+      rainOverlay,
+      snowOverlay,
+      windOverlay,
+      fogOverlay,
+      GAME_WIDTH,
+      GAME_HEIGHT,
+    );
 
     // --- COMBO UI ---
-    if (currentCombo >= 3) {
-      ctx.save();
-      // Pulsating Scale
-      const scale = 1 + Math.sin(visualTime * 0.01) * 0.1;
-      ctx.translate(100, 100);
-      ctx.scale(scale, scale);
-
-      ctx.font = 'bold 14px "Press Start 2P"'; // Reduced size
-      ctx.textAlign = "center";
-      ctx.strokeStyle = "#3e2723";
-      ctx.lineWidth = 4; // Reduced stroke
-
-      // Colors shift based on combo height
-      let comboColor = "#ffeb3b"; // Yellow
-      if (currentCombo >= 10) comboColor = "#ff9800"; // Orange
-      if (currentCombo >= 50) comboColor = "#f44336"; // Red
-      if (currentCombo >= 100) comboColor = "#e040fb"; // Purple
-
-      const text = `COMBO x${currentCombo}`;
-      ctx.strokeText(text, 0, 0);
-      ctx.fillStyle = comboColor;
-      ctx.fillText(text, 0, 0);
-      ctx.restore();
-    }
+    drawCombo(ctx, currentCombo, visualTime, 100, 100);
 
     // --- Timers UI ---
     let timerY = 80;
 
-    // Rainbow/Magic Conch Timer (Weather Expiration)
+    // Rainbow Timer (Special weather timer)
     if (weatherExpiration && weather === WeatherType.RAINBOW) {
-      const remaining = Math.ceil((weatherExpiration - visualTime) / 1000);
-      if (remaining > 0) {
-        ctx.save();
-        ctx.font = 'bold 16px "Press Start 2P"';
-        // Pulsing Rainbow colors for text
-        const hue = (visualTime * 0.1) % 360;
-        ctx.fillStyle = `hsl(${hue}, 100%, 70%)`;
-        ctx.strokeStyle = "white";
-        ctx.lineWidth = 4;
-        ctx.textAlign = "center";
-        const text = `RAINBOW TIME: ${remaining}s`;
-        ctx.strokeText(text, GAME_WIDTH / 2, timerY);
-        ctx.fillText(text, GAME_WIDTH / 2, timerY);
-        ctx.restore();
-        timerY += 30;
-      }
+      drawRainbowTimer(ctx, weatherExpiration, visualTime, timerY, GAME_WIDTH);
+      timerY += 30;
     }
 
-    // Fish Frenzy Timer
-    if (isFishFrenzyActive) {
-      const expiration = activePowerups["fishFrenzy"];
-      const remaining = Math.ceil((expiration - visualTime) / 1000);
-
-      if (remaining > 0) {
-        ctx.save();
-        ctx.font = 'bold 16px "Press Start 2P"';
-        const blink = Math.floor(visualTime / 100) % 2 === 0;
-        ctx.fillStyle = blink ? "#ffeb3b" : "#ff5722";
-        ctx.strokeStyle = "#bf360c";
-        ctx.lineWidth = 4;
-        ctx.textAlign = "center";
-        const text = `FISH FRENZY: ${remaining}s`;
-        ctx.strokeText(text, GAME_WIDTH / 2, timerY);
-        ctx.fillText(text, GAME_WIDTH / 2, timerY);
-        ctx.restore();
-        timerY += 30;
-      }
-    }
-
-    // Diamond Hook Timer
-    if (isDiamondHookActive) {
-      const expiration = activePowerups["diamondHook"];
-      const remaining = Math.ceil((expiration - visualTime) / 1000);
-
-      if (remaining > 0) {
-        ctx.save();
-        ctx.font = 'bold 16px "Press Start 2P"';
-        const blink = Math.floor(visualTime / 500) % 2 === 0;
-        ctx.fillStyle = blink ? "#e1f5fe" : "#fff";
-        ctx.strokeStyle = "#0288d1";
-        ctx.lineWidth = 4;
-        ctx.textAlign = "center";
-        const text = `DIAMOND HOOK: ${remaining}s`;
-        ctx.strokeText(text, GAME_WIDTH / 2, timerY);
-        ctx.fillText(text, GAME_WIDTH / 2, timerY);
-        ctx.restore();
-        timerY += 30;
-      }
-    }
-
-    // Super Net Timer
-    if (isSuperNetActive) {
-      const expiration = activePowerups["superNet"];
-      const remaining = Math.ceil((expiration - visualTime) / 1000);
-
-      if (remaining > 0) {
-        ctx.save();
-        ctx.font = 'bold 16px "Press Start 2P"';
-        const blink = Math.floor(visualTime / 500) % 2 === 0;
-        ctx.fillStyle = blink ? "#69f0ae" : "#fff";
-        ctx.strokeStyle = "#2e7d32";
-        ctx.lineWidth = 4;
-        ctx.textAlign = "center";
-        const text = `SUPER NET: ${remaining}s`;
-        ctx.strokeText(text, GAME_WIDTH / 2, timerY);
-        ctx.fillText(text, GAME_WIDTH / 2, timerY);
-        ctx.restore();
-        timerY += 30;
-      }
-    }
-
-    // Multi-Claw Timer
-    if (isMultiClawActive) {
-      const expiration = activePowerups["multiClaw"];
-      const remaining = Math.ceil((expiration - visualTime) / 1000);
-
-      // Only draw if still active (expiration > visualTime)
-      if (remaining > 0) {
-        ctx.save();
-        ctx.font = 'bold 16px "Press Start 2P"';
-        const blink = Math.floor(visualTime / 500) % 2 === 0;
-        ctx.fillStyle = blink ? "#2196f3" : "#fff";
-        ctx.strokeStyle = "#0d47a1";
-        ctx.lineWidth = 4;
-        ctx.textAlign = "center";
-        const text = `OCTOPUS: ${remaining}s`;
-        ctx.strokeText(text, GAME_WIDTH / 2, timerY);
-        ctx.fillText(text, GAME_WIDTH / 2, timerY);
-        ctx.restore();
-        timerY += 30;
-      }
-    }
-
-    // Super Bait Timer
-    if (isSuperBaitActive) {
-      const expiration = activePowerups["superBait"];
-      const remaining = Math.ceil((expiration - visualTime) / 1000);
-
-      // Only draw if still active
-      if (remaining > 0) {
-        ctx.save();
-        ctx.font = 'bold 16px "Press Start 2P"';
-        const blink = Math.floor(visualTime / 500) % 2 === 0;
-        ctx.fillStyle = blink ? "#00acc1" : "#fff";
-        ctx.strokeStyle = "#006064";
-        ctx.lineWidth = 4;
-        ctx.textAlign = "center";
-        const text = `SUPER BAIT: ${remaining}s`;
-        ctx.strokeText(text, GAME_WIDTH / 2, timerY);
-        ctx.fillText(text, GAME_WIDTH / 2, timerY);
-        ctx.restore();
-        timerY += 30;
-      }
-    }
+    // All Powerup Timers
+    timerY = drawPowerupTimers(
+      ctx,
+      activePowerups,
+      visualTime,
+      timerY,
+      GAME_WIDTH,
+    );
 
     // Trash Suppression Timer
-    if (trashSuppressionUntil.current > visualTime && !isSuperBaitActive) {
-      const remaining = Math.ceil(
-        (trashSuppressionUntil.current - visualTime) / 1000,
-      );
-
-      ctx.save();
-      ctx.font = 'bold 16px "Press Start 2P"';
-      // Blink effect
-      const blink = Math.floor(visualTime / 500) % 2 === 0;
-      ctx.fillStyle = blink ? "#ffeb3b" : "#fff";
-      ctx.strokeStyle = "#3e2723";
-      ctx.lineWidth = 4;
-      ctx.textAlign = "center";
-
-      const text = `NO TRASH: ${remaining}s`;
-
-      // Draw at top center in the sky
-      ctx.strokeText(text, GAME_WIDTH / 2, timerY);
-      ctx.fillText(text, GAME_WIDTH / 2, timerY);
-      ctx.restore();
-    }
+    drawTrashSuppressionTimer(
+      ctx,
+      trashSuppressionUntil.current,
+      visualTime,
+      timerY,
+      GAME_WIDTH,
+      isSuperBaitActive,
+    );
   }, [
     activePowerups,
     weather,

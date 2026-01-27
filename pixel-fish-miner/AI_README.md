@@ -80,6 +80,55 @@ Rendering logic is modularized to keep `GameCanvas` clean and maintainable.
 - **`utils/drawLamp.ts`**: Renders the boat's lamp (structure and glow effect) with day/night lighting.
 - **`utils/drawCrane.ts`**: Renders the crane/winch mechanism with powerup indicators (Multi-Claw, Diamond Hook, Super Net).
 
+#### Collision Detection System (`utils/collision.ts`)
+
+Collision detection logic extracted for testability and reusability.
+
+- **`checkFishCollision(tipX, tipY, fishes)`**: Returns index of first fish hit by claw tip, or -1 if no collision
+  - Uses bounding box detection with 1.5x tolerance for better game feel
+  - Checks all fish in array sequentially
+- **`getNetCatch(tipX, tipY, fishes, radius)`**: Returns all fish within Super Net radius
+  - Radius-based collision for multi-catch (default 150px)
+  - Automatically skips crabs (they cut the net)
+  - Returns `{ fish: EntityFish[], indices: number[] }`
+  - Indices are pre-sorted descending for safe array removal
+- **`checkWallCollision(tipX, tipY, clawLength, maxLength, gameWidth, gameHeight)`**: Checks if claw hit boundaries
+  - Returns true if hit left/right/bottom walls OR reached max length
+  - Used to trigger claw retraction
+
+**Usage Pattern:**
+
+```typescript
+// In GameCanvas.tsx update loop:
+import {
+  checkFishCollision,
+  getNetCatch,
+  checkWallCollision,
+} from "../utils/collision";
+
+// Check single fish collision
+const hitIndex = checkFishCollision(tipX, tipY, fishes.current);
+
+// Check net collision (Super Net powerup)
+const { fish, indices } = getNetCatch(tipX, tipY, fishes.current, 150);
+
+// Check wall collision
+const hitWall = checkWallCollision(
+  tipX,
+  tipY,
+  claw.length,
+  maxLength,
+  GAME_WIDTH,
+  GAME_HEIGHT,
+);
+```
+
+**Technical Notes:**
+
+- Collision boxes are slightly smaller than visual sprites (width/1.5) for better feel
+- Net catch automatically filters out crabs to prevent line cutting
+- Functions are pure (no side effects) for easy testing
+
 #### Fish Rendering System (`utils/fish/`)
 
 The fish rendering system is organized in a modular folder structure with entity-specific rendering functions.
@@ -276,7 +325,9 @@ drawFishermanCostume(ctx, manX, manY, equippedCostume);
 
 #### UI Rendering System (`utils/ui/`)
 
-UI elements have been extracted for cleaner organization.
+UI elements have been extracted for cleaner organization and maintainability.
+
+- **`utils/ui/index.ts`**: Main export barrel that re-exports all UI modules.
 
 - **`utils/ui/floatingText.ts`**: Floating text rendering
   - Exports `drawFloatingTexts(ctx, floatingTexts)` function
@@ -284,68 +335,86 @@ UI elements have been extracted for cleaner organization.
   - Handles alpha fade based on text life
   - Used for catch notifications, money gained, combo messages, etc.
 
+- **`utils/ui/timers.ts`**: Powerup and effect timer rendering
+  - `drawPowerupTimers()`: Renders all active powerup timers (Fish Frenzy, Diamond Hook, Super Net, Multi-Claw, Super Bait)
+  - `drawRainbowTimer()`: Special rainbow weather timer with pulsing rainbow colors
+  - `drawTrashSuppressionTimer()`: Mystery Bag effect timer
+  - All timers feature blinking animation (500ms interval)
+  - Returns final Y position for stacking additional UI elements
+  - Each timer has unique color scheme for instant recognition
+
+- **`utils/ui/combo.ts`**: Combo display rendering
+  - Exports `drawCombo(ctx, combo, visualTime, x, y)` function
+  - Pulsating scale animation (1.0 to 1.1 scale)
+  - Color changes based on combo tier:
+    - 3-9: Yellow (#ffeb3b)
+    - 10-49: Orange (#ff9800)
+    - 50-99: Red (#f44336)
+    - 100+: Purple (#e040fb)
+  - Only displays when combo ≥ 3
+
+- **`utils/ui/overlays.ts`**: Screen overlay rendering
+  - `drawLightingOverlay()`: Day/night darkness overlay
+  - `drawWeatherOverlay()`: Weather-specific color tints (rain, snow, wind, fog)
+  - Applied after all rendering but before lamp glow for proper layering
+
 **Usage Pattern:**
 
 ```typescript
 // In GameCanvas.tsx:
-import { drawFloatingTexts } from "../utils/ui/floatingText";
+import {
+  drawFloatingTexts,
+  drawPowerupTimers,
+  drawRainbowTimer,
+  drawTrashSuppressionTimer,
+  drawCombo,
+  drawLightingOverlay,
+  drawWeatherOverlay,
+} from "../utils/ui";
 
-// In render function:
+// Floating text
 drawFloatingTexts(ctx, floatingTexts.current);
+
+// Combo
+drawCombo(ctx, currentCombo, visualTime, 100, 100);
+
+// Timers (stacked vertically)
+let timerY = 80;
+if (weatherExpiration && weather === WeatherType.RAINBOW) {
+  drawRainbowTimer(ctx, weatherExpiration, visualTime, timerY, GAME_WIDTH);
+  timerY += 30;
+}
+timerY = drawPowerupTimers(ctx, activePowerups, visualTime, timerY, GAME_WIDTH);
+drawTrashSuppressionTimer(
+  ctx,
+  suppressionUntil,
+  visualTime,
+  timerY,
+  GAME_WIDTH,
+  isSuperBaitActive,
+);
+
+// Overlays (rendered last)
+drawLightingOverlay(ctx, overlay, GAME_WIDTH, GAME_HEIGHT);
+drawWeatherOverlay(
+  ctx,
+  weather,
+  rainOverlay,
+  snowOverlay,
+  windOverlay,
+  fogOverlay,
+  GAME_WIDTH,
+  GAME_HEIGHT,
+);
 ```
 
 **Technical Notes:**
 
 - Uses manual 8-way outline instead of strokeText for better pixel art appearance
 - Text fades out based on `life` property (0 = invisible, 1+ = solid)
-- Font: "Press Start 2P" at 10px for retro aesthetic
-
-### 4. Costume System (`utils/costumes/`)
-
-The fisherman costume rendering has been extracted into modular files for better maintainability.
-
-- **`utils/costumes/index.ts`**: Main export that routes costume rendering based on `costumeId`
-  - Exports `drawFishermanCostume(ctx, x, y, costumeId)` function
-  - Handles `ctx.save()`, `ctx.translate()`, and `ctx.restore()` for positioning
-  - Switch statement routes to appropriate costume renderer
-
-- **Individual Costume Files**:
-  - `fisherman.ts`: Default costume - yellow hat, red vest with stripes, grey beard
-  - `sailor.ts`: Breton striped shirt, blue pants, white sailor cap with gold anchor
-  - `diver.ts`: Black wetsuit with cyan stripes, diving mask, yellow snorkel, air tank
-  - `pirate.ts`: Red/black vest, wooden leg, hook hand, bandana, eye patch, pistol
-  - `lifeguard.ts`: Red uniform with white cross, red shorts, lifebuoy, drink cup, visor cap, whistle
-  - `sushiMaster.ts`: White chef coat with black lapels, traditional headband with red emblem, sushi knife, mustache, plate with sushi tower on head
-  - `captain.ts`: Dark blue uniform with gold buttons, white beard, captain's hat with gold badge, tobacco pipe
-
-- **File Naming Convention**:
-  - Files use **camelCase** (e.g., `sushiMaster.ts`)
-  - Costume IDs in constants use **snake_case** (e.g., `"sushi_master"`)
-  - Function names use **camelCase** (e.g., `drawSushiMasterCostume()`)
-
-- **Usage in GameCanvas**:
-
-```typescript
-import { drawFishermanCostume } from "../utils/costumes";
-
-// In render function:
-const manX = GAME_WIDTH / 2 + 40;
-const manY = boatY;
-drawFishermanCostume(ctx, manX, manY, equippedCostume);
-```
-
-- **Adding New Costumes**:
-  1. Create new file in `utils/costumes/` (e.g., `ninja.ts`)
-  2. Export function: `export const drawNinjaCostume = (ctx: CanvasRenderingContext2D) => { ... }`
-  3. Add case to `index.ts` switch statement
-  4. Add costume definition to `COSTUMES` in `constants.ts`
-  5. Add translations to all language files
-
-- **Technical Notes**:
-  - All drawing assumes `ctx` is already translated to `(manX, manY)` position
-  - Coordinates are relative to the fisherman's base position (boat deck)
-  - Each costume function is self-contained with no external dependencies
-  - Uses pixel art style with `ctx.fillRect()` for all rendering
+- Timers use consistent blinking pattern (500ms) for visual coherence
+- Font: "Press Start 2P" for retro aesthetic
+- Overlays use semi-transparent fills to maintain visibility of game elements
 
 ### 5. Data Models (`types.ts` & `constants.ts`)
 
@@ -706,3 +775,7 @@ To add new content:
 - **Crab Hidden**: Pinchy Crab appears in gameplay (cuts line) but is hidden from Bag/Encyclopedia (`showInBag: false`).
 - **Trash Filter**: Progressively reduces trash spawn rate. Formula: `((level-1)/19)*0.95` gives 0-95% reduction across 20 levels.
 - **Rendering Order**: Matters for layering - Sky → Celestial → Clouds → Rainbow → Airplane → Seagulls → Boats → Water → Boat → Fisherman → Fish → Claws → Particles → Overlays.
+
+```
+
+```
