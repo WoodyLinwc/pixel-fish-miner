@@ -27,6 +27,11 @@ import {
   drawWaves,
   drawWaterSparkles,
   drawRainbow,
+  drawBoat, // NEW
+  drawLamp, // NEW
+  drawLampGlow, // NEW
+  drawCrane, // NEW
+  drawFloatingTexts, // NEW
 } from "../utils/drawing";
 import { drawFishermanCostume } from "../utils/costumes";
 
@@ -1254,80 +1259,25 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     const boatHeight = 35;
     const boatX = GAME_WIDTH / 2 - boatWidth / 2;
 
-    ctx.fillStyle = "#5d4037";
-    ctx.fillRect(boatX, boatY, boatWidth, boatHeight);
+    drawBoat(ctx, boatX, boatY, boatWidth, boatHeight);
 
-    ctx.fillStyle = "#4e342e";
-    ctx.fillRect(boatX, boatY + 10, boatWidth, 2);
-    ctx.fillRect(boatX, boatY + 20, boatWidth, 2);
-
-    ctx.fillStyle = "#8d6e63";
-    ctx.fillRect(boatX + 10, boatY - 10, boatWidth - 20, 5);
-    ctx.fillRect(boatX + 10, boatY - 10, 5, 10);
-    ctx.fillRect(boatX + boatWidth - 15, boatY - 10, 5, 10);
-
-    // Lamp (Left Side)
-    const lampX = boatX - 14; // Moved further left (hanging off side)
+    // Lamp
+    const lampX = boatX - 14;
     const lampY = boatY - 25;
     const isLampOn = currentHour >= 18 || currentHour < 6;
 
-    // Bracket/Support connecting to boat
-    ctx.fillStyle = "#4e342e"; // Dark wood
-    ctx.fillRect(lampX + 2, boatY + 2, 16, 4); // Horizontal arm attaching to hull
-
-    // Post/Housing vertical line
-    ctx.fillStyle = "#3e2723";
-    ctx.fillRect(lampX, lampY, 4, 30);
-
-    // Lantern Housing
-    ctx.fillStyle = "#263238";
-    ctx.fillRect(lampX - 3, lampY, 10, 2); // Top lid
-    ctx.fillRect(lampX - 2, lampY + 12, 8, 2); // Bottom base
-
-    // Lantern Glass
-    ctx.fillStyle = isLampOn ? "#ffeb3b" : "#90a4ae";
-    ctx.fillRect(lampX - 2, lampY + 2, 8, 10);
-
-    // Handle ring
-    ctx.strokeStyle = "#263238";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(lampX + 2, lampY - 2, 3, Math.PI, 0);
-    ctx.stroke();
+    drawLamp(ctx, lampX, lampY, boatY, isLampOn);
 
     // Crane
-    ctx.fillStyle = "#455a64";
-    ctx.fillRect(
-      GAME_WIDTH / 2 - 8,
-      clawY.current - 10,
-      16,
-      SURFACE_Y - clawY.current + 10,
+    drawCrane(
+      ctx,
+      GAME_WIDTH / 2,
+      clawY.current,
+      SURFACE_Y,
+      isMultiClawActive,
+      isDiamondHookActive,
+      isSuperNetActive,
     );
-
-    // Draw extra gear if multi-claw active
-    if (isMultiClawActive) {
-      ctx.fillStyle = "#2196f3"; // Blue gear indicator
-      ctx.fillRect(GAME_WIDTH / 2 - 12, clawY.current - 15, 24, 6);
-    }
-    // Draw extra gear if diamond hook active
-    if (isDiamondHookActive) {
-      ctx.fillStyle = "#ab47bc"; // Purple gear indicator
-      ctx.fillRect(GAME_WIDTH / 2 - 14, clawY.current - 18, 28, 4);
-    }
-    // Draw extra gear if super net active
-    if (isSuperNetActive) {
-      ctx.fillStyle = "#4caf50"; // Green gear indicator
-      ctx.fillRect(GAME_WIDTH / 2 - 16, clawY.current - 21, 32, 4);
-    }
-
-    ctx.fillStyle = "#263238";
-    ctx.beginPath();
-    ctx.arc(GAME_WIDTH / 2, clawY.current, 10, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#546e7a";
-    ctx.beginPath();
-    ctx.arc(GAME_WIDTH / 2, clawY.current, 4, 0, Math.PI * 2);
-    ctx.fill();
 
     // Pet (Rendered behind or next to fisherman)
     if (equippedPet) {
@@ -1393,29 +1343,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     });
 
     // Draw Floating Texts
-    floatingTexts.current.forEach((t) => {
-      ctx.save();
-      // Use life as alpha if it's decaying (<1), but if it's holding (>1), keep it 1.0
-      ctx.globalAlpha = Math.min(1.0, t.life);
-
-      // Removed bold for thinner text
-      ctx.font = '10px "Press Start 2P"';
-      ctx.textAlign = "left";
-
-      // 8-way outline manually for pixel perfection at small sizes
-      // This is much cleaner than strokeText which eats into the font
-      ctx.fillStyle = "black";
-      ctx.fillText(t.text, t.x - 1, t.y - 1);
-      ctx.fillText(t.text, t.x + 1, t.y - 1);
-      ctx.fillText(t.text, t.x - 1, t.y + 1);
-      ctx.fillText(t.text, t.x + 1, t.y + 1);
-
-      // Main text on top
-      ctx.fillStyle = t.color;
-      ctx.fillText(t.text, t.x, t.y);
-
-      ctx.restore();
-    });
+    drawFloatingTexts(ctx, floatingTexts.current);
 
     // --- Draw Particles (Weather & Music) ---
     particlesRef.current.forEach((p) => {
@@ -1479,28 +1407,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
     // --- LAMP LIGHT GLOW (Rendered ON TOP of darkness) ---
     if (isLampOn) {
-      ctx.save();
-      const glowX = lampX + 2;
-      const glowY = lampY + 7;
-      // Warm glow gradient
-      const gradient = ctx.createRadialGradient(
-        glowX,
-        glowY,
-        2,
-        glowX,
-        glowY,
-        150,
-      );
-      gradient.addColorStop(0, "rgba(255, 235, 59, 0.5)"); // Bright core
-      gradient.addColorStop(0.1, "rgba(255, 235, 59, 0.2)"); // Soft Halo
-      gradient.addColorStop(1, "rgba(255, 235, 59, 0)"); // Transparent
-
-      ctx.fillStyle = gradient;
-      // Draw glow as a large circle intersecting the darkness
-      ctx.beginPath();
-      ctx.arc(glowX, glowY, 150, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
+      drawLampGlow(ctx, lampX, lampY);
     }
 
     // Weather Specific Overlays

@@ -1,6 +1,10 @@
 export * from "./drawHelpers";
 export * from "./environment";
-export * from "./fish"; // Changed from './drawFish'
+export * from "./fish";
 export * from "./drawClaw";
 export * from "./drawPet";
 export * from "./drawAirplane";
+export * from "./drawBoat";
+export * from "./drawLamp";
+export * from "./drawCrane";
+export * from "./ui/floatingText";
