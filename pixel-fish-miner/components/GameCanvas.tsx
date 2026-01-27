@@ -16,6 +16,17 @@ import {
   drawClaw,
   drawPet,
   drawAirplane,
+  drawSkyGradient,
+  drawSun,
+  drawMoon,
+  drawStars,
+  drawClouds,
+  drawSeagulls,
+  drawBackgroundBoats,
+  drawWaterBands,
+  drawWaves,
+  drawWaterSparkles,
+  drawRainbow,
 } from "../utils/drawing";
 import { drawFishermanCostume } from "../utils/costumes";
 
@@ -1188,100 +1199,20 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     // Clear
     ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-    // --- Draw Surface (Sky) ---
-    const skyGrad = ctx.createLinearGradient(0, 0, 0, SURFACE_Y);
-    skyGrad.addColorStop(0, skyTop);
-    skyGrad.addColorStop(1, skyBot);
-    ctx.fillStyle = skyGrad;
-    ctx.fillRect(0, 0, GAME_WIDTH, SURFACE_Y);
+    // --- Draw Sky ---
+    drawSkyGradient(ctx, GAME_WIDTH, SURFACE_Y, { skyTop, skyBot });
 
-    // --- Celestial Bodies ---
-    // Sun logic: 6 AM to 18 PM. Peak at 12.
-    if (currentHour >= 5 && currentHour <= 19) {
-      const sunDuration = 14;
-      const sunProgress = (currentHour - 5) / sunDuration; // 0 to 1
-      // Arc movement: x goes 0 to width, y goes up then down
-      const sunX = sunProgress * GAME_WIDTH;
-      const sunY = SURFACE_Y - 20 - Math.sin(sunProgress * Math.PI) * 100;
+    // --- Draw Celestial Bodies ---
+    drawSun(ctx, currentHour, GAME_WIDTH, SURFACE_Y);
+    drawMoon(ctx, currentHour, GAME_WIDTH, SURFACE_Y);
+    drawStars(ctx, starsRef.current, currentHour, visualTime);
 
-      // Sun Glow
-      ctx.fillStyle = "rgba(255, 255, 200, 0.3)";
-      ctx.beginPath();
-      ctx.arc(sunX, sunY, 30, 0, Math.PI * 2);
-      ctx.fill();
-      // Sun Core
-      ctx.fillStyle = "#ffeb3b";
-      ctx.beginPath();
-      ctx.arc(sunX, sunY, 15, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // Moon logic: 18 PM to 6 AM. Peak at 0 (midnight).
-    let moonProgress = -1;
-    if (currentHour >= 18) moonProgress = (currentHour - 18) / 12;
-    else if (currentHour <= 6) moonProgress = (currentHour + 6) / 12;
-
-    if (moonProgress >= 0 && moonProgress <= 1) {
-      const moonX = moonProgress * GAME_WIDTH;
-      const moonY = SURFACE_Y - 30 - Math.sin(moonProgress * Math.PI) * 90;
-
-      ctx.fillStyle = "#f4f4f4"; // White moon
-      ctx.beginPath();
-      ctx.arc(moonX, moonY, 12, 0, Math.PI * 2);
-      ctx.fill();
-      // Crater
-      ctx.fillStyle = "#e0e0e0";
-      ctx.beginPath();
-      ctx.arc(moonX + 4, moonY - 2, 4, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // Stars (Only visible at night/dusk)
-    if (currentHour >= 18 || currentHour <= 6) {
-      let alpha = 1;
-      // Fade in dusk/dawn
-      if (currentHour >= 18 && currentHour < 20) alpha = (currentHour - 18) / 2;
-      if (currentHour >= 4 && currentHour < 6)
-        alpha = 1 - (currentHour - 4) / 2;
-
-      ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-      starsRef.current.forEach((star, i) => {
-        const blink = Math.sin(visualTime * 0.005 + star.blinkOffset) > 0;
-        if (blink) {
-          ctx.fillRect(star.x, star.y, star.size, star.size);
-        }
-      });
-    }
-
-    // Moving Clouds
-    ctx.fillStyle = currentHour > 19 || currentHour < 5 ? "#546e7a" : "#ffffff";
-    if (weather === WeatherType.RAIN || weather === WeatherType.SNOW)
-      ctx.fillStyle = "#78909c"; // Stormy clouds
-    if (weather === WeatherType.FOG) ctx.fillStyle = "#eceff1"; // Fog clouds
-
-    cloudsRef.current.forEach((cloud) => {
-      ctx.fillRect(cloud.x, cloud.y, cloud.w, cloud.h);
-      // Simple pixel art detail: smaller block on top
-      ctx.fillRect(cloud.x + 10, cloud.y - 10, cloud.w - 20, 10);
-    });
+    // --- Draw Clouds ---
+    drawClouds(ctx, cloudsRef.current, currentHour, weather);
 
     // --- Draw Rainbow (If Active) ---
     if (weather === WeatherType.RAINBOW) {
-      ctx.save();
-      ctx.globalAlpha = 0.4;
-      const colors = ["#f44336", "#ffeb3b", "#4caf50", "#2196f3", "#9c27b0"];
-      const centerX = GAME_WIDTH / 2;
-      const centerY = SURFACE_Y + 400;
-      const radiusBase = 600;
-
-      for (let i = 0; i < 5; i++) {
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, radiusBase - i * 15, Math.PI, 2 * Math.PI);
-        ctx.strokeStyle = colors[i];
-        ctx.lineWidth = 15;
-        ctx.stroke();
-      }
-      ctx.restore();
+      drawRainbow(ctx, GAME_WIDTH, SURFACE_Y);
     }
 
     // --- Draw Airplane (If Active) ---
@@ -1291,167 +1222,30 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       drawAirplane(ctx, p.x, p.y, isNight, visualTime, p.vx > 0);
     }
 
-    // --- Seagulls ---
-    seagullsRef.current.forEach((s) => {
-      const { x, y, vx, flapState } = s;
-      const facingRight = vx > 0;
+    // --- Draw Seagulls ---
+    drawSeagulls(ctx, seagullsRef.current);
 
-      ctx.save();
-      ctx.translate(x, y);
-      if (!facingRight) ctx.scale(-1, 1);
+    // --- Draw Background Boats ---
+    drawBackgroundBoats(ctx, backgroundBoatsRef.current, visualTime);
 
-      // Body
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(-5, -2, 12, 5);
-
-      // Tail
-      ctx.fillStyle = "#cfd8dc";
-      ctx.fillRect(-8, 0, 3, 2);
-
-      // Head area
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(5, -5, 5, 5);
-
-      // Beak
-      ctx.fillStyle = "#ffb74d";
-      ctx.fillRect(9, -2, 3, 2);
-
-      // Eye
-      ctx.fillStyle = "#263238";
-      ctx.fillRect(7, -4, 1, 1);
-
-      // Wings (Greyish)
-      ctx.fillStyle = "#e0e0e0";
-      const state = flapState % 4; // 0: Up, 1: Mid, 2: Down, 3: Mid
-
-      if (state === 0) {
-        // Up
-        ctx.fillRect(-2, -8, 6, 6); // Wing up
-      } else if (state === 1 || state === 3) {
-        // Mid
-        ctx.fillRect(-2, -1, 8, 3);
-      } else {
-        // Down
-        ctx.fillRect(-2, 1, 6, 5);
-      }
-
-      ctx.restore();
-    });
-
-    // --- Draw Background Boats (NEW) ---
-    // Draw them right at the horizon line (SURFACE_Y), but behind water/main boat
-    backgroundBoatsRef.current.forEach((b) => {
-      ctx.save();
-      ctx.translate(b.x, b.y);
-
-      // Use stored scale for variety
-      const scale = b.scale || 0.6;
-      ctx.scale(scale, scale);
-
-      if (b.vx < 0) ctx.scale(-1, 1); // Flip if moving left
-
-      if (b.type === "SMALL") {
-        // Sailboat
-        // Hull
-        ctx.fillStyle = "#5d4037";
-        ctx.beginPath();
-        ctx.moveTo(-15, 0);
-        ctx.lineTo(15, 0);
-        ctx.lineTo(10, 6);
-        ctx.lineTo(-10, 6);
-        ctx.fill();
-        // Mast
-        ctx.fillStyle = "#3e2723";
-        ctx.fillRect(-2, -20, 2, 20);
-        // Sail
-        ctx.fillStyle = "#eceff1";
-        ctx.beginPath();
-        ctx.moveTo(0, -18);
-        ctx.lineTo(14, -4);
-        ctx.lineTo(0, -4);
-        ctx.fill();
-      } else {
-        // Big Ship (Cargo)
-        // Hull
-        ctx.fillStyle = "#37474f"; // Dark BlueGrey
-        ctx.fillRect(-40, -4, 80, 10);
-        ctx.fillStyle = "#b71c1c"; // Red bottom line (water line)
-        ctx.fillRect(-40, 2, 80, 4);
-
-        // Bridge
-        ctx.fillStyle = "#cfd8dc"; // White/Grey upper
-        ctx.fillRect(10, -14, 20, 10);
-        // Windows
-        ctx.fillStyle = "#263238";
-        ctx.fillRect(14, -10, 12, 2);
-
-        // Cargo Containers
-        // Use time-seeded random color logic or simple pattern
-        const colors = ["#ef5350", "#42a5f5", "#66bb6a", "#ffa726"];
-        // Fixed colored containers for stability
-        ctx.fillStyle = "#ef5350";
-        ctx.fillRect(-20, -10, 10, 6);
-        ctx.fillStyle = "#42a5f5";
-        ctx.fillRect(-8, -10, 10, 6);
-
-        // Smoke
-        if (Math.floor(visualTime / 200) % 2 === 0) {
-          ctx.fillStyle = "rgba(255,255,255,0.4)";
-          ctx.beginPath();
-          ctx.arc(20, -18, 4, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-      ctx.restore();
-    });
-
-    // --- Draw Water ---
-    const waterBaseColors = [
-      "#4fc3f7",
-      "#29b6f6",
-      "#03a9f4",
-      "#039be5",
-      "#0288d1",
-    ];
+    // --- Calculate Light Level (for water) ---
     let lightLevel = 1.0;
     if (currentHour >= 20 || currentHour < 4) lightLevel = 0.5;
     else if (currentHour >= 18)
       lightLevel = 0.7; // Sunset
     else if (currentHour < 6) lightLevel = 0.6; // Dawn
 
-    const bandSize = (GAME_HEIGHT - SURFACE_Y) / 5;
-
-    waterBaseColors.forEach((color, i) => {
-      ctx.fillStyle = color;
-      ctx.fillRect(0, SURFACE_Y + i * bandSize, GAME_WIDTH, bandSize);
-    });
-
-    // --- Waves ---
-    ctx.fillStyle = "#e1f5fe";
-    const waveChunkWidth = 10;
-    const waveAmplitude = 3;
-    const waveSpeed = 0.005;
-    const waveWindSpeed = weather === WeatherType.WIND ? 3 : 1;
-    for (let x = 0; x <= GAME_WIDTH; x += waveChunkWidth) {
-      const yOffset =
-        Math.sin(x * 0.05 + visualTime * waveSpeed * waveWindSpeed) *
-        waveAmplitude;
-      const discreteY = Math.floor(yOffset);
-      ctx.fillRect(x, SURFACE_Y + discreteY - 2, waveChunkWidth + 1, 5);
-    }
-
-    // --- Sparkles ---
-    if (lightLevel > 0.6) {
-      ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
-      for (let i = 0; i < 15; i++) {
-        const px = (i * 97) % GAME_WIDTH;
-        const py = SURFACE_Y + 20 + ((i * 43) % (GAME_HEIGHT - SURFACE_Y - 40));
-        const blink = Math.sin(visualTime * 0.005 + i);
-        if (blink > 0.8) {
-          ctx.fillRect(px, py, 4, 4);
-        }
-      }
-    }
+    // --- Draw Water ---
+    drawWaterBands(ctx, GAME_WIDTH, GAME_HEIGHT, SURFACE_Y);
+    drawWaves(ctx, GAME_WIDTH, SURFACE_Y, visualTime, weather);
+    drawWaterSparkles(
+      ctx,
+      GAME_WIDTH,
+      GAME_HEIGHT,
+      SURFACE_Y,
+      lightLevel,
+      visualTime,
+    );
 
     // --- Draw Objects ---
     // Boat
