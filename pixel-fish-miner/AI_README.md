@@ -76,6 +76,9 @@ Rendering logic is modularized to keep `GameCanvas` clean and maintainable.
 - **`utils/drawClaw.ts`**: Renders the rope (normal/severed/electric), claw mechanism, and "Net" visual if Super Net is active.
 - **`utils/drawPet.ts`**: Renders pixel art for pets (Goldfish, Parrot, Cat, Dog, Penguin, Ghost Crab, Pelican) with idle animations.
 - **`utils/drawAirplane.ts`**: Renders the supply drop airplane (cargo plane design) with day/night lighting.
+- **`utils/drawBoat.ts`**: Renders the player's fishing boat with hull, deck planks, and rails.
+- **`utils/drawLamp.ts`**: Renders the boat's lamp (structure and glow effect) with day/night lighting.
+- **`utils/drawCrane.ts`**: Renders the crane/winch mechanism with powerup indicators (Multi-Claw, Diamond Hook, Super Net).
 
 #### Fish Rendering System (`utils/fish/`)
 
@@ -270,6 +273,32 @@ drawFishermanCostume(ctx, manX, manY, equippedCostume);
   - Coordinates are relative to the fisherman's base position (boat deck)
   - Each costume function is self-contained with no external dependencies
   - Uses pixel art style with `ctx.fillRect()` for all rendering
+
+#### UI Rendering System (`utils/ui/`)
+
+UI elements have been extracted for cleaner organization.
+
+- **`utils/ui/floatingText.ts`**: Floating text rendering
+  - Exports `drawFloatingTexts(ctx, floatingTexts)` function
+  - Renders floating messages with 8-way outline for pixel-perfect visibility
+  - Handles alpha fade based on text life
+  - Used for catch notifications, money gained, combo messages, etc.
+
+**Usage Pattern:**
+
+```typescript
+// In GameCanvas.tsx:
+import { drawFloatingTexts } from "../utils/ui/floatingText";
+
+// In render function:
+drawFloatingTexts(ctx, floatingTexts.current);
+```
+
+**Technical Notes:**
+
+- Uses manual 8-way outline instead of strokeText for better pixel art appearance
+- Text fades out based on `life` property (0 = invisible, 1+ = solid)
+- Font: "Press Start 2P" at 10px for retro aesthetic
 
 ### 4. Costume System (`utils/costumes/`)
 
