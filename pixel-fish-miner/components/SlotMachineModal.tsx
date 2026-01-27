@@ -15,12 +15,12 @@ interface SlotMachineModalProps {
 
 const SYMBOLS = ["🐟", "🐠", "🦈", "🐡", "🦞", "🦑", "🐙"];
 
-// Payout: Lose 70%, 2x 20%, 10x 9%, 50x 1%
+// New win rate: Lose 75%, 3-row 20%, 4-row 4%, 5-row 1%
 const PAYOUTS = {
   fifty: 50, // 1% chance - 5 consecutive
-  ten: 10, // 9% chance - 4 consecutive
+  ten: 10, // 4% chance - 4 consecutive
   two: 2, // 20% chance - 3 consecutive
-  none: 0, // 70% chance
+  none: 0, // 75% chance
 };
 
 const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
@@ -83,8 +83,9 @@ const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
       return [symbol, symbol, symbol, symbol, symbol];
     }
 
-    // 9% chance for 10x (4 consecutive matching)
-    if (random < 0.1) {
+    // 4% chance for 10x (4 consecutive matching)
+    if (random < 0.05) {
+      // 0.01 + 0.04 = 0.05
       const symbol = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
       const different = SYMBOLS.filter((s) => s !== symbol)[
         Math.floor(Math.random() * (SYMBOLS.length - 1))
@@ -93,7 +94,8 @@ const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
     }
 
     // 20% chance for 2x (3 consecutive matching)
-    if (random < 0.3) {
+    if (random < 0.25) {
+      // 0.05 + 0.20 = 0.25
       const symbol = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
       const result = [symbol, symbol, symbol];
 
@@ -106,7 +108,7 @@ const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
       return result;
     }
 
-    // 70% chance for no consecutive match (lose)
+    // 75% chance for no consecutive match (lose)
     const result: string[] = [];
     for (let i = 0; i < 5; i++) {
       const symbol = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
@@ -270,7 +272,9 @@ const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
                     {/* Payout Info - Consecutive matches only */}
                     <div className="bg-[#e6c288] border-2 border-[#c68c53] rounded p-2 text-[10px] md:text-xs">
                       <div className="text-center text-[#5d4037] font-bold mb-2 text-[9px] md:text-[11px]">
-                        ⭐ Consecutive matches from left ⭐
+                        ⭐{" "}
+                        {t.slotConsecutive || "Consecutive matches from left"}{" "}
+                        ⭐
                       </div>
                       <div className="flex justify-between text-[#5d4037] font-bold mb-1">
                         <span>💎 5 in a row:</span>

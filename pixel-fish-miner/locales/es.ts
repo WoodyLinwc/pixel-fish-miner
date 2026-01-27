@@ -14,6 +14,7 @@ export const es = {
   slotWin: "¡Ganaste!",
   slotJackpot: "¡PREMIO MAYOR!",
   slotLose: "¡Inténtalo de Nuevo!",
+  slotConsecutive: "Coincidencias consecutivas desde la izquierda",
   notEnoughMoney: "Dinero Insuficiente",
   achievementsTitle: "Logros",
   achievementsBtn: "PREMIOS",

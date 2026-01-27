@@ -239,11 +239,11 @@ Rendering logic is modularized to keep `GameCanvas` clean.
   - Example LOSE: 🐟🦈🐟🐟🐟 (not consecutive from left)
 - **Payouts** (3 tiers):
   - 5 consecutive: 50x bet (1% chance) - MEGA JACKPOT 💎💎
-  - 4 consecutive: 10x bet (9% chance) - JACKPOT 💎
+  - 4 consecutive: 10x bet (4% chance) - JACKPOT 💎
   - 3 consecutive: 2x bet (20% chance) - WIN ✨
-  - Less than 3 consecutive: Lose bet (70% chance) 😔
-- **Expected Return**: ~130% RTP (Return to Player) = (0.01×50 + 0.09×10 + 0.20×2) = 1.30
-- **Note**: High RTP favors the player - this is a fun/generous slot machine!
+  - Less than 3 consecutive: Lose bet (75% chance) 😔
+- **Expected Return**: ~90% RTP (Return to Player) = (0.01×50 + 0.04×10 + 0.20×2) = 0.90
+- **Note**: 90% RTP is fair and balanced - slight house edge like real casinos!
 - **Implementation**:
   - State management tracks bet amount, spinning status, stopped reels
   - Money deducted immediately on spin
