@@ -14,7 +14,6 @@ export const zh = {
   slotWin: "你赢了！",
   slotJackpot: "大奖！",
   slotLose: "再试一次！",
-  slotConsecutive: "从左边开始连续匹配",
   notEnoughMoney: "钱不够",
   achievementsTitle: "成就",
   achievementsBtn: "奖杯",

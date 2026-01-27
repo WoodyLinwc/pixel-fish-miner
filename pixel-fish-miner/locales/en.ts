@@ -14,7 +14,6 @@ export const en = {
   slotWin: "You Win!",
   slotJackpot: "JACKPOT!",
   slotLose: "Try Again!",
-  slotConsecutive: "Consecutive matches from left",
   notEnoughMoney: "Not Enough Money",
   achievementsTitle: "Achievements",
   achievementsBtn: "AWARDS",

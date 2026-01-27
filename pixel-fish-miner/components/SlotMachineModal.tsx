@@ -269,19 +269,14 @@ const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
                       )}
                     </div>
 
-                    {/* Payout Info - Consecutive matches only */}
+                    {/* Payout Info */}
                     <div className="bg-[#e6c288] border-2 border-[#c68c53] rounded p-2 text-[10px] md:text-xs">
-                      <div className="text-center text-[#5d4037] font-bold mb-2 text-[9px] md:text-[11px]">
-                        ⭐{" "}
-                        {t.slotConsecutive || "Consecutive matches from left"}{" "}
-                        ⭐
-                      </div>
                       <div className="flex justify-between text-[#5d4037] font-bold mb-1">
                         <span>💎 5 in a row:</span>
                         <span className="text-[#e91e63]">50x Bet</span>
                       </div>
                       <div className="flex justify-between text-[#5d4037] font-bold mb-1">
-                        <span>💎 4 in a row:</span>
+                        <span>💲 4 in a row:</span>
                         <span className="text-[#9c27b0]">10x Bet</span>
                       </div>
                       <div className="flex justify-between text-[#5d4037] font-bold">
