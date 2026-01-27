@@ -285,12 +285,12 @@ drawFishermanCostume(ctx, manX, manY, equippedCostume);
   - Example WIN: 🐟🐟🐟🦈🐠 (3 consecutive from left)
   - Example LOSE: 🐟🦈🐟🐟🐟 (not consecutive from left)
 - **Payouts** (3 tiers):
-  - 5 consecutive: 50x bet (1% chance) - MEGA JACKPOT 💎💎
-  - 4 consecutive: 10x bet (4% chance) - JACKPOT 💎
+  - 5 consecutive: 20x bet (1% chance) - MEGA JACKPOT 💎💎
+  - 4 consecutive: 5x bet (4% chance) - JACKPOT 💎
   - 3 consecutive: 2x bet (15% chance) - WIN ✨
   - Less than 3 consecutive: Lose bet (80% chance) 😔
-- **Expected Return**: ~70% RTP (Return to Player) = (0.01×50 + 0.04×10 + 0.15×2) = 0.70
-- **Note**: 70% RTP gives house a 30% edge - typical for casual games!
+- **Expected Return**: ~50% RTP (Return to Player) = (0.01×20 + 0.04×5 + 0.15×2) = 0.50
+- **Note**: 50% RTP gives house a 50% edge - makes the game more challenging!
 - **Implementation**:
   - State management tracks bet amount, spinning status, stopped reels
   - Money deducted immediately on spin

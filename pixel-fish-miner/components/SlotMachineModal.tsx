@@ -17,8 +17,8 @@ const SYMBOLS = ["🐟", "🐠", "🦈", "🐡", "🦞", "🦑", "🐙"];
 
 // Win rate: Lose 80%, 3-row 15%, 4-row 4%, 5-row 1%
 const PAYOUTS = {
-  fifty: 50, // 1% chance - 5 consecutive
-  ten: 10, // 4% chance - 4 consecutive
+  twenty: 20, // 1% chance - 5 consecutive
+  five: 5, // 4% chance - 4 consecutive
   two: 2, // 15% chance - 3 consecutive
   none: 0, // 80% chance
 };
@@ -68,8 +68,8 @@ const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
       }
     }
 
-    if (consecutiveCount >= 5) return PAYOUTS.fifty;
-    if (consecutiveCount >= 4) return PAYOUTS.ten;
+    if (consecutiveCount >= 5) return PAYOUTS.twenty;
+    if (consecutiveCount >= 4) return PAYOUTS.five;
     if (consecutiveCount >= 3) return PAYOUTS.two;
     return PAYOUTS.none;
   };
@@ -77,13 +77,13 @@ const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
   const generateResult = (): string[] => {
     const random = Math.random();
 
-    // 1% chance for 50x (5 consecutive matching)
+    // 1% chance for 20x (5 consecutive matching)
     if (random < 0.01) {
       const symbol = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
       return [symbol, symbol, symbol, symbol, symbol];
     }
 
-    // 4% chance for 10x (4 consecutive matching)
+    // 4% chance for 5x (4 consecutive matching)
     if (random < 0.05) {
       // 0.01 + 0.04 = 0.05
       const symbol = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
@@ -186,9 +186,9 @@ const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
                 onWin(winnings);
                 audioManager.playPowerupSound();
 
-                if (multiplier === PAYOUTS.fifty) {
+                if (multiplier === PAYOUTS.twenty) {
                   setMessage(`💎💎 MEGA JACKPOT! +$${winnings} 💎💎`);
-                } else if (multiplier === PAYOUTS.ten) {
+                } else if (multiplier === PAYOUTS.five) {
                   setMessage(`💎 JACKPOT! +$${winnings}`);
                 } else {
                   setMessage(`✨ WIN! +$${winnings}`);
@@ -274,11 +274,11 @@ const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
                   <div className="flex-1 bg-[#e6c288] border-2 border-[#c68c53] rounded p-1.5 md:p-2 text-[9px] md:text-xs">
                     <div className="flex justify-between text-[#5d4037] font-bold mb-0.5 md:mb-1">
                       <span>💎 5 in a row:</span>
-                      <span className="text-[#e91e63]">50x</span>
+                      <span className="text-[#e91e63]">20x</span>
                     </div>
                     <div className="flex justify-between text-[#5d4037] font-bold mb-0.5 md:mb-1">
                       <span>💲 4 in a row:</span>
-                      <span className="text-[#9c27b0]">10x</span>
+                      <span className="text-[#9c27b0]">5x</span>
                     </div>
                     <div className="flex justify-between text-[#5d4037] font-bold">
                       <span>🎰 3 in a row:</span>
