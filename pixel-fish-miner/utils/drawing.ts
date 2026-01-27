@@ -1,6 +1,6 @@
 export * from "./drawHelpers";
-export * from "./environment"; // Changed from './drawEnvironment'
-export * from "./drawFish";
+export * from "./environment";
+export * from "./fish"; // Changed from './drawFish'
 export * from "./drawClaw";
 export * from "./drawPet";
 export * from "./drawAirplane";

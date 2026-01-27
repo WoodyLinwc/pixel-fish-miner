@@ -76,15 +76,48 @@ Rendering logic is modularized to keep `GameCanvas` clean and maintainable.
 - **`utils/drawClaw.ts`**: Renders the rope (normal/severed/electric), claw mechanism, and "Net" visual if Super Net is active.
 - **`utils/drawPet.ts`**: Renders pixel art for pets (Goldfish, Parrot, Cat, Dog, Penguin, Ghost Crab, Pelican) with idle animations.
 - **`utils/drawAirplane.ts`**: Renders the supply drop airplane (cargo plane design) with day/night lighting.
-- **`utils/drawFish.ts`**: Main entry for entity rendering. Dispatches to specific files:
-  - `fish/commonFish.ts`: Sardine, Herring, Small Yellow Croaker, Mackerel, Cod, Boxfish, Pomfret
-  - `fish/uncommonFish.ts`: Clownfish, Squid, Sea Bass, Red Snapper, Salmon, Tuna, Needlefish
-  - `fish/rareFish.ts`: Large Yellow Croaker, Turbot, Ribbonfish, Giant Grouper, Anglerfish, Wolffish, Crab, Electric Jelly
-  - `fish/legendaryFish.ts`: Whale, Narwhal
-  - `fish/weatherFish.ts`: Thunder Eel (Rain), Ice Fin (Snow), Wind Ray (Wind), Sea Turtle (Fog)
-  - `fish/staticItems.ts`: Shell, Sea Cucumber, Coral, Mystery Bag, Supply Box
-  - `fish/trash.ts`: Old Boot, Rusty Can, Plastic Bottle, Straw
-  - Uses `canvas` path drawing commands (rects, arcs, lines, paths) to create pixel art procedurally.
+
+#### Fish Rendering System (`utils/fish/`)
+
+The fish rendering system is organized in a modular folder structure with entity-specific rendering functions.
+
+- **`utils/fish/index.ts`**: Main entity rendering dispatcher
+  - Exports `drawEntity(ctx, entity, rotation, time)` function
+  - Routes to specific fish rendering functions based on `entity.type.id`
+  - Handles entity positioning, rotation, and sprite flipping
+  - Includes fallback rendering for unknown entity types
+
+- **Individual Fish Category Files**:
+  - `commonFish.ts`: Sardine, Herring, Small Yellow Croaker, Mackerel, Cod, Boxfish, Pomfret
+  - `uncommonFish.ts`: Clownfish, Squid, Sea Bass, Red Snapper, Salmon, Tuna, Needlefish
+  - `rareFish.ts`: Large Yellow Croaker, Turbot, Ribbonfish, Giant Grouper, Anglerfish, Wolffish, Crab, Electric Jelly
+  - `legendaryFish.ts`: Whale, Narwhal
+  - `weatherFish.ts`: Thunder Eel (Rain), Ice Fin (Snow), Wind Ray (Wind), Sea Turtle (Fog)
+  - `staticItems.ts`: Shell, Sea Cucumber, Coral, Mystery Bag, Supply Box
+  - `trash.ts`: Old Boot, Rusty Can, Plastic Bottle, Straw
+
+- **Rendering Details**:
+  - Uses `canvas` path drawing commands (rects, arcs, lines, paths) to create pixel art procedurally
+  - All fish functions follow pattern: `drawFishName(ctx: CanvasRenderingContext2D, w: number, h: number)`
+  - Some fish have animated features (e.g., Anglerfish lure glow, Narwhal sparkles, Sea Turtle bubbles)
+  - Entity coordinates are center-based (entity.x, entity.y is the center point)
+
+**Usage Pattern:**
+
+```typescript
+// In GameCanvas.tsx or BagModal.tsx:
+import { drawEntity } from "../utils/fish";
+
+// Draw a fish entity
+drawEntity(ctx, fishEntity, rotationAngle, visualTime);
+```
+
+**Technical Notes:**
+
+- `drawEntity` handles `ctx.save()`, positioning, rotation, flipping, and `ctx.restore()`
+- Individual fish renderers assume context is already positioned and scaled
+- Time parameter used for animated effects (glow, particles, etc.)
+- Uses procedural canvas drawing (no image assets)
 
 #### Environment Rendering System (`utils/environment/`)
 
@@ -190,6 +223,53 @@ drawWaterSparkles(
 - Functions accept explicit parameters rather than relying on closure (makes them testable)
 - Rendering order matters: Sky → Celestial → Clouds → Rainbow → Seagulls → Boats → Water
 - Each module is self-contained with no external dependencies except types
+
+#### Costume System (`utils/costumes/`)
+
+The fisherman costume rendering has been extracted into modular files for better maintainability.
+
+- **`utils/costumes/index.ts`**: Main export that routes costume rendering based on `costumeId`
+  - Exports `drawFishermanCostume(ctx, x, y, costumeId)` function
+  - Handles `ctx.save()`, `ctx.translate()`, and `ctx.restore()` for positioning
+  - Switch statement routes to appropriate costume renderer
+
+- **Individual Costume Files**:
+  - `fisherman.ts`: Default costume - yellow hat, red vest with stripes, grey beard
+  - `sailor.ts`: Breton striped shirt, blue pants, white sailor cap with gold anchor
+  - `diver.ts`: Black wetsuit with cyan stripes, diving mask, yellow snorkel, air tank
+  - `pirate.ts`: Red/black vest, wooden leg, hook hand, bandana, eye patch, pistol
+  - `lifeguard.ts`: Red uniform with white cross, red shorts, lifebuoy, drink cup, visor cap, whistle
+  - `sushiMaster.ts`: White chef coat with black lapels, traditional headband with red emblem, sushi knife, mustache, plate with sushi tower on head
+  - `captain.ts`: Dark blue uniform with gold buttons, white beard, captain's hat with gold badge, tobacco pipe
+
+- **File Naming Convention**:
+  - Files use **camelCase** (e.g., `sushiMaster.ts`)
+  - Costume IDs in constants use **snake_case** (e.g., `"sushi_master"`)
+  - Function names use **camelCase** (e.g., `drawSushiMasterCostume()`)
+
+- **Usage in GameCanvas**:
+
+```typescript
+import { drawFishermanCostume } from "../utils/costumes";
+
+// In render function:
+const manX = GAME_WIDTH / 2 + 40;
+const manY = boatY;
+drawFishermanCostume(ctx, manX, manY, equippedCostume);
+```
+
+- **Adding New Costumes**:
+  1. Create new file in `utils/costumes/` (e.g., `ninja.ts`)
+  2. Export function: `export const drawNinjaCostume = (ctx: CanvasRenderingContext2D) => { ... }`
+  3. Add case to `index.ts` switch statement
+  4. Add costume definition to `COSTUMES` in `constants.ts`
+  5. Add translations to all language files
+
+- **Technical Notes**:
+  - All drawing assumes `ctx` is already translated to `(manX, manY)` position
+  - Coordinates are relative to the fisherman's base position (boat deck)
+  - Each costume function is self-contained with no external dependencies
+  - Uses pixel art style with `ctx.fillRect()` for all rendering
 
 ### 4. Costume System (`utils/costumes/`)
 
