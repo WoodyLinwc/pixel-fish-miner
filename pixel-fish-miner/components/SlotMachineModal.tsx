@@ -15,12 +15,12 @@ interface SlotMachineModalProps {
 
 const SYMBOLS = ["🐟", "🐠", "🦈", "🐡", "🦞", "🦑", "🐙"];
 
-// Win rate: Lose 75%, 3-row 20%, 4-row 4%, 5-row 1%
+// Win rate: Lose 80%, 3-row 15%, 4-row 4%, 5-row 1%
 const PAYOUTS = {
   fifty: 50, // 1% chance - 5 consecutive
   ten: 10, // 4% chance - 4 consecutive
-  two: 2, // 20% chance - 3 consecutive
-  none: 0, // 75% chance
+  two: 2, // 15% chance - 3 consecutive
+  none: 0, // 80% chance
 };
 
 const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
@@ -93,9 +93,9 @@ const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
       return [symbol, symbol, symbol, symbol, different];
     }
 
-    // 20% chance for 2x (3 consecutive matching)
-    if (random < 0.25) {
-      // 0.05 + 0.20 = 0.25
+    // 15% chance for 2x (3 consecutive matching)
+    if (random < 0.2) {
+      // 0.05 + 0.15 = 0.20
       const symbol = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
       const result = [symbol, symbol, symbol];
 
@@ -108,7 +108,7 @@ const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
       return result;
     }
 
-    // 75% chance for no consecutive match (lose)
+    // 80% chance for no consecutive match (lose)
     const result: string[] = [];
     for (let i = 0; i < 5; i++) {
       const symbol = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
