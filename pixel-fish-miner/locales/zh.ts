@@ -202,7 +202,7 @@ export const zh = {
     },
     dog: {
       name: "狗",
-      description: "长途航行的忠实朋友。",
+      description: "长途航行的忠实伙伴。",
     },
     penguin: {
       name: "企鹅",
