@@ -5,7 +5,6 @@ import {
   WeatherType,
   EntityFish,
   FloatingText,
-  Particle,
   ClawState,
   ClawEntity,
 } from "../types";
@@ -32,15 +31,33 @@ import {
   drawLampGlow,
   drawCrane,
   drawFloatingTexts,
-  checkFishCollision, // NEW
-  getNetCatch, // NEW
-  checkWallCollision, // NEW
-  drawPowerupTimers, // NEW
-  drawRainbowTimer, // NEW
-  drawTrashSuppressionTimer, // NEW
-  drawCombo, // NEW
-  drawLightingOverlay, // NEW
-  drawWeatherOverlay, // NEW
+  checkFishCollision,
+  getNetCatch,
+  checkWallCollision,
+  drawPowerupTimers,
+  drawRainbowTimer,
+  drawTrashSuppressionTimer,
+  drawCombo,
+  drawLightingOverlay,
+  drawWeatherOverlay,
+  // Particle system
+  Particle, // Now importing from utils/particles
+  spawnWeatherParticles,
+  spawnNarwhalAura,
+  spawnSeaTurtleBubbles,
+  spawnMusicNotes,
+  updateParticles,
+  renderParticles,
+  // Spawning system
+  spawnFish as spawnFishEntity,
+  spawnSeagulls as spawnSeagullEntities,
+  updateSeagulls as updateSeagullEntities,
+  spawnBackgroundBoats as spawnBackgroundBoatEntities,
+  updateBackgroundBoats as updateBackgroundBoatEntities,
+  shouldSpawnAirplane,
+  createAirplane,
+  updateAirplane as updateAirplaneEntity,
+  shouldDropSupplyBox,
 } from "../utils/drawing";
 import { drawFishermanCostume } from "../utils/costumes";
 
@@ -287,160 +304,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     });
   };
 
-  // Helper: Weighted Spawn
-  const getWeightedFishType = useCallback(
-    (isSuperBaitActive: boolean) => {
-      // CHEAT: Fish Frenzy - Force spawn special weather fish
-      if ((activePowerups["fishFrenzy"] || 0) > Date.now()) {
-        const specialFish = FISH_TYPES.filter(
-          (f) => f.requiredWeather && f.requiredWeather.length > 0,
-        );
-        if (specialFish.length > 0) {
-          return specialFish[Math.floor(Math.random() * specialFish.length)];
-        }
-      }
-
-      let availableFish = FISH_TYPES;
-
-      // Filter out trash if Super Bait is active
-      if (isSuperBaitActive) {
-        availableFish = availableFish.filter((f) => !f.isTrash);
-      }
-
-      // Apply Trash Filter reduction based on level
-      // Level 1 = 100% trash, Level 20 = 5% trash (95% reduction)
-      if (!isSuperBaitActive && trashFilterLevel > 1) {
-        const trashReductionPercent = ((trashFilterLevel - 1) / 19) * 0.95; // 0% to 95%
-        const randomValue = Math.random();
-
-        // Filter out trash based on reduction percentage
-        if (randomValue < trashReductionPercent) {
-          availableFish = availableFish.filter((f) => !f.isTrash);
-        }
-      }
-
-      // Filter out static items from random spawning logic (Shell, Sea Cucumber, Coral)
-      availableFish = availableFish.filter(
-        (f) => f.id !== "shell" && f.id !== "sea_cucumber" && f.id !== "coral",
-      );
-
-      // Filter out supply_box (Event Only)
-      availableFish = availableFish.filter((f) => f.id !== "supply_box");
-
-      // Filter by Weather
-      availableFish = availableFish.filter((f) => {
-        if (!f.requiredWeather) return true;
-        // Logic for Narwhal uniqueness:
-        // During Rainbow, do NOT allow Narwhal in the random pool.
-        // It will be injected specifically by the timer in spawnFish.
-        if (f.id === "narwhal") {
-          return false;
-        }
-        return f.requiredWeather.includes(weather);
-      });
-
-      // Filter by Time (Night Only)
-      // Night is roughly considered 19:00 to 05:00
-      const currentHour = gameHour.current;
-      const isNight = currentHour >= 19 || currentHour < 5;
-
-      availableFish = availableFish.filter((f) => {
-        if (f.isNightOnly && !isNight) return false;
-        return true;
-      });
-
-      const totalWeight = availableFish.reduce(
-        (acc, fish) => acc + (RARITY_WEIGHTS[fish.rarity] || 10),
-        0,
-      );
-      let random = Math.random() * totalWeight;
-
-      for (const fish of availableFish) {
-        const weight = RARITY_WEIGHTS[fish.rarity] || 10;
-        if (random < weight) {
-          return fish;
-        }
-        random -= weight;
-      }
-      return availableFish[0];
-    },
-    [weather, activePowerups, trashFilterLevel],
-  );
-
-  // Helper: Spawn a fish
-  const spawnFish = useCallback(
-    (isSuperBaitActive: boolean) => {
-      let type = getWeightedFishType(isSuperBaitActive);
-      const now = Date.now();
-
-      // --- FORCE NARWHAL LOGIC (10s Interval) ---
-      // If it's Rainbow weather, check if 10s have passed since last Narwhal.
-      if (weather === WeatherType.RAINBOW) {
-        if (now - lastNarwhalSpawnTime.current >= 10000) {
-          const narwhalType = FISH_TYPES.find((f) => f.id === "narwhal");
-          if (narwhalType) {
-            type = narwhalType;
-            lastNarwhalSpawnTime.current = now; // Reset timer
-          }
-        }
-      }
-
-      const fishOnly = FISH_TYPES.filter(
-        (f) =>
-          !f.isTrash &&
-          (!f.requiredWeather || f.requiredWeather.includes(weather)) &&
-          f.id !== "shell" &&
-          f.id !== "sea_cucumber" &&
-          f.id !== "coral" &&
-          f.id !== "narwhal" &&
-          f.id !== "supply_box",
-      );
-
-      // If trash is suppressed via Mystery Bag and we picked trash, force pick a standard fish
-      if (
-        (Date.now() < trashSuppressionUntil.current || isSuperBaitActive) &&
-        type.isTrash
-      ) {
-        if (fishOnly.length > 0) {
-          type = fishOnly[Math.floor(Math.random() * fishOnly.length)];
-        }
-      }
-
-      // Cap the number of trash items on screen.
-      const currentTrashCount = fishes.current.filter(
-        (f) => f.type.isTrash,
-      ).length;
-      // Increased trash cap from 12 to 25 to allow more trash
-      if (type.isTrash && currentTrashCount >= 25) {
-        if (fishOnly.length > 0) {
-          type = fishOnly[Math.floor(Math.random() * fishOnly.length)];
-        }
-      }
-
-      const startLeft = Math.random() < 0.5;
-
-      let y =
-        type.minDepth * GAME_HEIGHT +
-        Math.random() * (type.maxDepth - type.minDepth) * GAME_HEIGHT;
-      const safeTop = SURFACE_Y + 30;
-      const safeBottom = GAME_HEIGHT - 30;
-
-      // Ensure it spawns within game bounds regardless of config
-      if (y < safeTop) y = safeTop;
-      if (y > safeBottom) y = safeBottom;
-
-      // Standard moving spawn (off-screen)
-      fishes.current.push({
-        x: startLeft ? -type.width : GAME_WIDTH + type.width,
-        y: y,
-        vx: startLeft ? type.speed : -type.speed,
-        type: type,
-        facingRight: startLeft,
-      });
-    },
-    [getWeightedFishType, weather],
-  );
-
   // Triggered when Mystery Bag is caught
   const triggerMysteryBag = useCallback(() => {
     const isMoneyPrize = Math.random() > 0.5;
@@ -506,62 +369,37 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       gameHour.current = (gameHour.current + deltaHours) % 24;
 
       // --- Update Airplane Logic ---
-      // Check if supply box exists
       const hasSupplyBox = fishes.current.some(
         (f) => f.type.id === "supply_box",
       );
 
       // Trigger via Promo Code
-      // (Promo code can override the supply box check if requested, but logic here respects the one-box rule for safety if desired.
-      // However, usually cheats are cheats. I'll let promo codes work regardless, but random generation will block.)
       if (
         lastPlaneRequestTime &&
         lastPlaneRequestTime > processedPlaneRequestRef.current &&
         !airplaneRef.current
       ) {
-        const startLeft = Math.random() > 0.5;
-        airplaneRef.current = {
-          x: startLeft ? -100 : GAME_WIDTH + 100,
-          y: 30 + Math.random() * 30, // High in sky
-          vx: startLeft ? 2.5 : -2.5, // Reasonably fast
-          hasDropped: false,
-        };
+        airplaneRef.current = createAirplane();
         processedPlaneRequestRef.current = lastPlaneRequestTime;
       }
 
-      // Random Rare Occurrence (0.01% chance per frame)
-      // Only if no supply box exists
-      if (!airplaneRef.current && !hasSupplyBox && Math.random() < 0.0001) {
-        const startLeft = Math.random() > 0.5;
-        airplaneRef.current = {
-          x: startLeft ? -100 : GAME_WIDTH + 100,
-          y: 30 + Math.random() * 30,
-          vx: startLeft ? 2.5 : -2.5,
-          hasDropped: false,
-        };
+      // Random Rare Occurrence
+      if (shouldSpawnAirplane(hasSupplyBox, !!airplaneRef.current)) {
+        airplaneRef.current = createAirplane();
       }
 
       // Update Airplane
       if (airplaneRef.current) {
         const p = airplaneRef.current;
-        p.x += p.vx;
 
-        // Logic to drop box (When near center, with some randomness)
-        const centerX = GAME_WIDTH / 2;
-        const dropZone = 100; // Drop within 100px of center
-
-        if (
-          !p.hasDropped &&
-          Math.abs(p.x - centerX) < dropZone &&
-          Math.random() < 0.1
-        ) {
-          // SPAWN SUPPLY BOX
+        // Check if should drop supply box
+        if (shouldDropSupplyBox(p)) {
           const supplyBoxType = FISH_TYPES.find((f) => f.id === "supply_box");
           if (supplyBoxType) {
             fishes.current.push({
               x: p.x,
               y: p.y + 20, // Start just below plane
-              vx: 0, // Falls straight down mostly
+              vx: 0,
               vy: 0.8, // Slow fall (Parachute speed)
               type: supplyBoxType,
               facingRight: true,
@@ -570,274 +408,51 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           }
         }
 
-        // Despawn plane
-        if (p.x < -200 || p.x > GAME_WIDTH + 200) {
+        // Update position and check if should despawn
+        if (updateAirplaneEntity(p)) {
           airplaneRef.current = null;
         }
       }
 
       // --- Update Background Boats ---
-      // Spawn randomly - Reduced occurrence from 0.001 to 0.0005
-      if (Math.random() < 0.0005) {
-        const isBig = Math.random() > 0.7; // 30% chance for big ship
-        const startLeft = Math.random() > 0.5;
-        // Move significantly slower to simulate distance parallax
-        const speed = (isBig ? 0.15 : 0.3) * (Math.random() * 0.5 + 0.5);
-
-        // Randomize size (scale) to add variety
-        // NEW: Increased minimum and maximum size
-        const sizeMult = 1.0 + Math.random() * 0.5; // 1.0x to 1.5x variation (was 0.8x to 1.2x)
-        const finalScale = 0.75 * sizeMult; // Base scale 0.75 (was 0.6)
-
-        backgroundBoatsRef.current.push({
-          x: startLeft ? -150 : GAME_WIDTH + 150,
-          y: SURFACE_Y - 5, // Sit slightly above horizon
-          vx: startLeft ? speed : -speed,
-          type: isBig ? "BIG" : "SMALL",
-          color: Math.random(), // For random variation if needed
-          scale: finalScale,
-        });
-      }
-
-      // Update Boat Positions
-      backgroundBoatsRef.current.forEach((b) => {
-        b.x += b.vx;
-      });
-      // Remove off-screen boats
-      backgroundBoatsRef.current = backgroundBoatsRef.current.filter(
-        (b) => b.x > -200 && b.x < GAME_WIDTH + 200,
+      spawnBackgroundBoatEntities(backgroundBoatsRef.current);
+      backgroundBoatsRef.current = updateBackgroundBoatEntities(
+        backgroundBoatsRef.current,
       );
 
       // --- Update Seagulls ---
-      // Spawn (Daytime only: 5am to 8pm)
-      if (gameHour.current > 5 && gameHour.current < 20) {
-        if (Math.random() < 0.003 && seagullsRef.current.length < 5) {
-          // 0.3% chance per frame
-          const startLeft = Math.random() > 0.5;
-          seagullsRef.current.push({
-            x: startLeft ? -30 : GAME_WIDTH + 30,
-            y: 10 + Math.random() * (SURFACE_Y - 60), // Keep them high enough
-            vx: startLeft
-              ? 0.5 + Math.random() * 0.5
-              : -(0.5 + Math.random() * 0.5),
-            flapTimer: Math.random() * 10,
-            flapState: 0,
-          });
-        }
-      }
-
-      seagullsRef.current.forEach((s) => {
-        s.x += s.vx;
-        s.y += Math.sin(time * 0.003 + s.x * 0.05) * 0.2; // Gentle bobbing
-        s.flapTimer++;
-        if (s.flapTimer > 8) {
-          // Flap speed
-          s.flapState = (s.flapState + 1) % 4;
-          s.flapTimer = 0;
-        }
-      });
-
-      // Despawn
-      seagullsRef.current = seagullsRef.current.filter(
-        (s) => s.x > -50 && s.x < GAME_WIDTH + 50,
-      );
+      spawnSeagullEntities(seagullsRef.current, gameHour.current);
+      seagullsRef.current = updateSeagullEntities(seagullsRef.current, time);
 
       // --- Weather Particles ---
-      // Spawn new particles
-      if (weather === WeatherType.RAIN) {
-        if (
-          particlesRef.current.filter((p) => p.type === "RAIN").length < 100
-        ) {
-          // Spawn multiple drops
-          for (let i = 0; i < 3; i++) {
-            particlesRef.current.push({
-              x: Math.random() * GAME_WIDTH,
-              y: -10,
-              vx: -2 + Math.random(),
-              vy: 10 + Math.random() * 5,
-              size: 2 + Math.random() * 2,
-              color: "rgba(179, 229, 252, 0.6)",
-              type: "RAIN",
-            });
-          }
-        }
-      } else if (weather === WeatherType.SNOW) {
-        if (particlesRef.current.filter((p) => p.type === "SNOW").length < 80) {
-          if (Math.random() < 0.2) {
-            particlesRef.current.push({
-              x: Math.random() * GAME_WIDTH,
-              y: -10,
-              vx: -1 + Math.random() * 2,
-              vy: 1 + Math.random() * 2,
-              size: 2 + Math.random() * 2,
-              color: "white",
-              type: "SNOW",
-              wobble: Math.random() * 10,
-            });
-          }
-        }
-      } else if (weather === WeatherType.WIND) {
-        if (particlesRef.current.filter((p) => p.type === "LEAF").length < 40) {
-          if (Math.random() < 0.1) {
-            // Wind lines / leaves
-            const isLeaf = Math.random() > 0.5;
-            particlesRef.current.push({
-              x: -20,
-              y: Math.random() * (SURFACE_Y + 50),
-              vx: 5 + Math.random() * 10,
-              vy: Math.random() - 0.5,
-              size: isLeaf ? 4 : 2,
-              color: isLeaf ? "#a1887f" : "rgba(255,255,255,0.3)",
-              type: "LEAF",
-            });
-          }
-        }
-      } else if (weather === WeatherType.FOG) {
-        // Mist particles: Slow horizontal drift, semi-transparent
-        if (particlesRef.current.filter((p) => p.type === "MIST").length < 30) {
-          if (Math.random() < 0.05) {
-            const startLeft = Math.random() > 0.5;
-            particlesRef.current.push({
-              x: startLeft ? -100 : GAME_WIDTH + 100,
-              y:
-                Math.random() * SURFACE_Y +
-                Math.random() * (GAME_HEIGHT - SURFACE_Y) * 0.5, // Mostly upper half
-              vx: startLeft
-                ? 0.2 + Math.random() * 0.3
-                : -0.2 - Math.random() * 0.3,
-              vy: 0,
-              size: 40 + Math.random() * 60, // Large blobs
-              color: "rgba(255, 255, 255, 0.15)", // Very faint
-              type: "MIST",
-            });
-          }
-        }
-      } else if (weather === WeatherType.RAINBOW) {
-        // Rainbow Sparkles
-        if (
-          particlesRef.current.filter((p) => p.type === "RAINBOW_SPARKLE")
-            .length < 60
-        ) {
-          if (Math.random() < 0.1) {
-            const colors = [
-              "#f44336",
-              "#ffeb3b",
-              "#4caf50",
-              "#2196f3",
-              "#9c27b0",
-            ];
-            particlesRef.current.push({
-              x: Math.random() * GAME_WIDTH,
-              y: -10,
-              vx: (Math.random() - 0.5) * 1,
-              vy: 1 + Math.random() * 2,
-              size: 3,
-              color: colors[Math.floor(Math.random() * colors.length)],
-              type: "RAINBOW_SPARKLE",
-            });
-          }
-        }
-      }
+      spawnWeatherParticles(
+        weather,
+        particlesRef.current,
+        GAME_WIDTH,
+        GAME_HEIGHT,
+        SURFACE_Y,
+      );
 
-      // --- Narwhal Aura & Sea Turtle Bubbles (Special Effects) ---
+      // --- Special Effect Particles ---
       fishes.current.forEach((f) => {
-        // Narwhal Aura: Continuous sparkles
         if (f.type.id === "narwhal") {
-          if (Math.random() < 0.3) {
-            // 30% chance per frame for trail
-            const colors = ["#ffeb3b", "#fce4ec", "#e1f5fe", "#fff"];
-            particlesRef.current.push({
-              x: f.x + (Math.random() - 0.5) * f.type.width,
-              y: f.y + (Math.random() - 0.5) * f.type.height,
-              vx: (Math.random() - 0.5) * 0.5,
-              vy: -0.5 - Math.random(),
-              size: 2 + Math.random() * 3,
-              color: colors[Math.floor(Math.random() * colors.length)],
-              type: "RAINBOW_SPARKLE",
-              life: 1.0, // Fade out
-            });
-          }
+          spawnNarwhalAura(f, particlesRef.current);
         }
-
-        // Reduced frequency from 0.1 to 0.02
-        if (f.type.id === "sea_turtle" && Math.random() < 0.02) {
-          // Emit bubble
-          particlesRef.current.push({
-            x: f.x + (f.facingRight ? 10 : -10),
-            y: f.y - 15,
-            vx: (Math.random() - 0.5) * 0.5,
-            vy: -1 - Math.random(),
-            size: 3 + Math.floor(Math.random() * 3), // Integer sizes for pixels
-            color: "rgba(255, 255, 255, 0.6)",
-            type: "BUBBLE",
-            life: 1.0,
-          });
+        if (f.type.id === "sea_turtle") {
+          spawnSeaTurtleBubbles(f, particlesRef.current);
         }
       });
 
       // --- Music Notes (Idle Whistling) ---
-      // Random chance to whistle regardless of music setting to provide visual flair
-      // 0.5% chance per frame (~once every 3.3 seconds on avg, bursty)
-      if (Math.random() < 0.005) {
-        const boatY = SURFACE_Y - 25;
-        const manX = GAME_WIDTH / 2 + 40;
-        const manY = boatY;
+      const boatY = SURFACE_Y - 25;
+      const manX = GAME_WIDTH / 2 + 40;
+      const manY = boatY;
+      const mouthY = manY - 55;
+      const mouthX = manX + 10;
+      spawnMusicNotes(particlesRef.current, mouthX, mouthY);
 
-        // Spawn closer to mouth height (approx -50 from manY)
-        const mouthY = manY - 55;
-        const mouthX = manX + 10;
-
-        const colors = ["#f48fb1", "#81d4fa", "#ce93d8", "#ffcc80", "#e6ee9c"];
-        particlesRef.current.push({
-          x: mouthX,
-          y: mouthY,
-          vx: 0.2 + Math.random() * 0.2, // Drift right SLOWLY
-          vy: -0.3 - Math.random() * 0.3, // Float up SLOWLY
-          size: 14, // Font size
-          color: colors[Math.floor(Math.random() * colors.length)],
-          type: "MUSIC",
-          text: Math.random() > 0.5 ? "♪" : "♫",
-          wobble: Math.random() * 100,
-        });
-      }
-
-      // Update particles
-      particlesRef.current.forEach((p) => {
-        p.x += p.vx;
-        p.y += p.vy;
-        if (p.type === "SNOW" && p.wobble !== undefined) {
-          p.x += Math.sin(time * 0.005 + p.wobble) * 0.5;
-        }
-        if (p.type === "MUSIC" && p.wobble !== undefined) {
-          // Swaying motion
-          p.x += Math.sin(time * 0.005 + p.wobble) * 0.3;
-        }
-        if (
-          p.type === "BUBBLE" ||
-          (p.type === "RAINBOW_SPARKLE" && p.life !== undefined)
-        ) {
-          p.life = (p.life || 1) - 0.02;
-          if (p.type === "BUBBLE") {
-            p.x += Math.sin(time * 0.01 + p.y * 0.1) * 0.5; // Bubble wobble
-            // Snap to pixel grid movement roughly
-            p.x = Math.round(p.x);
-            p.y = Math.round(p.y);
-          }
-        }
-      });
-
-      // Clean up particles
-      particlesRef.current = particlesRef.current.filter((p) => {
-        // Music notes die when high up
-        if (p.type === "MUSIC") return p.y > 0 && p.y < GAME_HEIGHT;
-        if (
-          p.type === "BUBBLE" ||
-          (p.type === "RAINBOW_SPARKLE" && p.life !== undefined)
-        )
-          return (p.life || 0) > 0;
-        if (p.type === "MIST") return p.x > -200 && p.x < GAME_WIDTH + 200;
-        return p.y < GAME_HEIGHT + 10 && p.x > -50 && p.x < GAME_WIDTH + 50;
-      });
+      // Update and filter particles
+      particlesRef.current = updateParticles(particlesRef.current, time);
 
       // --- Update Clouds ---
       const windSpeedMultiplier = weather === WeatherType.WIND ? 5 : 1;
@@ -881,7 +496,20 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
       if (time - lastSpawnTime.current > spawnInterval) {
         if (fishes.current.length < maxFish) {
-          spawnFish(isSuperBaitActive);
+          const { shouldUpdateNarwhalTime } = spawnFishEntity(
+            fishes.current,
+            weather,
+            gameHour.current,
+            trashFilterLevel,
+            isSuperBaitActive,
+            isFishFrenzyActive,
+            trashSuppressionUntil.current,
+            lastNarwhalSpawnTime.current,
+          );
+
+          if (shouldUpdateNarwhalTime) {
+            lastNarwhalSpawnTime.current = Date.now();
+          }
         }
         lastSpawnTime.current = time;
       }
@@ -1144,9 +772,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       clawSpeedMultiplier,
       clawThrowSpeedMultiplier,
       fishDensityLevel,
+      trashFilterLevel,
       onFishCaught,
       paused,
-      spawnFish,
       triggerMysteryBag,
       activePowerups,
       weather,
@@ -1328,60 +956,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     drawFloatingTexts(ctx, floatingTexts.current);
 
     // --- Draw Particles (Weather & Music) ---
-    particlesRef.current.forEach((p) => {
-      ctx.fillStyle = p.color;
-      if (p.type === "RAIN") {
-        ctx.fillRect(p.x, p.y, 2, p.size * 3);
-      } else if (p.type === "SNOW") {
-        ctx.fillRect(p.x, p.y, p.size, p.size);
-      } else if (p.type === "LEAF") {
-        ctx.fillRect(p.x, p.y, p.size, p.size);
-      } else if (p.type === "WIND_LINE") {
-        ctx.fillRect(p.x, p.y, 30, 2);
-      } else if (p.type === "MIST") {
-        // Draw circle for mist
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fill();
-      } else if (p.type === "RAINBOW_SPARKLE") {
-        // Diamond shape sparkle
-        ctx.beginPath();
-        ctx.moveTo(p.x, p.y - p.size);
-        ctx.lineTo(p.x + p.size, p.y);
-        ctx.lineTo(p.x, p.y + p.size);
-        ctx.lineTo(p.x - p.size, p.y);
-        ctx.fill();
-      } else if (p.type === "BUBBLE") {
-        // Draw pixel bubble (Square)
-        ctx.strokeStyle = p.color;
-        ctx.lineWidth = 1;
-
-        // Snap to pixel grid
-        const size = Math.floor(p.size);
-        ctx.strokeRect(
-          Math.floor(p.x - size / 2) + 0.5,
-          Math.floor(p.y - size / 2) + 0.5,
-          size,
-          size,
-        );
-
-        // Highlight
-        ctx.fillStyle = "white";
-        ctx.fillRect(Math.floor(p.x) + 1, Math.floor(p.y - size / 2) + 1, 1, 1);
-      } else if (p.type === "MUSIC" && p.text) {
-        ctx.save();
-        // Simple font for music notes, larger and bold
-        ctx.font = 'bold 16px "Courier New"';
-        ctx.textAlign = "center";
-        // Outline for visibility
-        ctx.fillStyle = "black";
-        ctx.fillText(p.text, p.x + 1, p.y + 1);
-        // Fill
-        ctx.fillStyle = p.color;
-        ctx.fillText(p.text, p.x, p.y);
-        ctx.restore();
-      }
-    });
+    renderParticles(ctx, particlesRef.current);
 
     // --- GLOBAL OVERLAY (Lighting + Weather) ---
     drawLightingOverlay(ctx, overlay, GAME_WIDTH, GAME_HEIGHT);

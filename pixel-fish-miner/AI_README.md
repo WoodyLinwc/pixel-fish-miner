@@ -301,14 +301,14 @@ The fisherman costume rendering has been extracted into modular files for better
 
 - **Usage in GameCanvas**:
 
-```typescript
-import { drawFishermanCostume } from "../utils/costumes";
+  ```typescript
+  import { drawFishermanCostume } from "../utils/costumes";
 
-// In render function:
-const manX = GAME_WIDTH / 2 + 40;
-const manY = boatY;
-drawFishermanCostume(ctx, manX, manY, equippedCostume);
-```
+  // In render function:
+  const manX = GAME_WIDTH / 2 + 40;
+  const manY = boatY;
+  drawFishermanCostume(ctx, manX, manY, equippedCostume);
+  ```
 
 - **Adding New Costumes**:
   1. Create new file in `utils/costumes/` (e.g., `ninja.ts`)
@@ -322,6 +322,192 @@ drawFishermanCostume(ctx, manX, manY, equippedCostume);
   - Coordinates are relative to the fisherman's base position (boat deck)
   - Each costume function is self-contained with no external dependencies
   - Uses pixel art style with `ctx.fillRect()` for all rendering
+
+#### Particle System (`utils/particles/`)
+
+Comprehensive particle system for weather effects and special animations.
+
+- **`utils/particles/index.ts`**: Main export barrel that re-exports all particle modules and types.
+
+- **`utils/particles/types.ts`**: Particle type definitions
+  - Exports `Particle` interface and `ParticleType` union
+  - Particle types: RAIN, SNOW, LEAF, WIND_LINE, MIST, RAINBOW_SPARKLE, BUBBLE, MUSIC
+  - Properties: position, velocity, size, color, type-specific data (wobble, life, text)
+
+- **`utils/particles/weather.ts`**: Weather-based particle spawning
+  - `spawnRain()`: Spawns rain drops with diagonal fall (max 100 particles)
+  - `spawnSnow()`: Spawns snowflakes with wobble animation (max 80 particles)
+  - `spawnWind()`: Spawns leaves and wind lines (max 40 particles)
+  - `spawnFog()`: Spawns large semi-transparent mist blobs (max 30 particles)
+  - `spawnRainbowSparkles()`: Spawns colorful falling sparkles (max 60 particles)
+  - `spawnWeatherParticles()`: Main dispatcher that calls appropriate spawner based on weather
+
+- **`utils/particles/effects.ts`**: Special effect particles
+  - `spawnNarwhalAura()`: Spawns rainbow sparkle trail for narwhals (30% chance per frame)
+  - `spawnSeaTurtleBubbles()`: Spawns rising bubbles for sea turtles (2% chance per frame)
+  - `spawnMusicNotes()`: Spawns floating music notes for idle whistling (0.5% chance per frame)
+
+- **`utils/particles/update.ts`**: Particle physics and lifecycle
+  - `updateParticles()`: Updates all particle positions, animations, and lifetime
+  - Handles snow wobble, bubble sway, music note drift
+  - Applies life decay for fading particles (bubbles, sparkles)
+  - Filters out dead or off-screen particles
+  - Returns filtered array
+
+- **`utils/particles/render.ts`**: Particle rendering
+  - `renderParticles()`: Renders all particles based on type
+  - Rain: Vertical streaks
+  - Snow: Square flakes
+  - Leaves: Small squares
+  - Mist: Large circles
+  - Rainbow Sparkles: Diamond shapes
+  - Bubbles: Outlined squares with highlight pixel
+  - Music Notes: Rendered text (♪ ♫)
+
+**Usage Pattern:**
+
+```typescript
+// In GameCanvas.tsx:
+import {
+  Particle,
+  spawnWeatherParticles,
+  spawnNarwhalAura,
+  spawnSeaTurtleBubbles,
+  spawnMusicNotes,
+  updateParticles,
+  renderParticles,
+} from "../utils/particles";
+
+// In update loop:
+spawnWeatherParticles(
+  weather,
+  particlesRef.current,
+  GAME_WIDTH,
+  GAME_HEIGHT,
+  SURFACE_Y,
+);
+
+fishes.current.forEach((f) => {
+  if (f.type.id === "narwhal") spawnNarwhalAura(f, particlesRef.current);
+  if (f.type.id === "sea_turtle")
+    spawnSeaTurtleBubbles(f, particlesRef.current);
+});
+
+spawnMusicNotes(particlesRef.current, mouthX, mouthY);
+particlesRef.current = updateParticles(particlesRef.current, time);
+
+// In render loop:
+renderParticles(ctx, particlesRef.current);
+```
+
+**Technical Notes:**
+
+- Particle caps prevent performance issues (rain: 100, snow: 80, etc.)
+- Life decay rate: 0.02 per frame (bubbles/sparkles fade in ~50 frames)
+- Particles are filtered off-screen or when life <= 0
+- Weather particles spawn conditionally based on current count
+- Special effects use randomness to create organic feel
+
+#### Spawning System (`utils/spawning/`)
+
+Entity spawning logic extracted for better organization and testability.
+
+- **`utils/spawning/index.ts`**: Main export barrel that re-exports all spawning modules.
+
+- **`utils/spawning/fish.ts`**: Fish spawning logic
+  - `getWeightedFishType()`: Calculates weighted random fish based on:
+    - Weather conditions (required weather filters)
+    - Time of day (night-only fish)
+    - Trash filter level (0-95% reduction)
+    - Active powerups (Super Bait, Fish Frenzy)
+    - Rarity weights (Common: 50, Uncommon: 25, Rare: 10, Legendary: 4)
+  - `spawnFish()`: Spawns fish entity at screen edge
+    - Forces Narwhal spawn every 10s during Rainbow weather
+    - Respects trash suppression from Mystery Bag
+    - Caps trash at 25 items on screen
+    - Ensures spawn Y is within safe bounds
+    - Returns `{ shouldUpdateNarwhalTime: boolean }`
+
+- **`utils/spawning/seagulls.ts`**: Seagull spawning and update
+  - `spawnSeagulls()`: Spawns seagulls during daytime (5 AM - 8 PM)
+    - 0.3% chance per frame, max 5 seagulls
+    - Random speed and direction
+  - `updateSeagulls()`: Updates positions with bobbing animation
+    - Advances flap animation every 8 frames
+    - Removes off-screen seagulls
+    - Returns filtered array
+
+- **`utils/spawning/boats.ts`**: Background boat spawning and update
+  - Uses `BackgroundBoat` type from `environment/boats.ts`
+  - `spawnBackgroundBoats()`: Spawns parallax boats
+    - 0.05% chance per frame
+    - 30% chance for big cargo ship, 70% for small sailboat
+    - Randomized scale (0.75-1.125x) for depth variation
+  - `updateBackgroundBoats()`: Updates positions, removes off-screen boats
+
+- **`utils/spawning/airplane.ts`**: Airplane event spawning
+  - `shouldSpawnAirplane()`: Checks spawn conditions
+    - Only if no supply box exists and no airplane currently flying
+    - 0.01% random chance per frame
+  - `createAirplane()`: Creates airplane entity with random direction
+  - `updateAirplane()`: Updates position, returns true if should despawn
+  - `shouldDropSupplyBox()`: Checks if airplane is near center (100px dropzone, 10% chance)
+
+**Usage Pattern:**
+
+```typescript
+// In GameCanvas.tsx:
+import {
+  spawnFish,
+  spawnSeagulls,
+  updateSeagulls,
+  spawnBackgroundBoats,
+  updateBackgroundBoats,
+  shouldSpawnAirplane,
+  createAirplane,
+  updateAirplane,
+  shouldDropSupplyBox,
+} from "../utils/spawning";
+
+// In update loop:
+const { shouldUpdateNarwhalTime } = spawnFish(
+  fishes.current,
+  weather,
+  gameHour.current,
+  trashFilterLevel,
+  isSuperBaitActive,
+  isFishFrenzyActive,
+  trashSuppressionUntil.current,
+  lastNarwhalSpawnTime.current,
+);
+
+if (shouldUpdateNarwhalTime) {
+  lastNarwhalSpawnTime.current = Date.now();
+}
+
+spawnSeagulls(seagullsRef.current, gameHour.current);
+seagullsRef.current = updateSeagulls(seagullsRef.current, time);
+
+spawnBackgroundBoats(backgroundBoatsRef.current);
+backgroundBoatsRef.current = updateBackgroundBoats(backgroundBoatsRef.current);
+
+if (shouldSpawnAirplane(hasSupplyBox, !!airplaneRef.current)) {
+  airplaneRef.current = createAirplane();
+}
+
+if (airplaneRef.current && shouldDropSupplyBox(airplaneRef.current)) {
+  // Spawn supply box entity
+}
+```
+
+**Technical Notes:**
+
+- Fish spawning respects multiple filters (weather, time, trash level, powerups)
+- Narwhal spawning is time-based (10s interval) during Rainbow weather, not random
+- Trash filter calculation: `((level - 1) / 19) * 0.95` gives 0-95% reduction
+- Static items (shell, sea cucumber, coral) excluded from random spawning
+- Supply box is event-only (airplane drop or promo code)
+- All spawning functions are pure (no side effects on external state)
 
 #### UI Rendering System (`utils/ui/`)
 
@@ -416,7 +602,7 @@ drawWeatherOverlay(
 - Font: "Press Start 2P" for retro aesthetic
 - Overlays use semi-transparent fills to maintain visibility of game elements
 
-### 5. Data Models (`types.ts` & `constants.ts`)
+### 4. Data Models (`types.ts` & `constants.ts`)
 
 - **`types.ts`**:
   - `GameState`: Inventory, Upgrades, Unlocks, Active Effects, Settings. Includes `trashFilterLevel` for upgrade progression.
@@ -440,7 +626,7 @@ drawWeatherOverlay(
   - `PETS`: Goldfish ($50, $1/30s), Parrot ($100, $1/30s), Cat ($300, $2/30s), Dog ($500, $3/30s), Penguin ($200, $1/30s), Ghost Crab ($400, $2/30s), Pelican ($600, $3/30s).
   - `ACHIEVEMENTS`: Trophies for Fish, Money, Trash, Combo, Weather, Narwhal, Promo Codes, Secrets.
 
-### 6. UI Components
+### 5. UI Components
 
 - **`StatsPanel.tsx`**: Top HUD. Displays money, Shop/Bag/Slots/Achievement/Settings buttons.
 - **`StoreModal.tsx`**: The main progression hub. Tabs for Upgrades, Powerups, Pets, Costumes, Promo Codes.
@@ -468,12 +654,12 @@ drawWeatherOverlay(
 - **`PowerupBar.tsx`**: Bottom-right UI to activate inventory powerups. Shows count badges and active timers.
 - **`AchievementToast.tsx`**: Pop-up notification for unlocks (4s duration, slides in from right).
 
-### 7. Localization (`locales/`)
+### 6. Localization (`locales/`)
 
 - **`translations.ts`**: Central export for all language dictionaries.
 - **`en.ts`**, **`es.ts`**, **`zh.ts`**: Translation objects for English, Spanish, Chinese.
 
-### 8. Audio System (`utils/audioManager.ts`)
+### 7. Audio System (`utils/audioManager.ts`)
 
 - **Singleton Pattern**: Single `audioManager` instance exported.
 - **Background Music**: Loops ocean ambience (`background.mp3`), controlled by user toggle.
@@ -719,7 +905,7 @@ Import will fail and show error if:
 - **Fish Spawning**: Capped at calculated max (baseMaxFish + density level bonuses).
 - **Trash Cap**: Maximum 25 trash items on screen simultaneously.
 - **Canvas Clearing**: Full canvas cleared every frame (no retained mode).
-- **Modular Rendering**: Environment, fish, costumes, etc. are in separate files to reduce function size and improve maintainability.
+- **Modular Rendering**: Environment, fish, costumes, particles, etc. are in separate files to reduce function size and improve maintainability.
 
 ### Extension Points
 
@@ -729,7 +915,7 @@ To add new content:
    - Add entry to `FISH_TYPES` in `constants.ts`.
    - Add translation in `locales/en.ts`, `es.ts`, `zh.ts`.
    - Create draw function in appropriate `utils/fish/*.ts` file.
-   - Export from `utils/drawFish.ts`.
+   - Export from `utils/fish/index.ts`.
    - Use `showInBag: false` to hide from encyclopedia if needed.
 
 2. **New Powerup**:
@@ -765,17 +951,28 @@ To add new content:
    - Call from `GameCanvas.tsx` render function in correct layer order
    - Follow pattern: accept explicit parameters, use `ctx.save()`/`ctx.restore()`
 
+7. **New Particle Effect**:
+   - Add particle type to `ParticleType` in `utils/particles/types.ts`
+   - Create spawn function in `utils/particles/weather.ts` or `utils/particles/effects.ts`
+   - Add rendering logic in `utils/particles/render.ts`
+   - Update logic in `utils/particles/update.ts` if special physics needed
+   - Call spawn function from `GameCanvas.tsx` update loop
+
+8. **New Spawnable Entity**:
+   - Add spawn logic to appropriate file in `utils/spawning/`
+   - Consider weather conditions, time of day, and other filters
+   - Use rarity weights for balanced spawning
+   - Call spawn function from `GameCanvas.tsx` update loop
+   - Ensure proper cleanup when entities go off-screen
+
 ### Known Quirks
 
 - **Static Fish**: Shell, Sea Cucumber, Coral are spawned once at init and never despawn (decorative).
-- **Narwhal Spawning**: During Rainbow weather, standard random spawning excludes Narwhal; it only spawns via timed injection.
+- **Narwhal Spawning**: During Rainbow weather, standard random spawning excludes Narwhal; it only spawns via timed injection (10s intervals).
 - **Trash Suppression**: Mystery Bag creates 20s period where trash doesn't spawn (separate from Super Bait).
 - **Combo Pause**: Combo timer pauses when any modal is open.
 - **Weather Priority**: Fog and Rainbow override normal day/night sky colors.
 - **Crab Hidden**: Pinchy Crab appears in gameplay (cuts line) but is hidden from Bag/Encyclopedia (`showInBag: false`).
 - **Trash Filter**: Progressively reduces trash spawn rate. Formula: `((level-1)/19)*0.95` gives 0-95% reduction across 20 levels.
 - **Rendering Order**: Matters for layering - Sky → Celestial → Clouds → Rainbow → Airplane → Seagulls → Boats → Water → Boat → Fisherman → Fish → Claws → Particles → Overlays.
-
-```
-
-```
+- **GameCanvas Size**: After refactoring, reduced from ~1500 lines to ~725 lines (52% reduction) by extracting rendering, collision, particles, and spawning logic into dedicated utility modules.

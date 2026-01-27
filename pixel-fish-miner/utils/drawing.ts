@@ -7,5 +7,7 @@ export * from "./drawAirplane";
 export * from "./drawBoat";
 export * from "./drawLamp";
 export * from "./drawCrane";
-export * from "./ui"; // Changed from "./ui/floatingText"
-export * from "./collision"; // NEW
+export * from "./ui";
+export * from "./collision";
+export * from "./particles"; // NEW
+export * from "./spawning"; // NEW
