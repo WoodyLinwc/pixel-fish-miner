@@ -240,17 +240,17 @@ Rendering logic is modularized to keep `GameCanvas` clean.
 - **Payouts** (3 tiers):
   - 5 consecutive: 50x bet (1% chance) - MEGA JACKPOT 💎💎
   - 4 consecutive: 10x bet (4% chance) - JACKPOT 💎
-  - 3 consecutive: 2x bet (20% chance) - WIN ✨
-  - Less than 3 consecutive: Lose bet (75% chance) 😔
-- **Expected Return**: ~90% RTP (Return to Player) = (0.01×50 + 0.04×10 + 0.20×2) = 0.90
-- **Note**: 90% RTP is fair and balanced - slight house edge like real casinos!
+  - 3 consecutive: 2x bet (15% chance) - WIN ✨
+  - Less than 3 consecutive: Lose bet (80% chance) 😔
+- **Expected Return**: ~70% RTP (Return to Player) = (0.01×50 + 0.04×10 + 0.15×2) = 0.70
+- **Note**: 70% RTP gives house a 30% edge - typical for casual games!
 - **Implementation**:
   - State management tracks bet amount, spinning status, stopped reels
   - Money deducted immediately on spin
   - Winnings added on completion with sound effects
   - Game pauses while slot machine is open
   - Interactive lever animates when pulled
-  - Messages display for 5 seconds (longer than before)
+  - Messages display for 5 seconds (longer visibility)
   - Payout table shows "consecutive from left" rule
 - **UI**: Modal matches game's wood/pixel aesthetic, 5 reels with sequential stop animation, lever positioned on right side
 
