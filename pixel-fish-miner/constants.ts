@@ -706,10 +706,23 @@ export const PETS: Pet[] = [
     cost: 85000,
   },
   {
+    id: "gentleman_octopus",
+    name: "Sir Octavius",
+    description: "A refined cephalopod.",
+    cost: 80000,
+  },
+  {
     id: "dog",
     name: "Dog",
     description: "A loyal friend for long voyages.",
     cost: 120000,
+  },
+
+  {
+    id: "kraken",
+    name: "Kraken",
+    description: "Terror of the deep!",
+    cost: 500000,
   },
 ];
 

@@ -146,6 +146,10 @@ const StoreModal: React.FC<StoreModalProps> = ({
         return "🦀";
       case "pelican":
         return "🦢";
+      case "kraken":
+        return "🐙";
+      case "gentleman_octopus":
+        return "🎩";
       default:
         return "🐾";
     }

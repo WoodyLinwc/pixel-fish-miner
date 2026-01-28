@@ -228,6 +228,14 @@ export const zh = {
       name: "鹈鹕",
       description: "有一张巨大的嘴用来储藏。别让它偷吃利润！",
     },
+    kraken: {
+      name: "克拉肯",
+      description: "深海的恐怖！它的触手不会让任何鱼逃脱。",
+    },
+    gentleman_octopus: {
+      name: "章鱼绅士",
+      description: "优雅的头足类动物。单片眼镜、高顶礼帽，举止无可挑剔。",
+    },
   },
   achievementDesc: {
     FISH: "捕获 {0} 条鱼",

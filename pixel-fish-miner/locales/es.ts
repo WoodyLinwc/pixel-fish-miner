@@ -234,6 +234,16 @@ export const es = {
       name: "Pelícano",
       description: "Tiene un pico enorme para guardar cosas.",
     },
+    kraken: {
+      name: "Kraken",
+      description:
+        "¡Terror de las profundidades! Sus tentáculos no dejarán escapar ningún pez.",
+    },
+    gentleman_octopus: {
+      name: "Don Octavio",
+      description:
+        "Un cefalópodo refinado. Monóculo, sombrero de copa y modales impecables.",
+    },
   },
   achievementDesc: {
     FISH: "Atrapa {0} Peces",

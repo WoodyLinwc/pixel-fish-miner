@@ -232,6 +232,16 @@ export const en = {
       description:
         "Has a massive beak for storage. Don't let him eat the profits!",
     },
+    kraken: {
+      name: "Kraken",
+      description:
+        "Terror of the deep! His tentacles won't let any fish escape.",
+    },
+    gentleman_octopus: {
+      name: "Sir Octavius",
+      description:
+        "A refined cephalopod. Monocle, top hat, and impeccable manners.",
+    },
   },
   achievementDesc: {
     FISH: "Catch {0} Fish",

@@ -344,8 +344,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             amount = 1;
           } else if (["ghost_crab", "cat"].includes(equippedPet)) {
             amount = 2;
-          } else if (["pelican", "dog"].includes(equippedPet)) {
+          } else if (
+            ["pelican", "gentleman_octopus", "dog"].includes(equippedPet)
+          ) {
             amount = 3;
+          } else if (["kraken"].includes(equippedPet)) {
+            amount = 10;
           }
 
           if (amount > 0) {
