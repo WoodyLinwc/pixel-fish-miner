@@ -117,6 +117,12 @@ const StoreModal: React.FC<StoreModalProps> = ({
         return "🛟";
       case "sushi_master":
         return "🍣";
+      case "captain_luna":
+        return "🌙";
+      case "marine_scientist":
+        return "🔬";
+      case "polar_explorer":
+        return "🧊";
       case "default":
         return "🎣";
       default:

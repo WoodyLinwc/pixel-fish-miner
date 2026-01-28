@@ -630,10 +630,22 @@ export const COSTUMES: Costume[] = [
     cost: 45000, // Increased from 6500
   },
   {
+    id: "marine_scientist",
+    name: "Marine Scientist",
+    description: "Science meets the sea!",
+    cost: 60000,
+  },
+  {
     id: "lifeguard",
     name: "Lifeguard",
     description: "Ready to save the day in bright red.",
     cost: 80000,
+  },
+  {
+    id: "polar_explorer",
+    name: "Polar Explorer",
+    description: "Brave the coldest waters!",
+    cost: 100000,
   },
   {
     id: "sushi_master",
@@ -641,6 +653,12 @@ export const COSTUMES: Costume[] = [
     description: "Traditional chef attire for a culinary expert.",
     cost: 150000,
   },
+  // {
+  //   id: "captain_luna",
+  //   name: "Captain Luna",
+  //   description: "Champion of the moon and sea!",
+  //   cost: 200000,
+  // },
   {
     id: "captain",
     name: "Sea Captain",

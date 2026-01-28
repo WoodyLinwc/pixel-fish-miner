@@ -186,6 +186,21 @@ export const en = {
       name: "Sea Captain",
       description: "A distinguished look for a master angler.",
     },
+    captain_luna: {
+      name: "Captain Luna",
+      description:
+        "Champion of the moon and sea! A nautical guardian with celestial powers.",
+    },
+    marine_scientist: {
+      name: "Marine Scientist",
+      description:
+        "Science meets the sea! Ready to research and reel in specimens.",
+    },
+    polar_explorer: {
+      name: "Polar Explorer",
+      description:
+        "Brave the coldest waters! Ice axe in hand, adventure in heart.",
+    },
   },
   pets: {
     goldfish: {

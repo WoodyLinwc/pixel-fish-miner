@@ -5,6 +5,9 @@ import { drawLifeguardCostume } from "./lifeguard";
 import { drawSushiMasterCostume } from "./sushiMaster";
 import { drawSailorCostume } from "./sailor";
 import { drawCaptainCostume } from "./captain";
+import { drawCaptainLunaCostume } from "./captainLuna";
+import { drawMarineScientistCostume } from "./marineScientist";
+import { drawPolarExplorerCostume } from "./polarExplorer";
 
 /**
  * Main function to render the fisherman with the specified costume
@@ -40,6 +43,15 @@ export const drawFishermanCostume = (
       break;
     case "captain":
       drawCaptainCostume(ctx);
+      break;
+    case "captain_luna":
+      drawCaptainLunaCostume(ctx);
+      break;
+    case "marine_scientist":
+      drawMarineScientistCostume(ctx);
+      break;
+    case "polar_explorer":
+      drawPolarExplorerCostume(ctx);
       break;
     case "fisherman":
     default:

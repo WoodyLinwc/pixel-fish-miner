@@ -189,6 +189,21 @@ export const es = {
       name: "Capitán de Mar",
       description: "Un aspecto distinguido para un maestro pescador.",
     },
+    captain_luna: {
+      name: "Capitana Luna",
+      description:
+        "¡Campeona de la luna y el mar! Una guardiana náutica con poderes celestiales.",
+    },
+    marine_scientist: {
+      name: "Científica Marina",
+      description:
+        "¡Ciencia y mar unidos! Lista para investigar y capturar especímenes.",
+    },
+    polar_explorer: {
+      name: "Exploradora Polar",
+      description:
+        "¡Desafía las aguas más frías! Piolet en mano, aventura en el corazón.",
+    },
   },
   pets: {
     goldfish: {

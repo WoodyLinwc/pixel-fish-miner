@@ -186,6 +186,18 @@ export const zh = {
       name: "船长",
       description: "捕鱼大师的尊贵造型。",
     },
+    captain_luna: {
+      name: "月之船长",
+      description: "月亮与大海的守护者！拥有天体力量的航海卫士。",
+    },
+    marine_scientist: {
+      name: "海洋科学家",
+      description: "科学与大海相遇！准备研究和捕捞标本。",
+    },
+    polar_explorer: {
+      name: "极地探险家",
+      description: "勇敢面对最冷的水域！手持冰镐，心怀冒险。",
+    },
   },
   pets: {
     goldfish: {
