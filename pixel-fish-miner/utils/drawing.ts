@@ -2,12 +2,12 @@ export * from "./drawHelpers";
 export * from "./environment";
 export * from "./fish";
 export * from "./drawClaw";
-export * from "./drawPet";
+export * from "./pets";
 export * from "./drawAirplane";
 export * from "./drawBoat";
 export * from "./drawLamp";
 export * from "./drawCrane";
 export * from "./ui";
 export * from "./collision";
-export * from "./particles"; // NEW
-export * from "./spawning"; // NEW
+export * from "./particles";
+export * from "./spawning";

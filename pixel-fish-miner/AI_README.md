@@ -78,11 +78,23 @@ Rendering logic is modularized to keep `GameCanvas` clean and maintainable.
 - **`utils/drawing.ts`**: Barrel export file that re-exports all drawing utilities.
 - **`utils/drawHelpers.ts`**: Color interpolation utilities (`hexToRgb`, `lerp`, `lerpColor`).
 - **`utils/drawClaw.ts`**: Renders the rope (normal/severed/electric), claw mechanism, and "Net" visual if Super Net is active.
-- **`utils/drawPet.ts`**: Renders pixel art for pets with idle animations:
-  - **Basic Pets**: Goldfish Tank, Parrot, Cat, Dog, Penguin, Ghost Crab, Pelican
-  - **Premium Pets**:
-    - **Gentleman Octopus**: Sophisticated octopus with top hat, monocle, bow tie, mustache, and walking cane. Features 8 tentacles properly connected to the body, with one tentacle elegantly holding the cane.
-    - **Kraken**: Massive sea monster with ONLY tentacles visible (no body). Features 8 enormous tentacles (15px, 14px, and 12px widths) wrapping around the boat from all directions with animated wave motion, large suction cups (6-8px), highlights, and water splash/bubble effects.
+- **`utils/pets/`**: Modular pet rendering system with individual files per pet:
+  - **`utils/pets/index.ts`**: Main pet rendering dispatcher - exports `drawPet(ctx, petId, x, y, time)` function
+  - **Individual Pet Files**:
+    - `goldfish.ts`: Goldfish tank with swimming animation and bubbles
+    - `ghostCrab.ts`: Ghost crab with skitter animation
+    - `penguin.ts`: Penguin with flapping wing animation
+    - `pelican.ts`: Pelican with throat pouch gulp animation
+    - `parrot.ts`: Colorful parrot with multi-colored plumage
+    - `cat.ts`: Orange tabby cat in sitting pose
+    - `dog.ts`: Brown dog with wagging tail animation
+    - `kraken.ts`: Massive sea monster with ONLY tentacles visible (no body) - 8 enormous tentacles (15-12px thick) wrapping around boat with wave animations, suction cups, highlights, and water effects
+    - `gentlemanOctopus.ts`: Sophisticated octopus with top hat, monocle, bow tie, mustache, and walking cane - 8 tentacles properly connected to body
+  - **Rendering Pattern**: Each pet file exports a `drawPetName()` function that handles its own rendering logic
+  - **Animation Types**:
+    - Bob animation (parrot, cat, penguin, pelican, gentleman_octopus)
+    - Time-based animations (dog tail wag, goldfish swim, ghost crab skitter)
+    - Complex animations (kraken tentacle waves, pelican gulp)
 - **`utils/drawAirplane.ts`**: Renders the supply drop airplane (cargo plane design) with day/night lighting.
 - **`utils/drawBoat.ts`**: Renders the player's fishing boat with hull, deck planks, and rails.
 - **`utils/drawLamp.ts`**: Renders the boat's lamp (structure and glow effect) with day/night lighting.
@@ -584,13 +596,16 @@ To add new content:
    - Maintain consistent proportions: head ~14-16px wide, body ~20-24px wide
 
 5. **New Pet**:
+   - Create new file in `utils/pets/` using camelCase (e.g., `dolphin.ts`)
+   - Export draw function: `export const drawDolphin = (ctx: CanvasRenderingContext2D, time: number, bob: number) => { ... }`
    - Add to `PETS` in `constants.ts` with cost and income properties
    - Add translation for all languages in `locales/`
-   - Implement draw function in `utils/drawPet.ts` following existing pattern
+   - Import and add case in `utils/pets/index.ts` switch statement
    - Add icon mapping in `StoreModal.tsx` `getPetIcon()` function
    - Update passive income logic in `App.tsx` pet income calculation
    - Income tiers: $1/30s (basic), $2/30s (mid), $3/30s (premium), $10/30s (legendary)
    - Use idle animations (bob, wave, flap, etc.) with `Math.sin(time * speed)` for natural motion
+   - Pets that sit flat (goldfish, kraken) use `ctx.translate(0, 4)` instead of bob parameter
 
 6. **New Environment Element**:
    - Determine which module it belongs to (sky, water, ambient objects)
@@ -624,5 +639,5 @@ To add new content:
 - **Trash Filter**: Progressively reduces trash spawn rate. Formula: `((level-1)/19)*0.95` gives 0-95% reduction across 20 levels
 - **Rendering Order**: Matters for layering - Sky → Celestial → Clouds → Rainbow → Airplane → Seagulls → Boats → Water → Boat → Fisherman/Costume → Pet → Fish → Claws → Particles → Overlays
 - **GameCanvas Size**: After refactoring, reduced from ~1500 lines to ~725 lines (52% reduction) by extracting rendering, collision, particles, and spawning logic into dedicated utility modules
-- **Pet Rendering**: Kraken renders at water level (translated +4px) with no body visible, only massive tentacles. Gentleman Octopus renders with standard bob animation and all 8 tentacles properly connected to body bottom.
+- **Pet Rendering**: Pet rendering system is modular with one file per pet in `utils/pets/`. Kraken renders at water level (translated +4px) with no body visible, only massive tentacles (15-12px thick). Gentleman Octopus renders with standard bob animation and all 8 tentacles properly connected to body bottom.
 - **Costume Rendering**: Captain Luna has slimmer body proportions and face width of 14px (vs 16px for most other costumes). Marine Scientist and Polar Explorer are female characters with appropriate proportions and details.
