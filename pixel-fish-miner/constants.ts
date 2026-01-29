@@ -778,6 +778,7 @@ export const INITIAL_GAME_STATE = {
   inventory: {},
   activePowerups: {},
   purchasedPowerups: [],
+  powerupPurchaseCounts: {}, // NEW: Track purchase counts for dynamic pricing
   usedPromoCodes: [], // Init empty
   successfulPromoCodes: 0, // Track successful promo uses
   weather: WeatherType.CLEAR,

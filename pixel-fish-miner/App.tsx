@@ -528,8 +528,12 @@ const App: React.FC = () => {
     const powerup = POWERUPS[powerupKey];
 
     setGameState((prev) => {
-      const hasBoughtBefore = prev.purchasedPowerups.includes(powerupId);
-      const cost = hasBoughtBefore ? powerup.cost : 0; // First purchase is free
+      // Get purchase count (0 if never bought)
+      const purchaseCount = prev.powerupPurchaseCounts[powerupId] || 0;
+
+      // Dynamic pricing: 1st = FREE, 2nd = $250, 3rd = $500, 4th = $750, 5th = $1000, 6th+ = $1250 (MAX)
+      const cost =
+        purchaseCount === 0 ? 0 : Math.min(purchaseCount * 250, 1250);
 
       if (prev.money >= cost) {
         // Play purchase sound
@@ -542,9 +546,13 @@ const App: React.FC = () => {
             ...prev.inventory,
             [powerupId]: (prev.inventory[powerupId] || 0) + 1,
           },
-          purchasedPowerups: hasBoughtBefore
+          purchasedPowerups: prev.purchasedPowerups.includes(powerupId)
             ? prev.purchasedPowerups
             : [...prev.purchasedPowerups, powerupId],
+          powerupPurchaseCounts: {
+            ...prev.powerupPurchaseCounts,
+            [powerupId]: purchaseCount + 1,
+          },
         };
       }
       return prev;

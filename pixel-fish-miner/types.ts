@@ -47,6 +47,7 @@ export interface GameState {
   inventory: Record<string, number>; // itemId -> quantity owned
   activePowerups: Record<string, number>; // powerupId -> expiration timestamp
   purchasedPowerups: string[]; // List of powerup IDs bought at least once
+  powerupPurchaseCounts: Record<string, number>; // NEW: Track purchase count for dynamic pricing
   usedPromoCodes: string[]; // Track used one-time codes
   successfulPromoCodes: number; // Count of successful promo code uses (for achievements)
   weather: WeatherType;
