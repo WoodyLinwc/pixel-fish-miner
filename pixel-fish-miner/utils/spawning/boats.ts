@@ -8,8 +8,11 @@ import { BackgroundBoat } from "../environment/boats"; // Import existing type
 /**
  * Spawn background boats (parallax effect)
  */
-export const spawnBackgroundBoats = (boats: BackgroundBoat[]): void => {
-  // Reduced occurrence from 0.001 to 0.0005
+export const spawnBackgroundBoats = (
+  boats: BackgroundBoat[],
+  hasKraken: boolean = false, // NEW PARAMETER
+): void => {
+  // Regular boat spawning
   if (Math.random() < 0.0005) {
     const isBig = Math.random() > 0.7; // 30% chance for big ship
     const startLeft = Math.random() > 0.5;
@@ -27,6 +30,24 @@ export const spawnBackgroundBoats = (boats: BackgroundBoat[]): void => {
       type: isBig ? "BIG" : "SMALL",
       color: Math.random(), // For random variation if needed
       scale: finalScale,
+    });
+  }
+
+  // NEW: Ghost boat spawning (only if Kraken owned)
+  if (hasKraken && Math.random() < 0.0003) {
+    const startLeft = Math.random() > 0.5;
+    const speed = 0.25 * (Math.random() * 0.5 + 0.5);
+    const sizeMult = 0.8 + Math.random() * 0.4; // 0.8x to 1.2x variation
+    const finalScale = 0.7 * sizeMult; // Slightly smaller base scale
+
+    boats.push({
+      x: startLeft ? -150 : GAME_WIDTH + 150,
+      y: SURFACE_Y - 8, // Slightly higher for ethereal effect
+      vx: startLeft ? speed : -speed,
+      type: "GHOST",
+      color: Math.random(),
+      scale: finalScale,
+      opacity: 0.3, // Initial opacity
     });
   }
 };

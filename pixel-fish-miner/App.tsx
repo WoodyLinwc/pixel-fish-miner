@@ -645,6 +645,38 @@ const App: React.FC = () => {
 
     setGameState((prev) => {
       if (prev.money >= pet.cost && !prev.unlockedPets.includes(petId)) {
+        // NEW: If buying Kraken, unlock ghost fish
+        if (petId === "kraken") {
+          const ghostFish = [
+            "phantom_perch",
+            "spectral_sardine",
+            "ghost_squid",
+          ];
+          const newUnlockedFish = [...prev.unlockedFish];
+
+          ghostFish.forEach((fishId) => {
+            if (!newUnlockedFish.includes(fishId)) {
+              newUnlockedFish.push(fishId);
+            }
+          });
+
+          // Unlock Kraken achievement
+          const newAchievements = [...prev.achievements];
+          if (!newAchievements.includes("secret_kraken")) {
+            newAchievements.push("secret_kraken");
+          }
+
+          return {
+            ...prev,
+            money: prev.money - pet.cost,
+            unlockedPets: [...prev.unlockedPets, petId],
+            unlockedFish: newUnlockedFish, // Add unlocked ghost fish
+            achievements: newAchievements, // Add Kraken achievement
+            equippedPet: petId, // Auto equip on buy
+          };
+        }
+
+        // Normal pet purchase
         return {
           ...prev,
           money: prev.money - pet.cost,
@@ -990,6 +1022,8 @@ const App: React.FC = () => {
             currentCombo={gameState.currentCombo}
             equippedCostume={gameState.equippedCostume}
             equippedPet={gameState.equippedPet}
+            unlockedPets={gameState.unlockedPets}
+            unlockedFish={gameState.unlockedFish}
             lastPlaneRequestTime={lastPlaneRequestTime}
             onClawRelease={() => audioManager.playClawRelease()}
             onCatchNothing={() => audioManager.playCatchNothing()}

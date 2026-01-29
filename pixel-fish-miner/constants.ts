@@ -230,6 +230,45 @@ export const FISH_TYPES: FishType[] = [
     maxDepth: 0.4,
   },
   {
+    id: "phantom_perch",
+    name: "Phantom Perch",
+    rarity: FishRarity.UNCOMMON,
+    weight: 20,
+    value: 85,
+    speed: 2.2,
+    color: "rgba(200, 230, 255, 0.4)", // Translucent pale blue
+    width: 42,
+    height: 22,
+    minDepth: 0.4,
+    maxDepth: 0.8,
+  },
+  {
+    id: "spectral_sardine",
+    name: "Spectral Sardine",
+    rarity: FishRarity.UNCOMMON,
+    weight: 18,
+    value: 70,
+    speed: 2.8,
+    color: "rgba(220, 200, 255, 0.35)", // Translucent pale purple
+    width: 38,
+    height: 16,
+    minDepth: 0.3,
+    maxDepth: 0.7,
+  },
+  {
+    id: "ghost_squid",
+    name: "Ghost Squid",
+    rarity: FishRarity.UNCOMMON,
+    weight: 22,
+    value: 75,
+    speed: 2.0,
+    color: "rgba(200, 220, 255, 0.4)", // Translucent pale blue-white
+    width: 40,
+    height: 24,
+    minDepth: 0.4,
+    maxDepth: 0.8,
+  },
+  {
     id: "squid",
     name: "Squid",
     rarity: FishRarity.UNCOMMON,
@@ -974,6 +1013,13 @@ export const ACHIEVEMENTS: Achievement[] = [
     category: AchievementCategory.SECRET,
     threshold: 1,
     icon: "🤠",
+  },
+  // Kraken
+  {
+    id: "secret_kraken",
+    category: AchievementCategory.KRAKEN,
+    threshold: 1,
+    icon: "🐙",
   },
   // Narwhal
   {

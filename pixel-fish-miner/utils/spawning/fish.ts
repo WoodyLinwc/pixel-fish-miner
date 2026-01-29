@@ -27,6 +27,7 @@ export const getWeightedFishType = (
   trashFilterLevel: number,
   isSuperBaitActive: boolean,
   isFishFrenzyActive: boolean,
+  unlockedFish: string[], // NEW PARAMETER
 ): FishType => {
   // CHEAT: Fish Frenzy - Force spawn special weather fish
   if (isFishFrenzyActive) {
@@ -86,6 +87,18 @@ export const getWeightedFishType = (
     return true;
   });
 
+  // NEW: Filter out ghost fish if not unlocked
+  availableFish = availableFish.filter((f) => {
+    if (
+      f.id === "phantom_perch" ||
+      f.id === "spectral_sardine" ||
+      f.id === "ghost_squid"
+    ) {
+      return unlockedFish.includes(f.id);
+    }
+    return true;
+  });
+
   const totalWeight = availableFish.reduce(
     (acc, fish) => acc + (RARITY_WEIGHTS[fish.rarity] || 10),
     0,
@@ -114,6 +127,7 @@ export const spawnFish = (
   isFishFrenzyActive: boolean,
   trashSuppressionUntil: number,
   lastNarwhalSpawnTime: number,
+  unlockedFish: string[], // NEW PARAMETER
 ): { shouldUpdateNarwhalTime: boolean } => {
   const now = Date.now();
   let type = getWeightedFishType(
@@ -122,6 +136,7 @@ export const spawnFish = (
     trashFilterLevel,
     isSuperBaitActive,
     isFishFrenzyActive,
+    unlockedFish, // PASS THE NEW PARAMETER
   );
 
   let shouldUpdateNarwhalTime = false;

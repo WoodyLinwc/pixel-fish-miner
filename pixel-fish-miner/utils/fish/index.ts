@@ -34,6 +34,9 @@ import {
   drawSalmon,
   drawTuna,
   drawNeedlefish,
+  drawPhantomPerch,
+  drawSpectralSardine,
+  drawGhostSquid,
 } from "./uncommonFish";
 import {
   drawLargeYellowCroaker,
@@ -93,6 +96,9 @@ export const drawEntity = (
   else if (type.id === "salmon") drawSalmon(ctx, w, h);
   else if (type.id === "tuna") drawTuna(ctx, w, h);
   else if (type.id === "needlefish") drawNeedlefish(ctx, w, h);
+  else if (type.id === "phantom_perch") drawPhantomPerch(ctx, w, h);
+  else if (type.id === "spectral_sardine") drawSpectralSardine(ctx, w, h);
+  else if (type.id === "ghost_squid") drawGhostSquid(ctx, w, h);
   else if (type.id === "pomfret") drawPomfret(ctx, w, h);
   else if (type.id === "large_yellow_croaker")
     drawLargeYellowCroaker(ctx, w, h);

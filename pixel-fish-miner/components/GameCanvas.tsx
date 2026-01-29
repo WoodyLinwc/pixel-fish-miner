@@ -76,6 +76,8 @@ interface GameCanvasProps {
   onRoundComplete: (caughtSomething: boolean) => void; // To update combo
   equippedCostume: string; // Current costume ID
   equippedPet: string | null; // Current pet ID
+  unlockedPets: string[]; // NEW: List of unlocked pet IDs
+  unlockedFish: string[]; // NEW: List of unlocked fish IDs
   lastPlaneRequestTime?: number; // Trigger for promo code plane
   onPassiveIncome: (amount: number) => void;
   onClawRelease?: () => void; // Sound callback
@@ -110,6 +112,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   onRoundComplete,
   equippedCostume,
   equippedPet,
+  unlockedPets,
+  unlockedFish,
   lastPlaneRequestTime,
   onPassiveIncome,
   onClawRelease,
@@ -419,7 +423,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       }
 
       // --- Update Background Boats ---
-      spawnBackgroundBoatEntities(backgroundBoatsRef.current);
+      const hasKraken = unlockedPets.includes("kraken");
+      spawnBackgroundBoatEntities(backgroundBoatsRef.current, hasKraken);
       backgroundBoatsRef.current = updateBackgroundBoatEntities(
         backgroundBoatsRef.current,
       );
@@ -509,6 +514,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             isFishFrenzyActive,
             trashSuppressionUntil.current,
             lastNarwhalSpawnTime.current,
+            unlockedFish, // NEW: Pass unlocked fish list
           );
 
           if (shouldUpdateNarwhalTime) {

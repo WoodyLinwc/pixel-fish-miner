@@ -112,6 +112,9 @@ export const zh = {
     wolffish: "狼鱼",
     boxfish: "箱鲀",
     supply_box: "补给箱",
+    phantom_perch: "幻影鲈鱼",
+    spectral_sardine: "光谱沙丁鱼",
+    ghost_squid: "幽灵鱿鱼",
   },
   upgrades: {
     clawSpeed: {
@@ -247,5 +250,6 @@ export const zh = {
     COMBO: "{0}连击",
     NARWHAL: "海中独角兽",
     PROMO: "使用 {0} 个优惠码",
+    KRAKEN: "驯服克拉肯",
   },
 };

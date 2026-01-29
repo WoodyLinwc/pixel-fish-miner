@@ -112,6 +112,9 @@ export const es = {
     wolffish: "Pez Lobo",
     boxfish: "Pez Cofre",
     supply_box: "Caja de Suministros",
+    phantom_perch: "Perca Fantasma",
+    spectral_sardine: "Sardina Espectral",
+    ghost_squid: "Calamar Fantasma",
   },
   upgrades: {
     clawSpeed: {
@@ -255,5 +258,6 @@ export const es = {
     COMBO: "Racha de {0}x",
     NARWHAL: "Unicornio del Mar",
     PROMO: "Usa {0} Códigos Promo",
+    KRAKEN: "Domina el Kraken",
   },
 };

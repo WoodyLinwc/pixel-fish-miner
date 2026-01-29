@@ -92,6 +92,7 @@ export enum AchievementCategory {
   COMBO = "COMBO",
   NARWHAL = "NARWHAL",
   PROMO = "PROMO",
+  KRAKEN = "KRAKEN",
 }
 
 export interface Achievement {

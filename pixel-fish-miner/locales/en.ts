@@ -112,6 +112,9 @@ export const en = {
     wolffish: "Wolffish",
     boxfish: "Boxfish",
     supply_box: "Supply Box",
+    phantom_perch: "Phantom Perch",
+    spectral_sardine: "Spectral Sardine",
+    ghost_squid: "Ghost Squid",
   },
   upgrades: {
     clawSpeed: {
@@ -253,5 +256,6 @@ export const en = {
     COMBO: "Catch {0} in a row",
     NARWHAL: "Unicorn of the Sea",
     PROMO: "Use {0} Promo Codes",
+    KRAKEN: "Tame the Kraken",
   },
 };
