@@ -68,6 +68,7 @@ export const es = {
     weatherClear: "Clima: ¡Despejado! ☀️",
     moneyAdded: "¡+$500 Añadido! 💰",
     fishFrenzy: "¡Frenesí de Peces! 🐟",
+    fishMigration: "¡La migración de peces ha comenzado! 🐟",
     unlockAll: "¡Peces Desbloqueados! 📖",
     secretUnlocked: "¡Secreto Desbloqueado! 🤠",
     invalidCode: "Código Inválido ❌",

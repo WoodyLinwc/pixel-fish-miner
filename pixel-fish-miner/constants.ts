@@ -264,8 +264,8 @@ export const FISH_TYPES: FishType[] = [
     value: 45,
     speed: 3.5, // Fast
     color: "#80deea", // Cyan/Light Blue
-    width: 60, // Long
-    height: 14, // Thin (slender body, fins extend 6px above/below)
+    width: 80, // Long
+    height: 10, // Thin (slender body, fins extend 6px above/below)
     minDepth: 0.1, // Surface dweller usually
     maxDepth: 0.4,
   },

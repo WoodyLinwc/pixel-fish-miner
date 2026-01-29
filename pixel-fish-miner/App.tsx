@@ -946,7 +946,7 @@ const App: React.FC = () => {
         migrationEndTime: now + 30000, // 30 seconds
         lastMigrationTime: 0, // Reset cooldown so it can trigger again after
       }));
-      return { success: true, message: "Fish migration started!" };
+      return { success: true, message: t.fishMigration };
     }
 
     // Unlock Code: unlock

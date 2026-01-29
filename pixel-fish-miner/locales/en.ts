@@ -68,6 +68,7 @@ export const en = {
     weatherClear: "Weather: Clear! ☀️",
     moneyAdded: "+$500 Added! 💰",
     fishFrenzy: "Fish Frenzy! 🐟",
+    fishMigration: "Fish migration started! 🐟",
     unlockAll: "Fish Unlocked! 📖",
     secretUnlocked: "Secret Unlocked! 🤠",
     invalidCode: "Invalid Code ❌",

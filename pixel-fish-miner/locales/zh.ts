@@ -68,6 +68,7 @@ export const zh = {
     weatherClear: "天气：晴朗！☀️",
     moneyAdded: "获得 $500！💰",
     fishFrenzy: "鱼群狂欢！🐟",
+    fishMigration: "鱼群洄游开启! 🐟",
     unlockAll: "图鉴全开！📖",
     secretUnlocked: "秘密解锁！🤠",
     invalidCode: "无效代码 ❌",
