@@ -231,6 +231,8 @@ Modular environment rendering with separate concerns for sky, water, and ambient
 - **`utils/environment/water.ts`**: Water surface and underwater gradient
 - **`utils/environment/rainbow.ts`**: Double rainbow effect during Rainbow weather
 - **`utils/environment/boats.ts`**: Background boats with parallax motion
+  - **Boat Types**: SMALL (sailboat), BIG (cargo ship), GHOST (Flying Dutchman)
+  - **Ghost Boat**: Haunted galleon with fade effect (opacity 0.0-1.0), glowing green lanterns, only spawns after Kraken purchase
 - **`utils/environment/seagulls.ts`**: Animated seagulls flying across the sky
 
 **Technical Details:**
@@ -281,6 +283,7 @@ Intelligent entity spawning with weighted randomization.
 
 - **Common** (50% spawn weight): Sardine, Herring, Mackerel, etc.
 - **Uncommon** (30% spawn weight): Clownfish, Squid, Salmon, etc.
+  - **Ghost Fish** (unlockable): Phantom Perch, Spectral Sardine, Ghost Squid (Kraken unlock)
 - **Rare** (15% spawn weight): Turbot, Giant Grouper, Anglerfish, etc.
 - **Legendary** (5% spawn weight): Whale, Narwhal (weather-dependent)
 
@@ -290,6 +293,7 @@ Intelligent entity spawning with weighted randomization.
 - Position randomization within screen bounds
 - Velocity and direction variation for natural movement
 - Special conditions (night-only, weather-specific) enforced
+- **Unlock filtering**: Ghost fish only spawn if `unlockedFish` includes their ID
 
 ---
 
@@ -311,6 +315,16 @@ Defines all catchable entities with properties:
 - `isNightOnly`: Optional flag for 19:00-05:00 spawning
 - `showInBag`: Whether to display in encyclopedia
 
+**Special Fish Categories**:
+
+- **Ghost Fish** (Unlockable via Kraken purchase):
+  - `phantom_perch`: Pale blue translucent fish ($85, 42x22, Uncommon)
+  - `spectral_sardine`: Pale purple wispy fish ($70, 38x16, Uncommon)
+  - `ghost_squid`: Pale blue-white ethereal squid ($75, 40x24, Uncommon)
+  - Only spawn after purchasing Kraken pet ($500,000)
+  - Filtered from spawn pool via `unlockedFish` check
+- `showInBag`: Whether to display in encyclopedia
+
 ### Upgrades (`UPGRADES`)
 
 Four upgrade paths with 20 levels each:
@@ -322,14 +336,27 @@ Four upgrade paths with 20 levels each:
 
 ### Powerups (`POWERUPS`)
 
-Single-use consumables with timed effects:
+Single-use consumables with **dynamic pricing system** (NEW):
 
-- **Octopus Gear** (`multiClaw`): $500, 4 extra claws for 30s, 1 free then paid
-- **Crazy Bait** (`superBait`): $300, attracts fish + repels trash for 30s, 1 free then paid
-- **Diamond Hook** (`diamondHook`): $400, instant reel-in for 30s, 1 free then paid
-- **Super Net** (`superNet`): $600, 150px radius catch for 30s, 1 free then paid
-- **Magic Conch** (`magicConch`): $250, random weather for 60s, 1 free then paid
-- **Rainbow Jar** (`rainbowBulb`): $0 (promo code unlock), instant rainbow weather
+**Dynamic Pricing**:
+
+- 1st purchase: **FREE** ($0)
+- 2nd purchase: $250
+- 3rd purchase: $500
+- 4th purchase: $750
+- 5th purchase: $1,000
+- 6th+ purchases: $1,250 (MAXIMUM CAP)
+
+**Available Powerups**:
+
+- **Octopus Gear** (`multiClaw`): 4 extra claws for 30s
+- **Crazy Bait** (`superBait`): Attracts fish + repels trash for 30s
+- **Diamond Hook** (`diamondHook`): Instant reel-in for 30s
+- **Super Net** (`superNet`): 150px radius catch on impact for 30s
+- **Magic Conch** (`magicConch`): Random weather event for 60s
+- **Rainbow Jar** (`rainbowBulb`): Instant rainbow weather (promo code unlock only)
+
+Note: Purchase counts tracked per powerup in `gameState.powerupPurchaseCounts`
 
 ### Costumes (`COSTUMES`)
 
@@ -359,6 +386,10 @@ Companion animals with passive income generation:
 - **Pelican** (`pelican`): $50,000, $3 per 30s (throat pouch animation)
 - **Gentleman Octopus** (`gentleman_octopus`): $80,000, $3 per 30s - Refined octopus with top hat, monocle, bow tie, and cane
 - **Kraken** (`kraken`): $500,000, $10 per 30s - Massive sea monster with 8 enormous tentacles (15-12px thick) wrapping around the boat
+  - **Special Unlock**: Purchasing Kraken unlocks:
+    - 3 Ghost Fish (Phantom Perch, Spectral Sardine, Ghost Squid)
+    - Flying Dutchman ghost boat (background element)
+    - "Tame the Kraken" achievement (🐙)
 
 ---
 
@@ -379,6 +410,7 @@ All translation files export an object with these sections:
 
 - **UI Labels**: title, buttons, modals, controls
 - **Fish Names**: All catchable entities
+  - Ghost Fish: Phantom Perch ("Phantom Perch" / "Perca Fantasma" / 幻影鲈鱼"), Spectral Sardine ("Spectral Sardine" / "Sardina Espectral" / "光谱沙丁鱼"), Ghost Squid ("Ghost Squid" / "Calamar Fantasma" / "幽灵鱿鱼")
 - **Upgrades**: Names and descriptions for all upgrade paths
 - **Powerups**: Names and descriptions for all consumables
 - **Costumes**: Names and descriptions for all skins
@@ -387,8 +419,9 @@ All translation files export an object with these sections:
   - Polar Explorer: "Polar Explorer" / "Exploradora Polar" / "极地探险家"
 - **Pets**: Names and descriptions for all companions
   - Gentleman Octopus: "Sir Octavius" / "Don Octavio" / "章鱼绅士"
-  - Kraken: "Kraken" / "Kraken" / "深海巨妖"
+  - Kraken: "Kraken" / "Kraken" / "克拉肯"
 - **Achievements**: Description templates with {0} placeholders
+  - Kraken Achievement: "Tame the Kraken" / "Domina el Kraken" / "驯服克拉肯"
 - **Promo Messages**: Feedback for promo code usage
 
 ### Implementation
@@ -422,7 +455,7 @@ React components for game interface.
 - **`AchievementsModal.tsx`**: Achievement tracking
   - Progress bars for incomplete achievements
   - Checkmarks for completed achievements
-  - Categories: Fish count, Trash cleaned, Money earned, Combos, Weather fish, Narwhals, Mystery bags, Promo codes
+  - Categories: Fish count, Trash cleaned, Money earned, Combos, Weather fish, Narwhals, Mystery bags, Promo codes, Kraken (pet unlock)
 - **`SettingsModal.tsx`**: Game settings and save management
   - Music/SFX toggles
   - Language selection (EN/ES/ZH)
@@ -632,12 +665,15 @@ To add new content:
 
 - **Static Fish**: Shell, Sea Cucumber, Coral are spawned once at init and never despawn (decorative)
 - **Narwhal Spawning**: During Rainbow weather, standard random spawning excludes Narwhal; it only spawns via timed injection (10s intervals)
+- **Ghost Fish Unlock**: Phantom Perch, Spectral Sardine, and Ghost Squid only spawn after purchasing Kraken pet. Filtered in `getWeightedFishType` via `unlockedFish` check
+- **Ghost Boat**: Flying Dutchman only spawns after Kraken purchase. Features fade effect (opacity 0.0-1.0) and glowing green lanterns
 - **Trash Suppression**: Mystery Bag creates 20s period where trash doesn't spawn (separate from Super Bait)
 - **Combo Pause**: Combo timer pauses when any modal is open
 - **Weather Priority**: Fog and Rainbow override normal day/night sky colors
 - **Crab Hidden**: Pinchy Crab appears in gameplay (cuts line) but is hidden from Bag/Encyclopedia (`showInBag: false`)
 - **Trash Filter**: Progressively reduces trash spawn rate. Formula: `((level-1)/19)*0.95` gives 0-95% reduction across 20 levels
-- **Rendering Order**: Matters for layering - Sky → Celestial → Clouds → Rainbow → Airplane → Seagulls → Boats → Water → Boat → Fisherman/Costume → Pet → Fish → Claws → Particles → Overlays
+- **Powerup Pricing**: Dynamic pricing system - 1st purchase FREE, then $250, $500, $750, $1,000, capped at $1,250. Tracked per powerup in `gameState.powerupPurchaseCounts`
+- **Rendering Order**: Matters for layering - Sky → Celestial → Clouds → Rainbow → Airplane → Seagulls → Boats (including ghost boat) → Water → Boat → Fisherman/Costume → Pet → Fish (including ghost fish) → Claws → Particles → Overlays
 - **GameCanvas Size**: After refactoring, reduced from ~1500 lines to ~725 lines (52% reduction) by extracting rendering, collision, particles, and spawning logic into dedicated utility modules
 - **Pet Rendering**: Pet rendering system is modular with one file per pet in `utils/pets/`. Kraken renders at water level (translated +4px) with no body visible, only massive tentacles (15-12px thick). Gentleman Octopus renders with standard bob animation and all 8 tentacles properly connected to body bottom.
 - **Costume Rendering**: Captain Luna has slimmer body proportions and face width of 14px (vs 16px for most other costumes). Marine Scientist and Polar Explorer are female characters with appropriate proportions and details.
