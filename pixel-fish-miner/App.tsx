@@ -65,6 +65,10 @@ const App: React.FC = () => {
           equippedCostume: parsed.equippedCostume || "default",
           unlockedPets: parsed.unlockedPets || [],
           equippedPet: parsed.equippedPet || null,
+          // Migration state
+          migrationActive: parsed.migrationActive || false,
+          migrationEndTime: parsed.migrationEndTime || 0,
+          lastMigrationTime: parsed.lastMigrationTime || 0,
         };
       } catch (e) {
         console.error("Failed to parse save data", e);
@@ -239,6 +243,42 @@ const App: React.FC = () => {
     }, 1000);
     return () => clearInterval(comboTimer);
   }, [isAutoPaused, isStoreOpen, isBagOpen, isAchievementsOpen]);
+
+  // Migration Timer Logic: Handle migration cooldown and auto-trigger
+  useEffect(() => {
+    const migrationTimer = setInterval(() => {
+      const now = Date.now();
+      setGameState((prev) => {
+        // Check if migration should end
+        if (prev.migrationActive && now >= prev.migrationEndTime) {
+          return {
+            ...prev,
+            migrationActive: false,
+            lastMigrationTime: now, // Set cooldown start time
+          };
+        }
+
+        // Check if ready for next migration (5 minutes = 300000ms cooldown)
+        const timeSinceLastMigration = now - prev.lastMigrationTime;
+        if (
+          !prev.migrationActive &&
+          prev.lastMigrationTime > 0 &&
+          timeSinceLastMigration >= 300000
+        ) {
+          // Trigger new migration (30 seconds = 30000ms)
+          // All 3 migration fish will spawn
+          return {
+            ...prev,
+            migrationActive: true,
+            migrationEndTime: now + 30000,
+          };
+        }
+
+        return prev;
+      });
+    }, 100); // Check every 100ms instead of 1000ms for faster response
+    return () => clearInterval(migrationTimer);
+  }, []);
 
   // Natural Weather Change Logic
   useEffect(() => {
@@ -897,6 +937,18 @@ const App: React.FC = () => {
       return { success: true, message: t.fishFrenzy };
     }
 
+    // Migration Code - Trigger fish migration immediately
+    if (cleanCode === "migration") {
+      const now = Date.now();
+      incrementPromoCounter((prev) => ({
+        ...prev,
+        migrationActive: true,
+        migrationEndTime: now + 30000, // 30 seconds
+        lastMigrationTime: 0, // Reset cooldown so it can trigger again after
+      }));
+      return { success: true, message: "Fish migration started!" };
+    }
+
     // Unlock Code: unlock
     if (cleanCode === "unlock") {
       incrementPromoCounter((prev) => {
@@ -1033,6 +1085,8 @@ const App: React.FC = () => {
             unlockedPets={gameState.unlockedPets}
             unlockedFish={gameState.unlockedFish}
             lastPlaneRequestTime={lastPlaneRequestTime}
+            migrationActive={gameState.migrationActive}
+            migrationEndTime={gameState.migrationEndTime}
             onClawRelease={() => audioManager.playClawRelease()}
             onCatchNothing={() => audioManager.playCatchNothing()}
           />

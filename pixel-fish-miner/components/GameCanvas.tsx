@@ -79,6 +79,8 @@ interface GameCanvasProps {
   unlockedPets: string[]; // NEW: List of unlocked pet IDs
   unlockedFish: string[]; // NEW: List of unlocked fish IDs
   lastPlaneRequestTime?: number; // Trigger for promo code plane
+  migrationActive: boolean; // NEW: Migration active state
+  migrationEndTime: number; // NEW: Migration end timestamp
   onPassiveIncome: (amount: number) => void;
   onClawRelease?: () => void; // Sound callback
   onCatchNothing?: () => void; // Sound callback
@@ -115,6 +117,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   unlockedPets,
   unlockedFish,
   lastPlaneRequestTime,
+  migrationActive,
+  migrationEndTime,
   onPassiveIncome,
   onClawRelease,
   onCatchNothing,
@@ -171,6 +175,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
   // Narwhal Spawn Timer
   const lastNarwhalSpawnTime = useRef<number>(0);
+
+  // Migration tracking
+  const previousMigrationActive = useRef<boolean>(migrationActive);
 
   // Pet Income Timer
   const lastPetIncomeTime = useRef<number>(Date.now());
@@ -487,6 +494,21 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       const totalMaxFish =
         baseMaxFish + (fishDensityLevel - 1) * extraFishPerLevel;
 
+      // --- Clear Migration Fish When Migration Ends ---
+      // Check both prop change AND time expiration (using 'now' from above)
+      const isMigrationActuallyActive =
+        migrationActive && now < migrationEndTime;
+      if (previousMigrationActive.current && !isMigrationActuallyActive) {
+        // Migration just ended, remove all migration fish from screen
+        fishes.current = fishes.current.filter(
+          (f) =>
+            f.type.id !== "pacific_saury" &&
+            f.type.id !== "mullet" &&
+            f.type.id !== "anchovy",
+        );
+      }
+      previousMigrationActive.current = isMigrationActuallyActive;
+
       // Spawn rate also increases with level (decreases interval)
       // Base 500ms, -30ms per level
       const baseSpawnInterval = 500;
@@ -505,6 +527,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
       if (time - lastSpawnTime.current > spawnInterval) {
         if (fishes.current.length < maxFish) {
+          // Use the same 'now' variable from above for consistency
           const { shouldUpdateNarwhalTime } = spawnFishEntity(
             fishes.current,
             weather,
@@ -515,6 +538,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             trashSuppressionUntil.current,
             lastNarwhalSpawnTime.current,
             unlockedFish, // NEW: Pass unlocked fish list
+            isMigrationActuallyActive, // NEW: Pass ACTUAL migration state based on Date.now()
           );
 
           if (shouldUpdateNarwhalTime) {
@@ -1018,11 +1042,45 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       GAME_WIDTH,
       isSuperBaitActive,
     );
+
+    // Migration Status Text with Countdown (subtle display below the boat)
+    // Use time-based check to hide immediately when expired
+    const isMigrationActuallyActive =
+      migrationActive && visualTime < migrationEndTime;
+    if (isMigrationActuallyActive) {
+      const boatX = GAME_WIDTH / 2;
+      const boatY = SURFACE_Y + 20;
+
+      // Calculate remaining time
+      const remainingMs = migrationEndTime - visualTime;
+      const remainingSecs = Math.max(0, Math.ceil(remainingMs / 1000));
+
+      ctx.save();
+      ctx.font = "10px 'Press Start 2P'";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
+      // Background (more transparent)
+      const text = `Migration ${remainingSecs}s`;
+      const textWidth = ctx.measureText(text).width;
+      ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+      ctx.fillRect(boatX - textWidth / 2 - 6, boatY + 50, textWidth + 12, 16);
+
+      // Text with subtle glow
+      ctx.shadowColor = "#4fc3f7";
+      ctx.shadowBlur = 4;
+      ctx.fillStyle = "#81d4fa";
+      ctx.fillText(text, boatX, boatY + 58);
+
+      ctx.restore();
+    }
   }, [
     activePowerups,
     weather,
     weatherExpiration,
     currentCombo,
+    migrationActive,
+    migrationEndTime,
     equippedCostume,
     equippedPet,
     fishDensityLevel,

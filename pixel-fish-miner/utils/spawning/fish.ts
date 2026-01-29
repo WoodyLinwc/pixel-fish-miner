@@ -28,6 +28,7 @@ export const getWeightedFishType = (
   isSuperBaitActive: boolean,
   isFishFrenzyActive: boolean,
   unlockedFish: string[], // NEW PARAMETER
+  migrationActive: boolean = false, // NEW: Migration parameter
 ): FishType => {
   // CHEAT: Fish Frenzy - Force spawn special weather fish
   if (isFishFrenzyActive) {
@@ -99,6 +100,21 @@ export const getWeightedFishType = (
     return true;
   });
 
+  // NEW: MIGRATION - Only migration fish spawn, all others are filtered out
+  if (migrationActive) {
+    // During migration, ONLY the 3 migration fish can spawn
+    availableFish = FISH_TYPES.filter(
+      (f) =>
+        f.id === "pacific_saury" || f.id === "mullet" || f.id === "anchovy",
+    );
+  } else {
+    // When not in migration, don't spawn migration fish
+    availableFish = availableFish.filter(
+      (f) =>
+        f.id !== "pacific_saury" && f.id !== "mullet" && f.id !== "anchovy",
+    );
+  }
+
   const totalWeight = availableFish.reduce(
     (acc, fish) => acc + (RARITY_WEIGHTS[fish.rarity] || 10),
     0,
@@ -128,6 +144,7 @@ export const spawnFish = (
   trashSuppressionUntil: number,
   lastNarwhalSpawnTime: number,
   unlockedFish: string[], // NEW PARAMETER
+  migrationActive: boolean = false, // NEW: Migration parameter
 ): { shouldUpdateNarwhalTime: boolean } => {
   const now = Date.now();
   let type = getWeightedFishType(
@@ -137,6 +154,7 @@ export const spawnFish = (
     isSuperBaitActive,
     isFishFrenzyActive,
     unlockedFish, // PASS THE NEW PARAMETER
+    migrationActive, // PASS MIGRATION PARAMETER
   );
 
   let shouldUpdateNarwhalTime = false;

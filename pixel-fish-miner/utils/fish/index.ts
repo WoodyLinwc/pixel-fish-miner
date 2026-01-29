@@ -25,7 +25,9 @@ import {
   drawCod,
   drawBoxfish,
   drawPomfret,
+  drawPufferfish,
 } from "./commonFish";
+import { drawPacificSaury, drawMullet, drawAnchovy } from "./migrationFish";
 import {
   drawClownfish,
   drawSquid,
@@ -88,6 +90,9 @@ export const drawEntity = (
   else if (type.id === "small_yellow_croaker")
     drawSmallYellowCroaker(ctx, w, h);
   else if (type.id === "mackerel") drawMackerel(ctx, w, h);
+  else if (type.id === "pacific_saury") drawPacificSaury(ctx, w, h);
+  else if (type.id === "mullet") drawMullet(ctx, w, h);
+  else if (type.id === "anchovy") drawAnchovy(ctx, w, h);
   else if (type.id === "cod") drawCod(ctx, w, h);
   else if (type.id === "clownfish") drawClownfish(ctx, w, h);
   else if (type.id === "squid") drawSquid(ctx, w, h);

@@ -164,6 +164,46 @@ export const FISH_TYPES: FishType[] = [
     minDepth: 0.15,
     maxDepth: 0.5,
   },
+  // Migration Fish (spawn during migration events)
+  {
+    id: "pacific_saury",
+    name: "Pacific Saury",
+    rarity: FishRarity.COMMON,
+    weight: 12,
+    value: 18,
+    speed: 2.8,
+    color: "#4fc3f7", // Light cyan-blue
+    width: 38,
+    height: 12,
+    minDepth: 0.15,
+    maxDepth: 0.55,
+  },
+  {
+    id: "mullet",
+    name: "Mullet",
+    rarity: FishRarity.COMMON,
+    weight: 14,
+    value: 22,
+    speed: 2.3,
+    color: "#78909c", // Blue-grey
+    width: 36,
+    height: 16,
+    minDepth: 0.2,
+    maxDepth: 0.6,
+  },
+  {
+    id: "anchovy",
+    name: "Anchovy",
+    rarity: FishRarity.COMMON,
+    weight: 8,
+    value: 12,
+    speed: 3.0,
+    color: "#b0bec5", // Light grey-blue
+    width: 26,
+    height: 10,
+    minDepth: 0.1,
+    maxDepth: 0.5,
+  },
   {
     id: "clownfish",
     name: "Clownfish",
@@ -225,7 +265,7 @@ export const FISH_TYPES: FishType[] = [
     speed: 3.5, // Fast
     color: "#80deea", // Cyan/Light Blue
     width: 60, // Long
-    height: 10, // Thin
+    height: 14, // Thin (slender body, fins extend 6px above/below)
     minDepth: 0.1, // Surface dweller usually
     maxDepth: 0.4,
   },
@@ -789,6 +829,10 @@ export const INITIAL_GAME_STATE = {
   equippedCostume: "default",
   unlockedPets: [],
   equippedPet: null,
+  // Migration state
+  migrationActive: false,
+  migrationEndTime: 0,
+  lastMigrationTime: 0,
 };
 
 export const ACHIEVEMENTS: Achievement[] = [

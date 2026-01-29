@@ -187,8 +187,9 @@ The fish rendering system is organized in a modular folder structure with entity
   - Includes fallback rendering for unknown entity types
 
 - **Individual Fish Category Files**:
-  - `commonFish.ts`: Sardine, Herring, Small Yellow Croaker, Mackerel, Cod, Boxfish, Pomfret
-  - `uncommonFish.ts`: Clownfish, Squid, Sea Bass, Red Snapper, Salmon, Tuna, Needlefish
+  - `commonFish.ts`: Sardine, Herring, Small Yellow Croaker, Mackerel, Cod, Boxfish, Pomfret, Pufferfish
+  - **`migrationFish.ts`**: Pacific Saury, Mullet, Anchovy (only spawn during migration events)
+  - `uncommonFish.ts`: Clownfish, Squid, Sea Bass, Red Snapper, Salmon, Tuna, Needlefish, Phantom Perch, Spectral Sardine, Ghost Squid
   - `rareFish.ts`: Large Yellow Croaker, Turbot, Ribbonfish, Giant Grouper, Anglerfish, Wolffish, Crab, Electric Jelly
   - `legendaryFish.ts`: Whale, Narwhal
   - `weatherFish.ts`: Thunder Eel (Rain), Ice Fin (Snow), Wind Ray (Wind), Sea Turtle (Fog)
@@ -317,6 +318,14 @@ Defines all catchable entities with properties:
 
 **Special Fish Categories**:
 
+- **Migration Fish** (Timed Event):
+  - `pacific_saury`: Pacific Saury ($18, 38x12, Common) - Light cyan elongated fish with beak-like mouth
+  - `mullet`: Mullet ($22, 36x16, Common) - Blue-grey robust fish with forked tail
+  - `anchovy`: Anchovy ($12, 26x10, Common) - Light grey-blue slender fish with lateral stripe
+  - Only spawn during migration events (30-second duration)
+  - Replace ALL other fish spawns during event
+  - Auto-triggers every 5 minutes, manual trigger via promo code "migration"
+  - Visual indicator: "Migration Xs" countdown text below player boat
 - **Ghost Fish** (Unlockable via Kraken purchase):
   - `phantom_perch`: Pale blue translucent fish ($85, 42x22, Uncommon)
   - `spectral_sardine`: Pale purple wispy fish ($70, 38x16, Uncommon)
@@ -393,6 +402,52 @@ Companion animals with passive income generation:
 
 ---
 
+## Game Events & Systems
+
+### Migration Event System
+
+The migration system creates timed events where special migration fish temporarily replace all regular fish spawns.
+
+**Migration Fish** (defined in `utils/fish/migrationFish.ts`):
+
+- **Pacific Saury** (`pacific_saury`): $18, 38x12px, Light cyan-blue elongated body with beak-like mouth, forked tail
+- **Mullet** (`mullet`): $22, 36x16px, Blue-grey robust body with deeply forked tail, silver belly stripe
+- **Anchovy** (`anchovy`): $12, 26x10px, Light grey-blue slender body with signature lateral stripe
+
+**Event Mechanics**:
+
+- **Duration**: 30 seconds per migration event
+- **Cooldown**: 5 minutes (300,000ms) between automatic migrations
+- **Effect**: During migration, ALL regular fish (common, uncommon, rare, legendary, weather) are filtered out of spawning
+- **Visual Indicator**: "Migration Xs" text displays below player boat with countdown (30s → 1s)
+- **Auto-trigger**: Automatically starts every 5 minutes after the last migration ends
+- **Manual trigger**: Promo code `"migration"` immediately starts a migration event and resets cooldown
+
+**State Management** (in `constants.ts` INITIAL_GAME_STATE):
+
+```typescript
+migrationActive: boolean; // Is migration currently happening
+migrationEndTime: number; // Timestamp when migration ends (Date.now() + 30000)
+lastMigrationTime: number; // Timestamp when last migration ended (for cooldown)
+```
+
+**Implementation Details**:
+
+- **Timer Logic** (`App.tsx`): Checks every 100ms for migration end/start conditions
+- **Spawning Filter** (`utils/fish/fish.ts`): `getWeightedFishType()` accepts `migrationActive` parameter
+  - If `migrationActive === true`: Only spawns pacific_saury, mullet, anchovy
+  - If `migrationActive === false`: Filters out migration fish from spawn pool
+- **Fish Clearing** (`GameCanvas.tsx`): When migration ends, all migration fish are immediately removed from screen
+- **Time-based Checks**: Uses `Date.now()` comparisons to handle migration end without waiting for React state updates
+
+**Translations**:
+
+- English: Pacific Saury, Mullet, Anchovy
+- Spanish: Paparda del Pacífico, Mújol, Anchoa
+- Chinese: 秋刀鱼, 鲻鱼, 凤尾鱼
+
+---
+
 ## Localization (`locales/`)
 
 Multi-language support with complete translations.
@@ -410,7 +465,8 @@ All translation files export an object with these sections:
 
 - **UI Labels**: title, buttons, modals, controls
 - **Fish Names**: All catchable entities
-  - Ghost Fish: Phantom Perch ("Phantom Perch" / "Perca Fantasma" / 幻影鲈鱼"), Spectral Sardine ("Spectral Sardine" / "Sardina Espectral" / "光谱沙丁鱼"), Ghost Squid ("Ghost Squid" / "Calamar Fantasma" / "幽灵鱿鱼")
+  - Migration Fish: Pacific Saury ("Pacific Saury" / "Paparda del Pacífico" / "秋刀鱼"), Mullet ("Mullet" / "Mújol" / "鲻鱼"), Anchovy ("Anchovy" / "Anchoa" / "凤尾鱼")
+  - Ghost Fish: Phantom Perch ("Phantom Perch" / "Perca Fantasma" / "幻影鲈鱼"), Spectral Sardine ("Spectral Sardine" / "Sardina Espectral" / "光谱沙丁鱼"), Ghost Squid ("Ghost Squid" / "Calamar Fantasma" / "幽灵鱿鱼")
 - **Upgrades**: Names and descriptions for all upgrade paths
 - **Powerups**: Names and descriptions for all consumables
 - **Costumes**: Names and descriptions for all skins
@@ -665,6 +721,7 @@ To add new content:
 
 - **Static Fish**: Shell, Sea Cucumber, Coral are spawned once at init and never despawn (decorative)
 - **Narwhal Spawning**: During Rainbow weather, standard random spawning excludes Narwhal; it only spawns via timed injection (10s intervals)
+- **Migration Event**: Pacific Saury, Mullet, and Anchovy only spawn during 30-second migration events. During migration, ALL other fish are filtered from spawn pool. Auto-triggers every 5 minutes or via promo code "migration". Uses time-based checks (`Date.now() < migrationEndTime`) to handle instant end without waiting for state updates
 - **Ghost Fish Unlock**: Phantom Perch, Spectral Sardine, and Ghost Squid only spawn after purchasing Kraken pet. Filtered in `getWeightedFishType` via `unlockedFish` check
 - **Ghost Boat**: Flying Dutchman only spawns after Kraken purchase. Features fade effect (opacity 0.0-1.0) and glowing green lanterns
 - **Trash Suppression**: Mystery Bag creates 20s period where trash doesn't spawn (separate from Super Bait)
