@@ -1035,7 +1035,7 @@ const App: React.FC = () => {
   // Calculate multipliers based on levels
   const clawSpeedMultiplier = 1 + ((gameState.clawSpeedLevel || 1) - 1) * 0.2;
   const clawThrowSpeedMultiplier =
-    1 + ((gameState.clawStrengthLevel || 1) - 1) * 0.15;
+    1 + ((gameState.clawStrengthLevel || 1) - 1) * 0.1;
   const t = TRANSLATIONS[language];
 
   // Get current achievement to show
