@@ -495,7 +495,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       // --- Update Fishes ---
       // Calculate max fish based on density level
       const baseMaxFish = 60;
-      const extraFishPerLevel = 8;
+      const extraFishPerLevel = 3;
       const totalMaxFish =
         baseMaxFish + (fishDensityLevel - 1) * extraFishPerLevel;
 
@@ -515,9 +515,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       previousMigrationActive.current = isMigrationActuallyActive;
 
       // Spawn rate also increases with level (decreases interval)
-      // Base 500ms, -30ms per level
+      // Base 500ms, -12ms per level
       const baseSpawnInterval = 500;
-      const intervalReductionPerLevel = 30;
+      const intervalReductionPerLevel = 12;
       let currentSpawnInterval =
         baseSpawnInterval - (fishDensityLevel - 1) * intervalReductionPerLevel;
       if (currentSpawnInterval < 150) currentSpawnInterval = 150; // Cap speed
