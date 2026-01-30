@@ -108,6 +108,7 @@ export const en = {
     shell: "Shiny Shell",
     sea_cucumber: "Sea Cucumber",
     coral: "Coral",
+    anchor: "Anchor",
     large_yellow_croaker: "Large Yellow Croaker",
     small_yellow_croaker: "Small Yellow Croaker",
     pomfret: "Pomfret",

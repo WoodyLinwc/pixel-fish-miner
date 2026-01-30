@@ -111,6 +111,19 @@ export const FISH_TYPES: FishType[] = [
     minDepth: 0.88,
     maxDepth: 0.98,
   },
+  {
+    id: "anchor",
+    name: "Anchor",
+    rarity: FishRarity.UNCOMMON,
+    weight: 150,
+    value: 20,
+    speed: 0, // Stationary
+    color: "#78909c", // Blue Grey (metallic)
+    width: 35,
+    height: 45,
+    minDepth: 0.9,
+    maxDepth: 0.98,
+  },
   // Common Fish
   {
     id: "sardine",

@@ -193,7 +193,7 @@ The fish rendering system is organized in a modular folder structure with entity
   - `rareFish.ts`: Large Yellow Croaker, Turbot, Ribbonfish, Giant Grouper, Anglerfish, Wolffish, Crab, Electric Jelly
   - `legendaryFish.ts`: Whale, Narwhal
   - `weatherFish.ts`: Thunder Eel (Rain), Ice Fin (Snow), Wind Ray (Wind), Sea Turtle (Fog)
-  - `staticItems.ts`: Shell, Sea Cucumber, Coral, Mystery Bag, Supply Box
+  - `staticItems.ts`: Shell, Sea Cucumber, Coral, Anchor, Mystery Bag, Supply Box
   - `trash.ts`: Old Boot, Rusty Can, Plastic Bottle, Straw
 
 - **Rendering Details**:
@@ -719,7 +719,7 @@ To add new content:
 
 ### Known Quirks
 
-- **Static Fish**: Shell, Sea Cucumber, Coral are spawned once at init and never despawn (decorative)
+- **Static Fish**: Shell, Sea Cucumber, Coral, Anchor are spawned once at init and never despawn (decorative)
 - **Narwhal Spawning**: During Rainbow weather, standard random spawning excludes Narwhal; it only spawns via timed injection (10s intervals)
 - **Migration Event**: Pacific Saury, Mullet, and Anchovy only spawn during 30-second migration events. During migration, ALL other fish are filtered from spawn pool. Auto-triggers every 5 minutes or via promo code "migration". Uses time-based checks (`Date.now() < migrationEndTime`) to handle instant end without waiting for state updates
 - **Ghost Fish Unlock**: Phantom Perch, Spectral Sardine, and Ghost Squid only spawn after purchasing Kraken pet. Filtered in `getWeightedFishType` via `unlockedFish` check

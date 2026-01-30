@@ -108,6 +108,7 @@ export const zh = {
     shell: "闪亮贝壳",
     sea_cucumber: "海参",
     coral: "珊瑚",
+    anchor: "锚",
     large_yellow_croaker: "大黄鱼",
     small_yellow_croaker: "小黄鱼",
     pomfret: "鲳鱼",

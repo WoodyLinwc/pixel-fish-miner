@@ -16,6 +16,7 @@ import {
   drawMysteryBag,
   drawSupplyBox,
   drawCoral,
+  drawAnchor,
 } from "./staticItems";
 import {
   drawSardine,
@@ -85,6 +86,7 @@ export const drawEntity = (
   else if (type.id === "shell") drawShell(ctx, w, h);
   else if (type.id === "sea_cucumber") drawSeaCucumber(ctx, w, h);
   else if (type.id === "coral") drawCoral(ctx, w, h);
+  else if (type.id === "anchor") drawAnchor(ctx, w, h);
   else if (type.id === "sardine") drawSardine(ctx, w, h);
   else if (type.id === "herring") drawHerring(ctx, w, h);
   else if (type.id === "small_yellow_croaker")

@@ -59,9 +59,13 @@ export const getWeightedFishType = (
     }
   }
 
-  // Filter out static items from random spawning logic (Shell, Sea Cucumber, Coral)
+  // Filter out static items from random spawning logic (Shell, Sea Cucumber, Coral, Anchor)
   availableFish = availableFish.filter(
-    (f) => f.id !== "shell" && f.id !== "sea_cucumber" && f.id !== "coral",
+    (f) =>
+      f.id !== "shell" &&
+      f.id !== "sea_cucumber" &&
+      f.id !== "coral" &&
+      f.id !== "anchor",
   );
 
   // Filter out supply_box (Event Only)
@@ -178,6 +182,7 @@ export const spawnFish = (
       f.id !== "shell" &&
       f.id !== "sea_cucumber" &&
       f.id !== "coral" &&
+      f.id !== "anchor" &&
       f.id !== "narwhal" &&
       f.id !== "supply_box",
   );

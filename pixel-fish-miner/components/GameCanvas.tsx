@@ -241,17 +241,22 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     }
     cloudsRef.current = clouds;
 
-    // Static Bottom Items (Shells & Sea Cucumbers & Coral)
+    // Static Bottom Items (Shells & Sea Cucumbers & Coral & Anchor)
     // Remove any existing static items first to prevent duplication on re-mounts/Strict Mode
     fishes.current = fishes.current.filter(
       (f) =>
         f.type.id !== "shell" &&
         f.type.id !== "sea_cucumber" &&
-        f.type.id !== "coral",
+        f.type.id !== "coral" &&
+        f.type.id !== "anchor",
     );
 
     const staticTypes = FISH_TYPES.filter(
-      (f) => f.id === "shell" || f.id === "sea_cucumber" || f.id === "coral",
+      (f) =>
+        f.id === "shell" ||
+        f.id === "sea_cucumber" ||
+        f.id === "coral" ||
+        f.id === "anchor",
     );
     const placedStaticItems: EntityFish[] = []; // Keep track locally to check collisions during generation
 

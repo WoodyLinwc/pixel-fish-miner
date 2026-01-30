@@ -108,6 +108,7 @@ export const es = {
     shell: "Concha Brillante",
     sea_cucumber: "Pepino de Mar",
     coral: "Coral",
+    anchor: "Ancla",
     large_yellow_croaker: "Corvina Amarilla Grande",
     small_yellow_croaker: "Corvina Amarilla Pequeña",
     pomfret: "Palometa",
