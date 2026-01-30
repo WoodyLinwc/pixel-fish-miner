@@ -844,22 +844,16 @@ export const ACHIEVEMENTS: Achievement[] = [
     icon: "🐟",
   },
   {
-    id: "fish_5",
+    id: "fish_10",
     category: AchievementCategory.FISH,
-    threshold: 5,
-    icon: "🐟",
-  },
-  {
-    id: "fish_20",
-    category: AchievementCategory.FISH,
-    threshold: 20,
+    threshold: 10,
     icon: "🐠",
   },
   {
     id: "fish_50",
     category: AchievementCategory.FISH,
     threshold: 50,
-    icon: "🐠",
+    icon: "🐡",
   },
   {
     id: "fish_100",
@@ -871,19 +865,19 @@ export const ACHIEVEMENTS: Achievement[] = [
     id: "fish_500",
     category: AchievementCategory.FISH,
     threshold: 500,
-    icon: "🦈",
+    icon: "🐬",
   },
   {
     id: "fish_1000",
     category: AchievementCategory.FISH,
     threshold: 1000,
-    icon: "👑",
+    icon: "🐳",
   },
   {
     id: "fish_5000",
     category: AchievementCategory.FISH,
     threshold: 5000,
-    icon: "👾",
+    icon: "🐋",
   }, // New
 
   // Weather Specials
@@ -917,25 +911,19 @@ export const ACHIEVEMENTS: Achievement[] = [
     id: "trash_1",
     category: AchievementCategory.TRASH,
     threshold: 1,
-    icon: "👞",
+    icon: "🥤",
   },
   {
-    id: "trash_5",
+    id: "trash_10",
     category: AchievementCategory.TRASH,
-    threshold: 5,
-    icon: "👞",
-  },
-  {
-    id: "trash_20",
-    category: AchievementCategory.TRASH,
-    threshold: 20,
-    icon: "👞",
+    threshold: 10,
+    icon: "🛢️",
   },
   {
     id: "trash_50",
     category: AchievementCategory.TRASH,
     threshold: 50,
-    icon: "🥾",
+    icon: "👞",
   },
   {
     id: "trash_100",
@@ -947,13 +935,19 @@ export const ACHIEVEMENTS: Achievement[] = [
     id: "trash_500",
     category: AchievementCategory.TRASH,
     threshold: 500,
-    icon: "🥾",
+    icon: "🗑️",
   },
   {
     id: "trash_1000",
     category: AchievementCategory.TRASH,
     threshold: 1000,
     icon: "♻️",
+  },
+  {
+    id: "trash_5000",
+    category: AchievementCategory.TRASH,
+    threshold: 5000,
+    icon: "🚮",
   },
 
   // Mystery
