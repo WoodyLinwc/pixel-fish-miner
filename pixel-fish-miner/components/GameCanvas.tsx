@@ -499,12 +499,25 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       const totalMaxFish =
         baseMaxFish + (fishDensityLevel - 1) * extraFishPerLevel;
 
-      // --- Clear Migration Fish When Migration Ends ---
+      // --- Handle Migration State Changes ---
       // Check both prop change AND time expiration (using 'now' from above)
       const isMigrationActuallyActive =
         migrationActive && now < migrationEndTime;
+
+      // When migration STARTS, clear all non-static fish
+      if (!previousMigrationActive.current && isMigrationActuallyActive) {
+        // Migration just started, remove all regular fish (keep only static items)
+        fishes.current = fishes.current.filter(
+          (f) =>
+            f.type.id === "shell" ||
+            f.type.id === "sea_cucumber" ||
+            f.type.id === "coral" ||
+            f.type.id === "anchor",
+        );
+      }
+
+      // When migration ENDS, remove all migration fish from screen
       if (previousMigrationActive.current && !isMigrationActuallyActive) {
-        // Migration just ended, remove all migration fish from screen
         fishes.current = fishes.current.filter(
           (f) =>
             f.type.id !== "pacific_saury" &&
@@ -512,6 +525,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             f.type.id !== "anchovy",
         );
       }
+
       previousMigrationActive.current = isMigrationActuallyActive;
 
       // Spawn rate also increases with level (decreases interval)

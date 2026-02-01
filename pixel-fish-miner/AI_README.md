@@ -721,7 +721,7 @@ To add new content:
 
 - **Static Fish**: Shell, Sea Cucumber, Coral, Anchor are spawned once at init and never despawn (decorative)
 - **Narwhal Spawning**: During Rainbow weather, standard random spawning excludes Narwhal; it only spawns via timed injection (10s intervals)
-- **Migration Event**: Pacific Saury, Mullet, and Anchovy only spawn during 30-second migration events. During migration, ALL other fish are filtered from spawn pool. Auto-triggers every 5 minutes or via promo code "migration". Uses time-based checks (`Date.now() < migrationEndTime`) to handle instant end without waiting for state updates
+- **Migration Event**: Pacific Saury, Mullet, and Anchovy only spawn during 30-second migration events. When migration starts, ALL existing fish (except static decorations) are immediately cleared from the screen, and only migration fish spawn. When migration ends, all migration fish are cleared. Auto-triggers every 5 minutes or via promo code "migration". Uses time-based checks (`Date.now() < migrationEndTime`) to handle instant end without waiting for state updates
 - **Ghost Fish Unlock**: Phantom Perch, Spectral Sardine, and Ghost Squid only spawn after purchasing Kraken pet. Filtered in `getWeightedFishType` via `unlockedFish` check
 - **Ghost Boat**: Flying Dutchman only spawns after Kraken purchase. Features fade effect (opacity 0.0-1.0) and glowing green lanterns
 - **Trash Suppression**: Mystery Bag creates 20s period where trash doesn't spawn (separate from Super Bait)
