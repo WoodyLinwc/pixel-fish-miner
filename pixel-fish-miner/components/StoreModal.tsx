@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { UPGRADES, POWERUPS, COSTUMES, PETS } from "../constants";
 import { GameState, Language } from "../types";
 import { TRANSLATIONS } from "../locales/translations";
@@ -54,6 +54,19 @@ const StoreModal: React.FC<StoreModalProps> = ({
     success: boolean;
     message: string;
   } | null>(null);
+
+  // Ref for promo input to handle keyboard blocking
+  const promoInputRef = useRef<HTMLInputElement>(null);
+
+  // Scroll input into view when focused (fixes mobile keyboard blocking)
+  const handlePromoFocus = () => {
+    setTimeout(() => {
+      promoInputRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }, 300); // Delay to allow keyboard to open
+  };
 
   if (!isOpen) return null;
 
@@ -276,7 +289,7 @@ const StoreModal: React.FC<StoreModalProps> = ({
             {t.shopTitle}
           </h2>
 
-          <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto pr-2 pb-32 custom-scrollbar">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {/* --- UPGRADES --- */}
               {/* Speed Upgrade */}
@@ -796,10 +809,12 @@ const StoreModal: React.FC<StoreModalProps> = ({
                   )}
 
                   <input
+                    ref={promoInputRef}
                     type="text"
                     value={promoCode}
                     onChange={(e) => setPromoCode(e.target.value)}
                     onKeyDown={handleKeyDown}
+                    onFocus={handlePromoFocus}
                     placeholder={t.promoCode}
                     className="bg-[#fff3e0] border-2 border-[#8d6e63] text-[#5d4037] text-xs p-2 rounded w-40 focus:outline-none focus:border-[#3e2723] placeholder-[#bcaaa4]"
                   />
