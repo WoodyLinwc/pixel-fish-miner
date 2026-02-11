@@ -9,6 +9,7 @@ class AudioManager {
   private musicVolume: number = 0.3; // 30% volume for background music
   private sfxVolume: number = 0.5; // 50% volume for sound effects
   private initialized: boolean = false;
+  private musicReady: boolean = false; // Track if music is fully loaded
 
   constructor() {
     this.initAudio();
@@ -20,6 +21,19 @@ class AudioManager {
       this.bgMusic = new Audio("/sounds/background.mp3");
       this.bgMusic.loop = true;
       this.bgMusic.volume = this.musicVolume;
+      this.bgMusic.preload = "auto"; // Force full preload on mobile
+
+      // Wait for music to be fully loaded before allowing playback
+      this.bgMusic.addEventListener("canplaythrough", () => {
+        this.musicReady = true;
+        console.log("Background music fully loaded");
+      });
+
+      // Handle loading errors
+      this.bgMusic.addEventListener("error", (e) => {
+        console.error("Music loading error:", e);
+        this.musicReady = false;
+      });
 
       // Initialize sound effects (all MP3 for maximum compatibility)
       this.sounds.claw = new Audio("/sounds/claw.mp3");
@@ -28,9 +42,10 @@ class AudioManager {
       this.sounds.powerup = new Audio("/sounds/powerup.mp3");
       this.sounds.button = new Audio("/sounds/button.mp3");
 
-      // Set volume for all sound effects
+      // Set volume and preload for all sound effects
       Object.values(this.sounds).forEach((sound) => {
         sound.volume = this.sfxVolume;
+        sound.preload = "auto";
       });
 
       this.initialized = true;
@@ -42,6 +57,24 @@ class AudioManager {
   // Background Music Controls
   public startMusic() {
     if (!this.initialized || !this.musicEnabled || !this.bgMusic) {
+      return;
+    }
+
+    // Only play if music is fully loaded
+    if (!this.musicReady) {
+      console.log("Music not ready yet, waiting for load...");
+      // Try again after music loads
+      this.bgMusic?.addEventListener(
+        "canplaythrough",
+        () => {
+          if (this.musicEnabled) {
+            this.bgMusic?.play().catch((error) => {
+              console.warn("Music play blocked:", error.message);
+            });
+          }
+        },
+        { once: true },
+      );
       return;
     }
 
@@ -63,6 +96,13 @@ class AudioManager {
       this.startMusic();
     } else {
       this.stopMusic();
+    }
+  }
+
+  // Force load audio (useful for mobile - call on first user interaction)
+  public forceLoadMusic() {
+    if (this.bgMusic && !this.musicReady) {
+      this.bgMusic.load();
     }
   }
 
