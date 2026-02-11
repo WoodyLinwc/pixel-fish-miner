@@ -199,11 +199,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     const offsets = [0, -35, 35, -70, 70];
     const initialClaws: ClawEntity[] = [];
 
+    // Slower oscillation on mobile for better feel
+    const baseAngleSpeed = window.Capacitor ? 0.02 : 0.03;
+
     for (let i = 0; i < 5; i++) {
       initialClaws.push({
         state: ClawState.IDLE,
         angle: 0,
-        angleSpeed: 0.03 * (Math.random() > 0.5 ? 1 : -1), // Randomize start direction for organic feel
+        angleSpeed: baseAngleSpeed * (Math.random() > 0.5 ? 1 : -1), // Randomize start direction for organic feel
         length: 60,
         xOffset: offsets[i],
         caughtFish: [],
