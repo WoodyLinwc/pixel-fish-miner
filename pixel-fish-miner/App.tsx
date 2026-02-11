@@ -32,6 +32,9 @@ import {
   decryptSaveData,
   downloadSaveFile,
 } from "./utils/encryption";
+import { App as CapApp } from "@capacitor/app";
+import { StatusBar } from "@capacitor/status-bar";
+import { Keyboard } from "@capacitor/keyboard";
 
 const App: React.FC = () => {
   // --- Persistence ---
@@ -314,6 +317,60 @@ const App: React.FC = () => {
     }, 20000); // Check every 20 seconds
     return () => clearInterval(weatherTimer);
   }, [isAutoPaused, isStoreOpen, isBagOpen, isAchievementsOpen]);
+
+  // Android Native Handlers (Capacitor)
+  useEffect(() => {
+    // Only run on mobile (Capacitor)
+    if (window.Capacitor) {
+      // Hide status bar for fullscreen
+      StatusBar.hide().catch(() => {
+        // Ignore error on web
+      });
+
+      // Prevent keyboard from pushing content
+      Keyboard.setScroll({ isDisabled: true }).catch(() => {
+        // Ignore error on web
+      });
+
+      // Handle Android back button
+      CapApp.addListener("backButton", ({ canGoBack }) => {
+        // Close modal if any is open
+        if (
+          isStoreOpen ||
+          isBagOpen ||
+          isSlotMachineOpen ||
+          isAchievementsOpen ||
+          isSettingsOpen
+        ) {
+          setIsStoreOpen(false);
+          setIsBagOpen(false);
+          setIsSlotMachineOpen(false);
+          setIsAchievementsOpen(false);
+          setIsSettingsOpen(false);
+        } else if (canGoBack) {
+          window.history.back();
+        } else {
+          // Exit app confirmation
+          const confirmExit = window.confirm("Exit game?");
+          if (confirmExit) {
+            CapApp.exitApp();
+          }
+        }
+      });
+    }
+
+    return () => {
+      if (window.Capacitor) {
+        CapApp.removeAllListeners();
+      }
+    };
+  }, [
+    isStoreOpen,
+    isBagOpen,
+    isSlotMachineOpen,
+    isAchievementsOpen,
+    isSettingsOpen,
+  ]);
 
   // --- Logic ---
 
