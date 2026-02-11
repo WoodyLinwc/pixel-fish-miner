@@ -147,9 +147,26 @@ class AudioManager {
     try {
       const soundClone = sound.cloneNode() as HTMLAudioElement;
       soundClone.volume = this.sfxVolume;
-      soundClone.play().catch((error) => {
-        console.warn(`Sound ${soundKey} play error:`, error.message);
-      });
+
+      // Ensure sound is loaded before playing (mobile fix)
+      if (soundClone.readyState >= 2) {
+        // HAVE_CURRENT_DATA or better - ready to play
+        soundClone.play().catch((error) => {
+          console.warn(`Sound ${soundKey} play error:`, error.message);
+        });
+      } else {
+        // Wait for sound to load, then play
+        soundClone.addEventListener(
+          "canplay",
+          () => {
+            soundClone.play().catch((error) => {
+              console.warn(`Sound ${soundKey} play error:`, error.message);
+            });
+          },
+          { once: true },
+        );
+        soundClone.load(); // Force load
+      }
     } catch (error) {
       console.error(`Error playing sound ${soundKey}:`, error);
     }
