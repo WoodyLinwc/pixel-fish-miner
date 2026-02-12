@@ -13,7 +13,7 @@ This project is a React-based arcade game inspired by "Gold Miner," styled with 
 - **Rendering:** HTML5 Canvas (managed within `GameCanvas.tsx` and `utils/drawing.ts`).
 - **State Management:** React `useState` for UI/Persistence, `useRef` for high-frequency game loop data.
 - **Persistence:** `localStorage` (Keys: `pixel-fish-miner-save`, `pixel-fish-miner-lang`, `pixel-fish-miner-music`, `pixel-fish-miner-sfx`).
-- **Audio:** HTML5 Audio API (managed via `audioManager.ts`).
+- **Audio:** Web Audio API (managed via `audioManager.ts`). Decodes full MP3 files into in-memory AudioBuffers for reliable playback on both web and mobile.
 - **Encryption:** XOR cipher + Base64 encoding for save file export/import (`encryption.ts`).
 
 ---
@@ -34,7 +34,19 @@ The game is deployed as both a web application and a native Android app using Ca
 
 #### Audio System (`utils/audioManager.ts`)
 
-EMPTY
+- **API**: Web Audio API (`AudioContext` + `AudioBuffer` + `AudioBufferSourceNode`)
+- **Why not HTMLAudioElement**: Android WebView has two critical bugs with `HTMLAudioElement`:
+  1. `.loop = true` restarts at the end of the _buffered_ portion (~1 second) instead of the full track
+  2. Backgrounding the app releases all buffered audio data, breaking playback on resume and killing SFX clones
+- **Solution**: `fetch()` → `decodeAudioData()` decodes entire MP3 into raw PCM stored in JavaScript heap memory. This data is never released by Android's media pipeline.
+- **Music Looping**: `AudioBufferSourceNode.loop = true` works correctly because the full decoded buffer is in memory
+- **Pause/Resume Lifecycle**:
+  - `pauseMusic()`: Saves playback position, destroys source node, calls `AudioContext.suspend()` to free system audio resources
+  - `resumeMusic()`: Calls `AudioContext.resume()` (restores both music AND SFX capability), creates fresh source node from saved offset
+  - Capacitor `pause` event → `audioManager.pauseMusic()`
+  - Capacitor `resume` event → `audioManager.resumeMusic()` (called unconditionally — method handles music toggle internally, but always resumes AudioContext for SFX)
+- **SFX**: Each play creates a new lightweight `AudioBufferSourceNode` from pre-decoded buffer — overlapping sounds work naturally, no cloning of broken elements
+- **Auto-play Policy**: AudioContext created and sounds loaded on first user interaction (click/touch/keypress). Loading screen tap serves as this interaction on mobile.
 
 #### Loading Screen (`components/LoadingScreen.tsx`)
 
@@ -219,7 +231,7 @@ android/
 #### Audio Files
 
 - **Location**: Bundled in APK at `assets/public/sounds/`
-- **Loading**: Instant on mobile (no network delay)
+- **Loading**: On first user interaction, all files are fetched and decoded into in-memory AudioBuffers via Web Audio API
 - **Format**: MP3 (maximum compatibility)
 - **Files**:
   - background.mp3 (looping music)
@@ -267,7 +279,12 @@ android/
       - Tier 2 (Ghost Crab, Cat): $2 per 30s
       - Tier 3 (Pelican, Gentleman Octopus, Dog): $3 per 30s
       - Tier 4 (Kraken): $10 per 30s
-  - **Audio Management**: EMPTY
+  - **Audio Management**: Syncs React state with `audioManager` singleton.
+    - `useEffect` syncs `isMusicOn` → `audioManager.setMusicEnabled()`
+    - `useEffect` syncs `isSoundEffectsOn` → `audioManager.setSfxEnabled()`
+    - `useEffect` calls `audioManager.startMusic()` when `isLoading` becomes `false`
+    - Capacitor lifecycle: `pause` → `audioManager.pauseMusic()`, `resume` → `audioManager.resumeMusic()` (always unconditional)
+    - All game actions call `audioManager.playButtonSound()`, `playMoneySound()`, `playPowerupSound()`, etc.
   - **UI Composition**: Renders `GameCanvas`, HUD, and Modals.
 
 ### 2. Game Engine (`components/GameCanvas.tsx`)
@@ -768,26 +785,79 @@ React components for game interface.
 
 ## Audio System (`utils/audioManager.ts`)
 
-Centralized audio management with volume control and browser compatibility.
+Centralized audio management using the **Web Audio API** for reliable cross-platform playback.
+
+### Why Web Audio API (not HTMLAudioElement)
+
+`HTMLAudioElement` streams audio progressively, which causes two fatal bugs on Android WebView:
+
+1. **1-second loop bug**: `.loop = true` restarts playback at the end of the currently-buffered portion (~1 second) instead of waiting for the full track to finish. The browser sees the buffer boundary as "end of audio" and loops.
+2. **Background buffer eviction**: When the user swipes away from the app, Android reclaims memory by releasing all buffered audio data. The JavaScript objects still exist but are empty shells. On resume, `.play()` re-buffers from scratch, triggering Bug 1 again. SFX cloned from these empty elements produce silence.
+
+**Web Audio API** avoids both issues: `fetch()` downloads the full MP3, `decodeAudioData()` decodes it into raw PCM stored in JavaScript's heap memory. This data is never released by Android's media pipeline. `AudioBufferSourceNode.loop = true` operates on the complete decoded buffer, so looping works correctly.
+
+### Architecture
+
+```
+AudioManager (singleton)
+├── AudioContext              ← Created on first user interaction
+│   ├── musicGain (GainNode)  ← Volume: 0.3, connects to destination
+│   └── sfxGain (GainNode)    ← Volume: 0.5, connects to destination
+├── musicBuffer (AudioBuffer) ← Decoded background.mp3 PCM data
+├── sfxBuffers (Map)          ← Decoded PCM for each SFX
+│   ├── "button" → AudioBuffer
+│   ├── "claw" → AudioBuffer
+│   ├── "catchnothing" → AudioBuffer
+│   ├── "money" → AudioBuffer
+│   └── "powerup" → AudioBuffer
+└── musicSource (AudioBufferSourceNode) ← Current playing instance
+```
 
 ### Audio Files
 
-Located in `/public/` directory:
+Located in `/public/sounds/` directory:
 
-- **`music.mp3`**: Ocean ambient background music (looping)
-- **`catchfish.mp3`**: Successful catch sound
+- **`background.mp3`**: Ocean ambient background music (looping)
+- **`claw.mp3`**: Claw release/throw sound
 - **`catchnothing.mp3`**: Empty claw return sound
-- **`money.mp3`**: Fish caught sound
-- **`powerup.mp3`**: Purchase/activation sound
+- **`money.mp3`**: Fish caught / money earned sound
+- **`powerup.mp3`**: Powerup activation sound
 - **`button.mp3`**: UI button click sound
+
+### Lifecycle
+
+1. **Constructor**: Reads music/SFX preferences from localStorage, sets up user interaction listeners
+2. **First interaction** (click/touch/keypress): Creates `AudioContext`, calls `fetch()` + `decodeAudioData()` for all 6 sound files in parallel, stores decoded `AudioBuffer`s in memory
+3. **After loading screen** (`startMusic()`): Creates `AudioBufferSourceNode` with `loop = true`, connects to `musicGain`, starts playback
+4. **App background** (`pauseMusic()`): Saves playback position (`musicOffset`), destroys source node, suspends `AudioContext`
+5. **App foreground** (`resumeMusic()`): Resumes `AudioContext` (needed for SFX too), creates new source node from saved offset. `AudioBuffer` data is still intact in memory
+6. **Toggle off** (`stopMusic()`): Resets offset to 0, destroys source node
+
+### Public Methods
+
+| Method                  | Description                                        | Called From                                      |
+| ----------------------- | -------------------------------------------------- | ------------------------------------------------ |
+| `startMusic()`          | Start background music from beginning              | `App.tsx` after loading                          |
+| `pauseMusic()`          | Save position, destroy source, suspend context     | Capacitor `pause` event                          |
+| `resumeMusic()`         | Resume context + restart music from saved position | Capacitor `resume` event                         |
+| `stopMusic()`           | Stop and reset to beginning                        | Internal (toggle off)                            |
+| `setMusicEnabled(bool)` | Toggle music on/off                                | `App.tsx` useEffect on `isMusicOn`               |
+| `setSfxEnabled(bool)`   | Toggle SFX on/off                                  | `App.tsx` useEffect on `isSoundEffectsOn`        |
+| `playButtonSound()`     | UI click                                           | Buy, equip, export, import, slot bet             |
+| `playClawRelease()`     | Claw throw                                         | `GameCanvas` `onClawRelease` prop                |
+| `playCatchNothing()`    | Empty return                                       | `GameCanvas` `onCatchNothing` prop               |
+| `playMoneySound()`      | Fish caught                                        | `handleFishCaught`, `handleSlotWin`, mystery bag |
+| `playPowerupSound()`    | Powerup used                                       | `handleActivatePowerup`                          |
 
 ### Implementation Notes
 
-- **Format**: All MP3 for maximum browser compatibility
-- **Volume**: Background music 30%, SFX 50% (adjustable in code)
-- **Cloning**: SFX are cloned on play to allow overlapping sounds
-- **Auto-play Policy**: Music only starts after first user interaction (click/touch/keypress)
-- **Persistence**: Music/SFX preferences saved to localStorage
+- **Format**: All MP3 for maximum browser/WebView compatibility
+- **Volume**: Background music 30%, SFX 50% (constants at top of file)
+- **SFX Overlap**: Each `playSfx()` call creates a new `AudioBufferSourceNode` — these are lightweight objects that auto-GC after playback
+- **Auto-play Policy**: `AudioContext` + `loadAllSounds()` deferred to first user interaction. Music queued via `musicPendingPlay` flag if `startMusic()` called before interaction
+- **Persistence**: Music/SFX toggle preferences saved to localStorage (`pixel-fish-miner-music`, `pixel-fish-miner-sfx`)
+- **Position Tracking**: `musicOffset` tracks seconds into the track, `musicStartTime` tracks `ctx.currentTime` at play start. On pause: `offset = (offset + elapsed) % duration`
+- **Singleton**: Exported as `audioManager` instance, imported throughout `App.tsx`
 
 ---
 
