@@ -6,77 +6,37 @@ interface LoadingScreenProps {
 
 const LoadingScreen: React.FC<LoadingScreenProps> = ({ onLoadComplete }) => {
   const [progress, setProgress] = useState(0);
-  const [status, setStatus] = useState("Loading audio...");
 
   useEffect(() => {
-    const loadAudio = async () => {
-      const startTime = Date.now();
-      const MIN_DISPLAY_TIME = 2000; // Show loading screen for at least 2 seconds
+    console.log("🔵 LoadingScreen: Starting 2 second delay...");
 
-      const audioFiles = [
-        "/sounds/background.mp3",
-        "/sounds/claw.mp3",
-        "/sounds/catchnothing.mp3",
-        "/sounds/money.mp3",
-        "/sounds/powerup.mp3",
-        "/sounds/button.mp3",
-      ];
+    const startTime = Date.now();
+    const LOADING_TIME = 2000; // 2 seconds to give audio time to load
 
-      let loaded = 0;
-      const total = audioFiles.length;
-
-      for (const audioFile of audioFiles) {
-        try {
-          await new Promise<void>((resolve, reject) => {
-            const audio = new Audio(audioFile);
-
-            audio.addEventListener(
-              "canplaythrough",
-              () => {
-                loaded++;
-                setProgress(Math.round((loaded / total) * 100));
-                setStatus(`Loading ${audioFile.split("/").pop()}...`);
-                resolve();
-              },
-              { once: true },
-            );
-
-            audio.addEventListener(
-              "error",
-              (e) => {
-                console.warn(`Failed to load ${audioFile}:`, e);
-                loaded++;
-                setProgress(Math.round((loaded / total) * 100));
-                resolve(); // Continue even if one file fails
-              },
-              { once: true },
-            );
-
-            audio.load();
-          });
-        } catch (error) {
-          console.error(`Error loading ${audioFile}:`, error);
-          loaded++;
-          setProgress(Math.round((loaded / total) * 100));
-        }
-      }
-
-      setStatus("Ready to play!");
-
-      // Ensure loading screen shows for at least MIN_DISPLAY_TIME
-      const elapsedTime = Date.now() - startTime;
-      const remainingTime = Math.max(0, MIN_DISPLAY_TIME - elapsedTime);
-
-      console.log(
-        `Loading completed in ${elapsedTime}ms, waiting ${remainingTime}ms more`,
+    // Animate progress
+    const progressInterval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const newProgress = Math.min(
+        100,
+        Math.round((elapsed / LOADING_TIME) * 100),
       );
+      setProgress(newProgress);
 
-      setTimeout(() => {
-        onLoadComplete();
-      }, remainingTime);
+      if (newProgress >= 100) {
+        clearInterval(progressInterval);
+      }
+    }, 50);
+
+    // Complete after LOADING_TIME
+    const timeout = setTimeout(() => {
+      console.log("🔵 LoadingScreen: Completing after 2 seconds");
+      onLoadComplete();
+    }, LOADING_TIME);
+
+    return () => {
+      clearInterval(progressInterval);
+      clearTimeout(timeout);
     };
-
-    loadAudio();
   }, [onLoadComplete]);
 
   return (
@@ -147,7 +107,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onLoadComplete }) => {
 
         {/* Status Text */}
         <div className="text-[#e0e0e0] text-xs font-mono animate-pulse">
-          {status}
+          Loading game...
         </div>
 
         {/* Pixel Fish Miner Title */}

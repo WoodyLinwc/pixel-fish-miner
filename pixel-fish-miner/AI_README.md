@@ -34,20 +34,11 @@ The game is deployed as both a web application and a native Android app using Ca
 
 #### Audio System (`utils/audioManager.ts`)
 
-- **Platform Detection**: Uses `window.Capacitor` to detect mobile environment
-- **Mobile Strategy**: Audio files preloaded with `audio.load()` and `preload="auto"`
-- **Sound Effect Handling**:
-  - Web: Clones audio elements to allow overlapping sounds
-  - Mobile: Resets `currentTime` and replays original element (cloning causes loading issues)
-- **Background Music**: Force loads entire file before playback to prevent 1-second loop bug
+EMPTY
 
 #### Loading Screen (`components/LoadingScreen.tsx`)
 
-- **Purpose**: Preloads all 6 audio files before game starts
-- **Minimum Display**: Shows for at least 2 seconds (audio loads instantly on mobile due to bundling)
-- **Progress Tracking**: Displays loading progress bar and current file being loaded
-- **Visual**: Animated bouncing fish icon with ocean blue progress bar
-- **Integration**: Wraps entire app in `App.tsx` with `isLoading` state
+EMPTY
 
 #### Game Physics (`components/GameCanvas.tsx`)
 
@@ -251,33 +242,6 @@ android/
 - **No Analytics**: No tracking or data collection
 - **Offline**: Fully playable offline after initial install
 
-### Known Mobile Issues
-
-1. **App Icon Cache**: Android aggressively caches launcher icons
-   - **Solution**: Uninstall app completely + restart phone before reinstall
-2. **Splash Screen Priority**: Native splash may briefly show before LoadingScreen
-   - **Mitigation**: Disabled Capacitor splash via `launchShowDuration: 0`
-3. **Keyboard Behavior**: On-screen keyboard can push content up
-   - **Fixed**: Custom scroll-into-view handler in StoreModal
-
-4. **Audio Autoplay**: May be blocked on first app launch
-   - **Solution**: LoadingScreen interaction enables audio context
-   - **Fallback**: Music won't play until user taps screen
-
-### Testing Checklist
-
-Mobile-specific features to verify:
-
-- [ ] Audio loads and plays correctly
-- [ ] Back button closes modals before exiting app
-- [ ] LoadingScreen shows for 2+ seconds
-- [ ] Keyboard doesn't block promo input
-- [ ] Touch controls feel responsive (slower claw oscillation)
-- [ ] Game centered vertically on screen
-- [ ] Save/load persists across app restarts
-- [ ] Status bar hidden (fullscreen mode)
-- [ ] No performance drops during gameplay
-
 ---
 
 ## File Structure & Responsibilities
@@ -303,7 +267,7 @@ Mobile-specific features to verify:
       - Tier 2 (Ghost Crab, Cat): $2 per 30s
       - Tier 3 (Pelican, Gentleman Octopus, Dog): $3 per 30s
       - Tier 4 (Kraken): $10 per 30s
-  - **Audio Management**: Controls music and sound effects based on user settings.
+  - **Audio Management**: EMPTY
   - **UI Composition**: Renders `GameCanvas`, HUD, and Modals.
 
 ### 2. Game Engine (`components/GameCanvas.tsx`)
@@ -790,14 +754,7 @@ React components for game interface.
 
 ### Loading & System Components
 
-- **`LoadingScreen.tsx`**: Asset preloading screen (mobile-focused)
-  - Preloads all 6 audio files before game starts
-  - Displays animated bouncing fish icon
-  - Shows progress bar (0-100%) and current file loading
-  - Minimum 2-second display time (audio loads instantly on mobile)
-  - Wood brown background (#4a3728) matching game aesthetic
-  - Calls `onLoadComplete()` callback when ready
-  - Prevents audio loading issues on mobile devices
+- **`LoadingScreen.tsx`**: EMPTY
 
 ### HUD Components
 

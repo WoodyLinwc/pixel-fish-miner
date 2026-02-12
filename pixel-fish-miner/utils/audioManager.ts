@@ -1,75 +1,275 @@
 // Audio Manager for Pixel Fish Miner
+// ====================================
+// Uses Web Audio API instead of HTMLAudioElement.
+//
+// Why: HTMLAudioElement streams audio progressively. On Android WebView:
+//   - .loop restarts at the end of the buffered portion (~1s), not the full track
+//   - Going to background releases buffered data, breaking playback on resume
+//   - Cloned elements inherit broken buffers, killing SFX
+//
+// Web Audio API decodes the entire MP3 into an in-memory AudioBuffer (raw PCM).
+// Once decoded, the data never gets released — looping, pausing, and resuming
+// all work from the full decoded buffer regardless of WebView state.
+
+const MUSIC_VOLUME = 0.3;
+const SFX_VOLUME = 0.5;
+
+const SOUND_PATHS: Record<string, string> = {
+  background: "/sounds/background.mp3",
+  button: "/sounds/button.mp3",
+  catchnothing: "/sounds/catchnothing.mp3",
+  claw: "/sounds/claw.mp3",
+  money: "/sounds/money.mp3",
+  powerup: "/sounds/powerup.mp3",
+};
+
 class AudioManager {
-  private bgMusic: HTMLAudioElement | null = null;
-  private sounds: Record<string, HTMLAudioElement> = {};
-  private musicEnabled: boolean = false;
-  private soundEffectsEnabled: boolean = true;
-  private musicVolume: number = 0.3;
-  private sfxVolume: number = 0.5;
-  private initialized: boolean = false;
-  private isMobile: boolean = false;
+  // Web Audio API core
+  private ctx: AudioContext | null = null;
+  private musicGain: GainNode | null = null;
+  private sfxGain: GainNode | null = null;
+
+  // Decoded audio buffers (persist in memory forever once loaded)
+  private musicBuffer: AudioBuffer | null = null;
+  private sfxBuffers: Map<string, AudioBuffer> = new Map();
+
+  // Current music source node (one-shot — must recreate after each stop)
+  private musicSource: AudioBufferSourceNode | null = null;
+
+  // Music position tracking for pause/resume
+  private musicStartTime: number = 0; // ctx.currentTime when playback started
+  private musicOffset: number = 0; // position in track (seconds)
+  private isMusicPlaying: boolean = false;
+
+  // State
+  private isMusicEnabled: boolean = true;
+  private isSfxEnabled: boolean = true;
+  private hasUserInteracted: boolean = false;
+  private musicPendingPlay: boolean = false;
+  private isLoaded: boolean = false;
+  private isLoading: boolean = false;
 
   constructor() {
-    this.isMobile = !!window.Capacitor;
-    this.initAudio();
+    const savedMusic = localStorage.getItem("pixel-fish-miner-music");
+    const savedSfx = localStorage.getItem("pixel-fish-miner-sfx");
+    this.isMusicEnabled = savedMusic !== null ? savedMusic === "true" : true;
+    this.isSfxEnabled = savedSfx !== null ? savedSfx === "true" : true;
+
+    this.setupInteractionListeners();
   }
 
-  private initAudio() {
-    try {
-      this.bgMusic = new Audio("/sounds/background.mp3");
-      this.bgMusic.loop = true;
-      this.bgMusic.volume = this.musicVolume;
+  // ─── AudioContext Setup ───────────────────────────────────────
 
-      if (this.isMobile) {
-        this.bgMusic.preload = "auto";
-        this.bgMusic.load();
+  private ensureContext(): AudioContext {
+    if (!this.ctx) {
+      const AudioCtx =
+        window.AudioContext || (window as any).webkitAudioContext;
+      this.ctx = new AudioCtx();
+
+      this.musicGain = this.ctx.createGain();
+      this.musicGain.gain.value = MUSIC_VOLUME;
+      this.musicGain.connect(this.ctx.destination);
+
+      this.sfxGain = this.ctx.createGain();
+      this.sfxGain.gain.value = SFX_VOLUME;
+      this.sfxGain.connect(this.ctx.destination);
+    }
+
+    return this.ctx;
+  }
+
+  // ─── Audio Loading ────────────────────────────────────────────
+
+  private async loadAllSounds(): Promise<void> {
+    if (this.isLoaded || this.isLoading) return;
+    this.isLoading = true;
+
+    const ctx = this.ensureContext();
+
+    try {
+      const entries = Object.entries(SOUND_PATHS);
+
+      // Fetch and decode all files in parallel
+      const results = await Promise.allSettled(
+        entries.map(async ([key, path]) => {
+          const response = await fetch(path);
+          const arrayBuffer = await response.arrayBuffer();
+          const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+          return { key, audioBuffer };
+        }),
+      );
+
+      for (const result of results) {
+        if (result.status === "fulfilled") {
+          const { key, audioBuffer } = result.value;
+          if (key === "background") {
+            this.musicBuffer = audioBuffer;
+          } else {
+            this.sfxBuffers.set(key, audioBuffer);
+          }
+        } else {
+          console.warn("Failed to load sound:", result.reason);
+        }
       }
 
-      this.sounds.claw = new Audio("/sounds/claw.mp3");
-      this.sounds.catchNothing = new Audio("/sounds/catchnothing.mp3");
-      this.sounds.money = new Audio("/sounds/money.mp3");
-      this.sounds.powerup = new Audio("/sounds/powerup.mp3");
-      this.sounds.button = new Audio("/sounds/button.mp3");
-
-      Object.values(this.sounds).forEach((sound) => {
-        sound.volume = this.sfxVolume;
-        if (this.isMobile) {
-          sound.preload = "auto";
-          sound.load();
-        }
-      });
-
-      this.initialized = true;
-    } catch (error) {
-      console.error("Error initializing audio:", error);
+      this.isLoaded = true;
+    } catch (err) {
+      console.error("Audio loading error:", err);
+    } finally {
+      this.isLoading = false;
     }
   }
 
-  public startMusic() {
-    if (!this.initialized || !this.musicEnabled || !this.bgMusic) {
+  // ─── User Interaction Gate ────────────────────────────────────
+
+  private setupInteractionListeners(): void {
+    const unlock = async () => {
+      if (this.hasUserInteracted) return;
+      this.hasUserInteracted = true;
+
+      // Create context and load all sounds on first interaction
+      const ctx = this.ensureContext();
+      if (ctx.state === "suspended") {
+        await ctx.resume().catch(() => {});
+      }
+      await this.loadAllSounds();
+
+      // Start music if it was waiting
+      if (this.musicPendingPlay && this.isMusicEnabled) {
+        this.playMusicInternal();
+      }
+
+      document.removeEventListener("click", unlock);
+      document.removeEventListener("touchstart", unlock);
+      document.removeEventListener("keydown", unlock);
+    };
+
+    document.addEventListener("click", unlock);
+    document.addEventListener("touchstart", unlock);
+    document.addEventListener("keydown", unlock);
+  }
+
+  // ─── Background Music ─────────────────────────────────────────
+
+  /** Start background music from the beginning. Call after loading screen. */
+  startMusic(): void {
+    if (!this.isMusicEnabled) return;
+
+    if (!this.hasUserInteracted || !this.isLoaded) {
+      this.musicPendingPlay = true;
       return;
     }
 
-    const playPromise = this.bgMusic.play();
+    this.musicOffset = 0;
+    this.playMusicInternal();
+  }
 
-    if (playPromise !== undefined) {
-      playPromise.catch((error) => {
-        console.warn("Music play blocked:", error.message);
-        if (this.isMobile) {
-          this.bgMusic?.load();
-        }
-      });
+  /** Create a new source node and start playing from musicOffset */
+  private playMusicInternal(): void {
+    if (!this.musicBuffer || !this.ctx || !this.musicGain) return;
+    this.musicPendingPlay = false;
+
+    // Stop any existing source
+    this.destroyMusicSource();
+
+    // Make sure context is running
+    if (this.ctx.state === "suspended") {
+      this.ctx.resume().catch(() => {});
+    }
+
+    const source = this.ctx.createBufferSource();
+    source.buffer = this.musicBuffer;
+    source.loop = true; // Works correctly with Web Audio — full PCM is in memory
+    source.connect(this.musicGain);
+
+    const offset = this.musicOffset % this.musicBuffer.duration;
+    source.start(0, offset);
+
+    this.musicSource = source;
+    this.musicStartTime = this.ctx.currentTime;
+    this.isMusicPlaying = true;
+
+    source.onended = () => {
+      if (this.musicSource === source) {
+        this.isMusicPlaying = false;
+      }
+    };
+  }
+
+  /** Stop and disconnect the current source node */
+  private destroyMusicSource(): void {
+    if (this.musicSource) {
+      try {
+        this.musicSource.onended = null;
+        this.musicSource.stop();
+        this.musicSource.disconnect();
+      } catch {
+        // May already be stopped
+      }
+      this.musicSource = null;
+    }
+    this.isMusicPlaying = false;
+  }
+
+  /** Save how far into the track we are */
+  private savePosition(): void {
+    if (this.isMusicPlaying && this.ctx && this.musicBuffer) {
+      const elapsed = this.ctx.currentTime - this.musicStartTime;
+      this.musicOffset =
+        (this.musicOffset + elapsed) % this.musicBuffer.duration;
     }
   }
 
-  public stopMusic() {
-    if (!this.bgMusic) return;
-    this.bgMusic.pause();
-    this.bgMusic.currentTime = 0;
+  /**
+   * Pause music and suspend AudioContext.
+   * Call from Capacitor 'pause' event (app going to background).
+   */
+  pauseMusic(): void {
+    this.savePosition();
+    this.destroyMusicSource();
+
+    // Suspend context to release system audio resources on mobile
+    if (this.ctx && this.ctx.state === "running") {
+      this.ctx.suspend().catch(() => {});
+    }
   }
 
-  public toggleMusic(enabled: boolean) {
-    this.musicEnabled = enabled;
+  /**
+   * Resume AudioContext and restart music if enabled.
+   * ALWAYS call this from Capacitor 'resume' event — it resumes the
+   * AudioContext so SFX work again, even if music is toggled off.
+   */
+  resumeMusic(): void {
+    if (!this.hasUserInteracted || !this.isLoaded || !this.ctx) return;
+
+    // Always resume the AudioContext (needed for SFX too)
+    if (this.ctx.state === "suspended") {
+      this.ctx
+        .resume()
+        .then(() => {
+          // Only restart music if it's enabled
+          if (this.isMusicEnabled) {
+            this.playMusicInternal();
+          }
+        })
+        .catch(() => {});
+    } else if (this.isMusicEnabled) {
+      this.playMusicInternal();
+    }
+  }
+
+  /** Stop music and reset to beginning */
+  stopMusic(): void {
+    this.musicOffset = 0;
+    this.destroyMusicSource();
+    this.musicPendingPlay = false;
+  }
+
+  // ─── Music Toggle ─────────────────────────────────────────────
+
+  setMusicEnabled(enabled: boolean): void {
+    this.isMusicEnabled = enabled;
+
     if (enabled) {
       this.startMusic();
     } else {
@@ -77,75 +277,64 @@ class AudioManager {
     }
   }
 
-  public toggleSoundEffects(enabled: boolean) {
-    this.soundEffectsEnabled = enabled;
+  getMusicEnabled(): boolean {
+    return this.isMusicEnabled;
   }
 
-  public playClawRelease() {
-    this.playSound("claw");
+  // ─── SFX Toggle ───────────────────────────────────────────────
+
+  setSfxEnabled(enabled: boolean): void {
+    this.isSfxEnabled = enabled;
   }
 
-  public playCatchNothing() {
-    this.playSound("catchNothing");
+  getSfxEnabled(): boolean {
+    return this.isSfxEnabled;
   }
 
-  public playMoneySound() {
-    this.playSound("money");
-  }
+  // ─── Sound Effect Playback ────────────────────────────────────
 
-  public playPowerupSound() {
-    this.playSound("powerup");
-  }
+  /**
+   * Play a one-shot sound effect.
+   * Creates a new AudioBufferSourceNode from the pre-decoded buffer.
+   * Multiple overlapping plays are fine — source nodes are lightweight.
+   */
+  private playSfx(key: string): void {
+    if (!this.isSfxEnabled || !this.hasUserInteracted) return;
+    if (!this.ctx || !this.sfxGain) return;
 
-  public playButtonSound() {
-    this.playSound("button");
-  }
+    const buffer = this.sfxBuffers.get(key);
+    if (!buffer) return;
 
-  private playSound(soundKey: string) {
-    if (!this.initialized || !this.soundEffectsEnabled) {
-      return;
+    // Resume context if suspended (safety net)
+    if (this.ctx.state === "suspended") {
+      this.ctx.resume().catch(() => {});
     }
 
-    const sound = this.sounds[soundKey];
-    if (!sound) {
-      console.error(`Sound ${soundKey} not found`);
-      return;
-    }
-
-    try {
-      if (this.isMobile) {
-        sound.currentTime = 0;
-        const playPromise = sound.play();
-
-        if (playPromise !== undefined) {
-          playPromise.catch((error) => {
-            console.warn(`Sound ${soundKey} play error:`, error.message);
-          });
-        }
-      } else {
-        const soundClone = sound.cloneNode() as HTMLAudioElement;
-        soundClone.volume = this.sfxVolume;
-        soundClone.play().catch((error) => {
-          console.warn(`Sound ${soundKey} play error:`, error.message);
-        });
-      }
-    } catch (error) {
-      console.error(`Error playing sound ${soundKey}:`, error);
-    }
+    const source = this.ctx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(this.sfxGain);
+    source.start(0);
+    // AudioBufferSourceNodes auto-GC after playback — no cleanup needed
   }
 
-  public setMusicVolume(volume: number) {
-    this.musicVolume = Math.max(0, Math.min(1, volume));
-    if (this.bgMusic) {
-      this.bgMusic.volume = this.musicVolume;
-    }
+  playButtonSound(): void {
+    this.playSfx("button");
   }
 
-  public setSFXVolume(volume: number) {
-    this.sfxVolume = Math.max(0, Math.min(1, volume));
-    Object.values(this.sounds).forEach((sound) => {
-      sound.volume = this.sfxVolume;
-    });
+  playClawRelease(): void {
+    this.playSfx("claw");
+  }
+
+  playCatchNothing(): void {
+    this.playSfx("catchnothing");
+  }
+
+  playMoneySound(): void {
+    this.playSfx("money");
+  }
+
+  playPowerupSound(): void {
+    this.playSfx("powerup");
   }
 }
 

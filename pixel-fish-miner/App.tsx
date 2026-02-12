@@ -137,52 +137,21 @@ const App: React.FC = () => {
     localStorage.setItem("pixel-fish-miner-lang", language);
   }, [language]);
 
-  // Sync audio manager with music/sound effects settings
+  // ===== AUDIO: Sync audio manager with React state =====
   useEffect(() => {
-    audioManager.toggleMusic(isMusicOn);
-
-    // Try to start music if enabled and user has interacted
-    if (
-      isMusicOn &&
-      hasInteractedRef.current &&
-      !musicStartAttemptedRef.current
-    ) {
-      musicStartAttemptedRef.current = true;
-      audioManager.startMusic();
-    }
+    audioManager.setMusicEnabled(isMusicOn);
   }, [isMusicOn]);
 
   useEffect(() => {
-    audioManager.toggleSoundEffects(isSoundEffectsOn);
+    audioManager.setSfxEnabled(isSoundEffectsOn);
   }, [isSoundEffectsOn]);
 
-  // Set up user interaction listener to enable music auto-play
+  // Start background music after loading screen finishes
   useEffect(() => {
-    const handleFirstInteraction = () => {
-      if (!hasInteractedRef.current) {
-        hasInteractedRef.current = true;
-
-        // If music is enabled, try to start it
-        if (isMusicOn && !musicStartAttemptedRef.current) {
-          musicStartAttemptedRef.current = true;
-          audioManager.startMusic();
-        }
-      }
-    };
-
-    // Listen for any user interaction
-    window.addEventListener("click", handleFirstInteraction, { once: true });
-    window.addEventListener("keydown", handleFirstInteraction, { once: true });
-    window.addEventListener("touchstart", handleFirstInteraction, {
-      once: true,
-    });
-
-    return () => {
-      window.removeEventListener("click", handleFirstInteraction);
-      window.removeEventListener("keydown", handleFirstInteraction);
-      window.removeEventListener("touchstart", handleFirstInteraction);
-    };
-  }, [isMusicOn]);
+    if (!isLoading) {
+      audioManager.startMusic();
+    }
+  }, [isLoading]);
 
   // Handle visibility change (Tab switching)
   useEffect(() => {
@@ -195,6 +164,38 @@ const App: React.FC = () => {
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
+  // ===== APP LIFECYCLE - Pause/Resume Audio =====
+  useEffect(() => {
+    // Only set up listeners on mobile
+    if (!window.Capacitor) return;
+
+    let pauseListener: any;
+    let resumeListener: any;
+
+    const setupAppListeners = async () => {
+      // App going to background — pause music and suspend AudioContext
+      pauseListener = await CapApp.addListener("pause", () => {
+        console.log("App going to background - pausing audio");
+        audioManager.pauseMusic();
+      });
+
+      // App returning to foreground — ALWAYS call resumeMusic().
+      // It resumes the AudioContext (needed for SFX) and only
+      // restarts music playback if music is enabled.
+      resumeListener = await CapApp.addListener("resume", () => {
+        console.log("App resuming from background - resuming audio");
+        audioManager.resumeMusic();
+      });
+    };
+
+    setupAppListeners();
+
+    return () => {
+      pauseListener?.remove();
+      resumeListener?.remove();
     };
   }, []);
 
@@ -323,48 +324,54 @@ const App: React.FC = () => {
   // Android Native Handlers (Capacitor)
   useEffect(() => {
     // Only run on mobile (Capacitor)
-    if (window.Capacitor) {
+    if (!window.Capacitor) return;
+
+    let backButtonListener: any;
+
+    const setupCapacitor = async () => {
       // Hide status bar for fullscreen
-      StatusBar.hide().catch(() => {
-        // Ignore error on web
-      });
+      try {
+        await StatusBar.hide();
+      } catch (error) {
+        console.warn("StatusBar hide failed:", error);
+      }
 
       // Prevent keyboard from pushing content
-      Keyboard.setScroll({ isDisabled: true }).catch(() => {
-        // Ignore error on web
-      });
+      try {
+        await Keyboard.setScroll({ isDisabled: true });
+      } catch (error) {
+        console.warn("Keyboard setScroll failed:", error);
+      }
 
       // Handle Android back button
-      CapApp.addListener("backButton", ({ canGoBack }) => {
-        // Close modal if any is open
-        if (
-          isStoreOpen ||
-          isBagOpen ||
-          isSlotMachineOpen ||
-          isAchievementsOpen ||
-          isSettingsOpen
-        ) {
+      backButtonListener = await CapApp.addListener("backButton", () => {
+        // If any modal is open, close it instead of exiting
+        if (isStoreOpen) {
           setIsStoreOpen(false);
+        } else if (isBagOpen) {
           setIsBagOpen(false);
+        } else if (isSlotMachineOpen) {
           setIsSlotMachineOpen(false);
+        } else if (isAchievementsOpen) {
           setIsAchievementsOpen(false);
+        } else if (isSettingsOpen) {
           setIsSettingsOpen(false);
-        } else if (canGoBack) {
-          window.history.back();
+        } else if (isAutoPaused) {
+          setIsAutoPaused(false);
         } else {
-          // Exit app confirmation
-          const confirmExit = window.confirm("Exit game?");
-          if (confirmExit) {
+          // No modals open - show exit confirmation
+          const shouldExit = window.confirm("Exit game?");
+          if (shouldExit) {
             CapApp.exitApp();
           }
         }
       });
-    }
+    };
+
+    setupCapacitor();
 
     return () => {
-      if (window.Capacitor) {
-        CapApp.removeAllListeners();
-      }
+      backButtonListener?.remove();
     };
   }, [
     isStoreOpen,
@@ -372,6 +379,7 @@ const App: React.FC = () => {
     isSlotMachineOpen,
     isAchievementsOpen,
     isSettingsOpen,
+    isAutoPaused,
   ]);
 
   // --- Logic ---
@@ -541,482 +549,482 @@ const App: React.FC = () => {
       let currentLevel = 1;
 
       if (upgradeId === "clawSpeed") currentLevel = prev.clawSpeedLevel || 1;
-      if (upgradeId === "clawStrength")
+      else if (upgradeId === "clawStrength")
         currentLevel = prev.clawStrengthLevel || 1;
-      if (upgradeId === "fishDensity")
+      else if (upgradeId === "fishDensity")
         currentLevel = prev.fishDensityLevel || 1;
-      if (upgradeId === "trashFilter")
+      else if (upgradeId === "trashFilter")
         currentLevel = prev.trashFilterLevel || 1;
 
+      if (currentLevel >= upg.maxLevel) {
+        console.warn("Already at max level");
+        return prev;
+      }
+
+      // Calculate cost using formula: baseCost * (costMultiplier ^ (currentLevel - 1))
       const cost = Math.floor(
         upg.baseCost * Math.pow(upg.costMultiplier, currentLevel - 1),
       );
 
-      if (prev.money >= cost && currentLevel < upg.maxLevel) {
-        // Play purchase sound
-        audioManager.playPowerupSound();
-
-        const newState = { ...prev, money: prev.money - cost };
-
-        if (upgradeId === "clawSpeed") {
-          newState.clawSpeedLevel = (prev.clawSpeedLevel || 1) + 1;
-        }
-        if (upgradeId === "clawStrength") {
-          newState.clawStrengthLevel = (prev.clawStrengthLevel || 1) + 1;
-        }
-        if (upgradeId === "fishDensity") {
-          newState.fishDensityLevel = (prev.fishDensityLevel || 1) + 1;
-        }
-        if (upgradeId === "trashFilter") {
-          newState.trashFilterLevel = (prev.trashFilterLevel || 1) + 1;
-        }
-        return newState;
+      if (prev.money < cost) {
+        console.warn("Not enough money");
+        return prev;
       }
+
+      // Play sound
+      audioManager.playButtonSound();
+
+      const newMoney = prev.money - cost;
+      const newLevel = currentLevel + 1;
+
+      if (upgradeId === "clawSpeed") {
+        return { ...prev, money: newMoney, clawSpeedLevel: newLevel };
+      } else if (upgradeId === "clawStrength") {
+        return { ...prev, money: newMoney, clawStrengthLevel: newLevel };
+      } else if (upgradeId === "fishDensity") {
+        return { ...prev, money: newMoney, fishDensityLevel: newLevel };
+      } else if (upgradeId === "trashFilter") {
+        return { ...prev, money: newMoney, trashFilterLevel: newLevel };
+      }
+
       return prev;
     });
   };
 
   const handleDowngradeUpgrade = (upgradeId: string) => {
     setGameState((prev) => {
-      const upg = UPGRADES[upgradeId];
       let currentLevel = 1;
 
       if (upgradeId === "clawSpeed") currentLevel = prev.clawSpeedLevel || 1;
-      if (upgradeId === "clawStrength")
+      else if (upgradeId === "clawStrength")
         currentLevel = prev.clawStrengthLevel || 1;
-      if (upgradeId === "fishDensity")
+      else if (upgradeId === "fishDensity")
         currentLevel = prev.fishDensityLevel || 1;
-      if (upgradeId === "trashFilter")
+      else if (upgradeId === "trashFilter")
         currentLevel = prev.trashFilterLevel || 1;
 
-      if (currentLevel > 1) {
-        // Refund calculation: Cost of previous level (level - 2 for array index/exponent logic)
-        // Example: At Lvl 2, you paid Base * Mult^0. Refund that.
-        // Exponent is (CurrentLevel - 2)
-        const refund = Math.floor(
-          upg.baseCost * Math.pow(upg.costMultiplier, currentLevel - 2),
-        );
-
-        const newState = { ...prev, money: prev.money + refund };
-
-        if (upgradeId === "clawSpeed") {
-          newState.clawSpeedLevel = (prev.clawSpeedLevel || 1) - 1;
-        }
-        if (upgradeId === "clawStrength") {
-          newState.clawStrengthLevel = (prev.clawStrengthLevel || 1) - 1;
-        }
-        if (upgradeId === "fishDensity") {
-          newState.fishDensityLevel = (prev.fishDensityLevel || 1) - 1;
-        }
-        if (upgradeId === "trashFilter") {
-          newState.trashFilterLevel = (prev.trashFilterLevel || 1) - 1;
-        }
-        return newState;
+      if (currentLevel <= 1) {
+        console.warn("Already at minimum level");
+        return prev;
       }
+
+      const upg = UPGRADES[upgradeId];
+      // Calculate the cost that was paid for the current level (to refund 70%)
+      const refundCost = Math.floor(
+        upg.baseCost * Math.pow(upg.costMultiplier, currentLevel - 2),
+      );
+      const refund = Math.floor(refundCost * 0.7);
+
+      // Play sound
+      audioManager.playButtonSound();
+
+      const newMoney = prev.money + refund;
+      const newLevel = currentLevel - 1;
+
+      if (upgradeId === "clawSpeed") {
+        return { ...prev, money: newMoney, clawSpeedLevel: newLevel };
+      } else if (upgradeId === "clawStrength") {
+        return { ...prev, money: newMoney, clawStrengthLevel: newLevel };
+      } else if (upgradeId === "fishDensity") {
+        return { ...prev, money: newMoney, fishDensityLevel: newLevel };
+      } else if (upgradeId === "trashFilter") {
+        return { ...prev, money: newMoney, trashFilterLevel: newLevel };
+      }
+
       return prev;
     });
   };
 
   const handleBuyPowerup = (powerupId: string) => {
-    // Find powerup key from id
-    const powerupKey = Object.keys(POWERUPS).find(
-      (key) => POWERUPS[key].id === powerupId,
-    );
-    if (!powerupKey) return;
-
-    const powerup = POWERUPS[powerupKey];
-
     setGameState((prev) => {
-      // Get purchase count (0 if never bought)
-      const purchaseCount = prev.powerupPurchaseCounts[powerupId] || 0;
+      const powerup = POWERUPS[powerupId];
 
-      // Dynamic pricing: 1st = FREE, 2nd = $250, 3rd = $500, 4th = $750, 5th = $1000, 6th+ = $1250 (MAX)
+      // Calculate current purchase count for this powerup
+      const currentCount = prev.powerupPurchaseCounts?.[powerupId] || 0;
+
+      // Pricing tiers: 1st FREE, then $250, $500, $750, $1000, capped at $1250
+      const pricePerPurchase = [0, 250, 500, 750, 1000];
       const cost =
-        purchaseCount === 0 ? 0 : Math.min(purchaseCount * 250, 1250);
+        currentCount < pricePerPurchase.length
+          ? pricePerPurchase[currentCount]
+          : 1250;
 
-      if (prev.money >= cost) {
-        // Play purchase sound
-        audioManager.playPowerupSound();
-
-        return {
-          ...prev,
-          money: prev.money - cost,
-          inventory: {
-            ...prev.inventory,
-            [powerupId]: (prev.inventory[powerupId] || 0) + 1,
-          },
-          purchasedPowerups: prev.purchasedPowerups.includes(powerupId)
-            ? prev.purchasedPowerups
-            : [...prev.purchasedPowerups, powerupId],
-          powerupPurchaseCounts: {
-            ...prev.powerupPurchaseCounts,
-            [powerupId]: purchaseCount + 1,
-          },
-        };
+      if (prev.money < cost) {
+        console.warn("Not enough money for powerup");
+        return prev;
       }
-      return prev;
+
+      // Add to purchasedPowerups array
+      const newPurchased = [...prev.purchasedPowerups, powerupId];
+
+      // Increment purchase count
+      const newCounts = {
+        ...prev.powerupPurchaseCounts,
+        [powerupId]: currentCount + 1,
+      };
+
+      // Play sound
+      audioManager.playButtonSound();
+
+      return {
+        ...prev,
+        money: prev.money - cost,
+        purchasedPowerups: newPurchased,
+        powerupPurchaseCounts: newCounts,
+      };
     });
   };
 
   const handleActivatePowerup = (powerupId: string) => {
-    // Find powerup key from id
-    const powerupKey = Object.keys(POWERUPS).find(
-      (key) => POWERUPS[key].id === powerupId,
-    );
-    if (!powerupKey) return;
-
-    const powerup = POWERUPS[powerupKey];
-    const duration = powerup.duration;
-
-    // Special Logic for Magic Conch
-    if (powerupId === "magicConch") {
-      const weathers = [
-        WeatherType.RAIN,
-        WeatherType.SNOW,
-        WeatherType.WIND,
-        WeatherType.FOG,
-      ];
-      const randomWeather =
-        weathers[Math.floor(Math.random() * weathers.length)];
-
-      setGameState((prev) => ({
-        ...prev,
-        weather: randomWeather,
-        weatherExpiration: Date.now() + duration,
-      }));
-    }
-
-    // Special Logic for Rainbow Bulb
-    if (powerupId === "rainbowBulb") {
-      setGameState((prev) => ({
-        ...prev,
-        weather: WeatherType.RAINBOW,
-        weatherExpiration: Date.now() + duration,
-      }));
-    }
-
     setGameState((prev) => {
-      const currentCount = prev.inventory[powerupId] || 0;
-      if (currentCount > 0) {
-        return {
-          ...prev,
-          inventory: {
-            ...prev.inventory,
-            [powerupId]: currentCount - 1,
+      const powerup = POWERUPS[powerupId];
+
+      // Remove from purchased list
+      const newPurchased = prev.purchasedPowerups.filter(
+        (p) => p !== powerupId,
+      );
+
+      // Add to active powerups with expiration time
+      const expiresAt = Date.now() + powerup.duration;
+
+      audioManager.playPowerupSound();
+
+      let nextState = {
+        ...prev,
+        purchasedPowerups: newPurchased,
+        activePowerups: {
+          ...prev.activePowerups,
+          [powerupId]: expiresAt,
+        },
+      };
+
+      // Special: Mystery Bag - Add random fish to inventory
+      if (powerupId === "mysteryBag") {
+        const allNonTrash = FISH_TYPES.filter(
+          (f) => !f.isTrash && f.id !== "mystery_bag",
+        );
+        const randomFish =
+          allNonTrash[Math.floor(Math.random() * allNonTrash.length)];
+
+        const newCount = (prev.fishCaught[randomFish.id] || 0) + 1;
+        const newMoney = prev.money + randomFish.value;
+        const newLifetimeEarnings = prev.lifetimeEarnings + randomFish.value;
+
+        // Add to unlocked if new
+        const newUnlocked = prev.unlockedFish.includes(randomFish.id)
+          ? prev.unlockedFish
+          : [...prev.unlockedFish, randomFish.id];
+
+        nextState = {
+          ...nextState,
+          money: newMoney,
+          lifetimeEarnings: newLifetimeEarnings,
+          fishCaught: {
+            ...prev.fishCaught,
+            [randomFish.id]: newCount,
           },
-          activePowerups: {
-            ...prev.activePowerups,
-            [powerupId]: Date.now() + duration,
-          },
+          unlockedFish: newUnlocked,
+        };
+
+        audioManager.playMoneySound();
+      }
+
+      // Special: Plane Bait - Trigger plane
+      if (powerupId === "planeBait") {
+        setLastPlaneRequestTime(Date.now());
+      }
+
+      // Special: Magic Conch - Force Rainbow for 30 seconds
+      if (powerupId === "magicConch") {
+        nextState = {
+          ...nextState,
+          weather: WeatherType.RAINBOW,
+          weatherExpiration: Date.now() + 30000, // 30 seconds
         };
       }
-      return prev;
+
+      // Run achievement check
+      const result = checkAchievements(nextState);
+
+      if (result.newUnlockedIds.length > 0) {
+        setAchievementQueue((q) => [...q, ...result.newUnlockedIds]);
+      }
+
+      return result.newState;
+    });
+  };
+
+  const handleSlotBet = () => {
+    setGameState((prev) => {
+      const cost = 10;
+      if (prev.money < cost) {
+        console.warn("Not enough money for slot bet");
+        return prev;
+      }
+
+      audioManager.playButtonSound();
+
+      return {
+        ...prev,
+        money: prev.money - cost,
+      };
+    });
+  };
+
+  const handleSlotWin = (winAmount: number) => {
+    setGameState((prev) => {
+      audioManager.playMoneySound();
+
+      return {
+        ...prev,
+        money: prev.money + winAmount,
+        lifetimeEarnings: prev.lifetimeEarnings + winAmount,
+      };
     });
   };
 
   const handleBuyCostume = (costumeId: string) => {
-    const costume = COSTUMES.find((c) => c.id === costumeId);
-    if (!costume) return;
-
     setGameState((prev) => {
-      if (
-        prev.money >= costume.cost &&
-        !prev.unlockedCostumes.includes(costumeId)
-      ) {
-        return {
-          ...prev,
-          money: prev.money - costume.cost,
-          unlockedCostumes: [...prev.unlockedCostumes, costumeId],
-          equippedCostume: costumeId, // Auto equip on buy
-        };
+      const costume = COSTUMES.find((c) => c.id === costumeId);
+      if (!costume) return prev;
+
+      if (prev.money < costume.cost) {
+        console.warn("Not enough money for costume");
+        return prev;
       }
-      return prev;
+
+      if (prev.unlockedCostumes.includes(costumeId)) {
+        console.warn("Costume already unlocked");
+        return prev;
+      }
+
+      audioManager.playButtonSound();
+
+      return {
+        ...prev,
+        money: prev.money - costume.cost,
+        unlockedCostumes: [...prev.unlockedCostumes, costumeId],
+      };
     });
   };
 
   const handleEquipCostume = (costumeId: string) => {
     setGameState((prev) => {
-      if (prev.unlockedCostumes.includes(costumeId)) {
-        return {
-          ...prev,
-          equippedCostume: costumeId,
-        };
+      if (!prev.unlockedCostumes.includes(costumeId)) {
+        console.warn("Costume not unlocked");
+        return prev;
       }
-      return prev;
+
+      audioManager.playButtonSound();
+
+      return {
+        ...prev,
+        equippedCostume: costumeId,
+      };
     });
   };
 
   const handleBuyPet = (petId: string) => {
-    const pet = PETS.find((p) => p.id === petId);
-    if (!pet) return;
-
     setGameState((prev) => {
-      if (prev.money >= pet.cost && !prev.unlockedPets.includes(petId)) {
-        // NEW: If buying Kraken, unlock ghost fish
-        if (petId === "kraken") {
-          const ghostFish = [
-            "phantom_perch",
-            "spectral_sardine",
-            "ghost_squid",
-          ];
-          const newUnlockedFish = [...prev.unlockedFish];
+      const pet = PETS.find((p) => p.id === petId);
+      if (!pet) return prev;
 
-          ghostFish.forEach((fishId) => {
-            if (!newUnlockedFish.includes(fishId)) {
-              newUnlockedFish.push(fishId);
-            }
-          });
-
-          // Unlock Kraken achievement
-          const newAchievements = [...prev.achievements];
-          if (!newAchievements.includes("secret_kraken")) {
-            newAchievements.push("secret_kraken");
-          }
-
-          return {
-            ...prev,
-            money: prev.money - pet.cost,
-            unlockedPets: [...prev.unlockedPets, petId],
-            unlockedFish: newUnlockedFish, // Add unlocked ghost fish
-            achievements: newAchievements, // Add Kraken achievement
-            equippedPet: petId, // Auto equip on buy
-          };
-        }
-
-        // Normal pet purchase
-        return {
-          ...prev,
-          money: prev.money - pet.cost,
-          unlockedPets: [...prev.unlockedPets, petId],
-          equippedPet: petId, // Auto equip on buy
-        };
+      if (prev.money < pet.cost) {
+        console.warn("Not enough money for pet");
+        return prev;
       }
-      return prev;
-    });
-  };
 
-  const handleEquipPet = (petId: string) => {
-    setGameState((prev) => {
       if (prev.unlockedPets.includes(petId)) {
-        // Toggle off if already equipped
-        if (prev.equippedPet === petId) {
-          return { ...prev, equippedPet: null };
-        }
-        return { ...prev, equippedPet: petId };
+        console.warn("Pet already unlocked");
+        return prev;
       }
-      return prev;
+
+      audioManager.playButtonSound();
+
+      return {
+        ...prev,
+        money: prev.money - pet.cost,
+        unlockedPets: [...prev.unlockedPets, petId],
+      };
     });
   };
 
-  // Export save data as encrypted file
+  const handleEquipPet = (petId: string | null) => {
+    setGameState((prev) => {
+      if (petId && !prev.unlockedPets.includes(petId)) {
+        console.warn("Pet not unlocked");
+        return prev;
+      }
+
+      audioManager.playButtonSound();
+
+      return {
+        ...prev,
+        equippedPet: petId,
+      };
+    });
+  };
+
+  // Export Save
   const handleExportSave = () => {
     try {
       const saveData = JSON.stringify(gameState);
       const encrypted = encryptSaveData(saveData);
-      const timestamp = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-      downloadSaveFile(encrypted, `pixel-fish-miner-${timestamp}.fishsave`);
+
+      const timestamp = new Date().toISOString().split("T")[0];
+      const filename = `pixel-fish-miner-${timestamp}.fishsave`;
+
+      downloadSaveFile(encrypted, filename);
+
+      audioManager.playButtonSound();
+      return { success: true, message: "Save exported!" };
     } catch (error) {
-      console.error("Failed to export save:", error);
+      console.error("Export error:", error);
+      return { success: false, message: "Export failed" };
     }
   };
 
-  // Import save data from encrypted file
-  const handleImportSave = (encryptedData: string): boolean => {
+  // Import Save
+  const handleImportSave = async (
+    file: File,
+  ): Promise<{ success: boolean; message: string }> => {
     try {
-      const decrypted = decryptSaveData(encryptedData);
-      if (!decrypted) {
-        return false; // Invalid or tampered file
-      }
+      const text = await file.text();
+      const decrypted = decryptSaveData(text);
 
-      const parsed = JSON.parse(decrypted);
+      const imported = JSON.parse(decrypted);
 
-      // Validate it has expected GameState structure
-      if (
-        typeof parsed.money !== "number" ||
-        !Array.isArray(parsed.achievements)
-      ) {
-        return false;
-      }
-
-      // Merge with INITIAL_GAME_STATE to ensure all fields exist
-      const migratedState = {
+      // Merge with INITIAL_GAME_STATE for migration safety
+      const merged = {
         ...INITIAL_GAME_STATE,
-        ...parsed,
-        clawSpeedLevel: parsed.clawSpeedLevel || 1,
-        clawStrengthLevel: parsed.clawStrengthLevel || 1,
-        fishDensityLevel: parsed.fishDensityLevel || 1,
-        trashFilterLevel: parsed.trashFilterLevel || 1,
-        achievements: parsed.achievements || [],
-        lifetimeEarnings: parsed.lifetimeEarnings || parsed.money || 0,
+        ...imported,
       };
 
-      // Save to localStorage and update state
-      localStorage.setItem(
-        "pixel-fish-miner-save",
-        JSON.stringify(migratedState),
-      );
-      setGameState(migratedState);
+      // Validate structure
+      if (typeof merged.money !== "number") {
+        throw new Error("Invalid save data: money field corrupted");
+      }
 
-      return true;
-    } catch (error) {
-      console.error("Failed to import save:", error);
-      return false;
+      // Save to localStorage
+      localStorage.setItem("pixel-fish-miner-save", JSON.stringify(merged));
+
+      audioManager.playButtonSound();
+
+      // Reload page to apply changes
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+
+      return { success: true, message: "Save imported! Reloading..." };
+    } catch (error: any) {
+      console.error("Import error:", error);
+      return {
+        success: false,
+        message: error.message || "Import failed - file may be corrupted",
+      };
     }
   };
 
-  // Slot Machine handlers
-  const handleSlotBet = (betAmount: number) => {
-    setGameState((prev) => ({
-      ...prev,
-      money: prev.money - betAmount,
-    }));
-  };
-
-  const handleSlotWin = (winAmount: number) => {
-    setGameState((prev) => ({
-      ...prev,
-      money: prev.money + winAmount,
-      lifetimeEarnings: prev.lifetimeEarnings + winAmount,
-    }));
-    audioManager.playMoneySound();
-  };
-
+  // Promo Code Handler
   const handleApplyPromoCode = (
     code: string,
   ): { success: boolean; message: string } => {
     const cleanCode = code.trim().toLowerCase();
-    const t = TRANSLATIONS[language].promoMessages;
+    const t = TRANSLATIONS[language];
 
-    // Helper function to increment promo counter and check achievements
+    // Check if code already used
+    if (gameState.usedPromoCodes.includes(cleanCode)) {
+      return { success: false, message: t.codeAlreadyUsed };
+    }
+
+    // Helper to increment the successful promo counter for achievement
     const incrementPromoCounter = (
-      updateState: (prev: GameState) => GameState,
+      updateFn: (prev: GameState) => GameState,
     ) => {
       setGameState((prev) => {
-        const updatedState = updateState(prev);
-        const stateWithPromo = {
-          ...updatedState,
-          successfulPromoCodes: (updatedState.successfulPromoCodes || 0) + 1,
+        const nextState = updateFn(prev);
+        return {
+          ...nextState,
+          successfulPromoCodes: (nextState.successfulPromoCodes || 0) + 1,
+          usedPromoCodes: [...nextState.usedPromoCodes, cleanCode],
         };
-
-        // Check for promo achievements
-        const result = checkAchievements(stateWithPromo);
-        if (result.newUnlockedIds.length > 0) {
-          setAchievementQueue((q) => [...q, ...result.newUnlockedIds]);
-        }
-
-        return result.newState;
       });
     };
 
-    // Weather Codes
-    if (cleanCode === "rain") {
+    // Power-ups
+    if (cleanCode === "superbait") {
       incrementPromoCounter((prev) => ({
         ...prev,
-        weather: WeatherType.RAIN,
-        weatherExpiration: undefined,
+        purchasedPowerups: [...prev.purchasedPowerups, "superBait"],
       }));
-      return { success: true, message: t.weatherRain };
-    }
-    if (cleanCode === "snow") {
-      incrementPromoCounter((prev) => ({
-        ...prev,
-        weather: WeatherType.SNOW,
-        weatherExpiration: undefined,
-      }));
-      return { success: true, message: t.weatherSnow };
-    }
-    if (cleanCode === "wind") {
-      incrementPromoCounter((prev) => ({
-        ...prev,
-        weather: WeatherType.WIND,
-        weatherExpiration: undefined,
-      }));
-      return { success: true, message: t.weatherWind };
-    }
-    if (cleanCode === "fog") {
-      incrementPromoCounter((prev) => ({
-        ...prev,
-        weather: WeatherType.FOG,
-        weatherExpiration: undefined,
-      }));
-      return { success: true, message: t.weatherFog };
+      return { success: true, message: t.superBaitUnlocked };
     }
 
-    // Rainbow Code - ONE TIME USE
+    if (cleanCode === "turbomode") {
+      incrementPromoCounter((prev) => ({
+        ...prev,
+        purchasedPowerups: [...prev.purchasedPowerups, "turboMode"],
+      }));
+      return { success: true, message: t.turboModeUnlocked };
+    }
+
+    if (cleanCode === "goldenhour") {
+      incrementPromoCounter((prev) => ({
+        ...prev,
+        purchasedPowerups: [...prev.purchasedPowerups, "goldenHour"],
+      }));
+      return { success: true, message: t.goldenHourUnlocked };
+    }
+
+    if (cleanCode === "mysterybag") {
+      incrementPromoCounter((prev) => ({
+        ...prev,
+        purchasedPowerups: [...prev.purchasedPowerups, "mysteryBag"],
+      }));
+      return { success: true, message: t.mysteryBagUnlocked };
+    }
+
+    if (cleanCode === "planebait") {
+      incrementPromoCounter((prev) => ({
+        ...prev,
+        purchasedPowerups: [...prev.purchasedPowerups, "planeBait"],
+      }));
+      return { success: true, message: t.planeBaitUnlocked };
+    }
+
+    if (cleanCode === "magicconch") {
+      incrementPromoCounter((prev) => ({
+        ...prev,
+        purchasedPowerups: [...prev.purchasedPowerups, "magicConch"],
+      }));
+      return { success: true, message: t.magicConchUnlocked };
+    }
+
+    // Instant Triggers
     if (cleanCode === "rainbow") {
-      if (
-        gameState.usedPromoCodes &&
-        gameState.usedPromoCodes.includes("rainbow")
-      ) {
-        return { success: false, message: t.promoUsed };
-      }
       incrementPromoCounter((prev) => ({
         ...prev,
         weather: WeatherType.RAINBOW,
-        weatherExpiration: Date.now() + 60000, // 60 Seconds
-        usedPromoCodes: [...(prev.usedPromoCodes || []), "rainbow"],
+        weatherExpiration: Date.now() + 30000,
       }));
-      return { success: true, message: t.weatherRainbow };
+      return { success: true, message: t.rainbowActivated };
     }
 
-    // Airplane Code
-    if (cleanCode === "plane" || cleanCode === "airplane") {
-      setLastPlaneRequestTime(Date.now());
-      incrementPromoCounter((prev) => prev);
-      return { success: true, message: t.planeIncoming };
-    }
-
-    if (cleanCode === "normal") {
-      incrementPromoCounter((prev) => ({
-        ...prev,
-        weather: WeatherType.CLEAR,
-        weatherExpiration: undefined,
-      }));
-      return { success: true, message: t.weatherClear };
-    }
-
-    // Money Code
-    if (cleanCode === "money") {
-      incrementPromoCounter((prev) => ({
-        ...prev,
-        money: prev.money + 500,
-      }));
-      return { success: true, message: t.moneyAdded };
-    }
-
-    // Cheat: Fish Frenzy
-    if (cleanCode === "fish") {
-      incrementPromoCounter((prev) => ({
-        ...prev,
-        activePowerups: {
-          ...prev.activePowerups,
-          fishFrenzy: Date.now() + 20000,
-        },
-      }));
-      return { success: true, message: t.fishFrenzy };
-    }
-
-    // Migration Code - Trigger fish migration immediately
     if (cleanCode === "migration") {
-      const now = Date.now();
       incrementPromoCounter((prev) => ({
         ...prev,
         migrationActive: true,
-        migrationEndTime: now + 30000, // 30 seconds
-        lastMigrationTime: 0, // Reset cooldown so it can trigger again after
+        migrationEndTime: Date.now() + 30000,
       }));
-      return { success: true, message: t.fishMigration };
+      return { success: true, message: t.migrationActivated };
     }
 
-    // Unlock Code: unlock
-    if (cleanCode === "unlock") {
+    if (cleanCode === "unlockall") {
       incrementPromoCounter((prev) => {
-        // Unlock all fish in bag (set count to 1)
         const newFishCaught = { ...prev.fishCaught };
         const newUnlockedFish = [...prev.unlockedFish];
 
         FISH_TYPES.forEach((fish) => {
-          // Set count to 1 if not present
           if (!newFishCaught[fish.id]) {
             newFishCaught[fish.id] = 1;
           }
