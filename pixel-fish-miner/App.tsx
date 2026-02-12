@@ -7,6 +7,7 @@ import AchievementsModal from "./components/AchievementsModal";
 import SettingsModal from "./components/SettingsModal";
 import SlotMachineModal from "./components/SlotMachineModal";
 import AchievementToast from "./components/AchievementToast";
+import LoadingScreen from "./components/LoadingScreen";
 import PowerupBar from "./components/PowerupBar";
 import {
   GameState,
@@ -94,6 +95,7 @@ const App: React.FC = () => {
   const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAutoPaused, setIsAutoPaused] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [isMusicOn, setIsMusicOn] = useState(() => {
     const savedMusicPref = localStorage.getItem("pixel-fish-miner-music");
@@ -1102,153 +1104,159 @@ const App: React.FC = () => {
     : null;
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center font-mono p-2 md:p-4">
-      <div className="w-full max-w-[1024px] flex flex-col shadow-[0_0_20px_rgba(0,0,0,0.5)]">
-        <StatsPanel
-          gameState={gameState}
-          onOpenStore={() => setIsStoreOpen(true)}
-          onOpenBag={() => setIsBagOpen(true)}
-          onOpenSlotMachine={() => setIsSlotMachineOpen(true)}
-          onOpenAchievements={() => setIsAchievementsOpen(true)}
-          onOpenSettings={() => setIsSettingsOpen(true)}
-          language={language}
-        />
-
-        {/* Game Area - Connected to StatsPanel (top) and Footer (bottom) */}
-        <div className="relative border-x-8 border-[#5d4037] bg-[#5d4037]">
-          <GameCanvas
-            onFishCaught={handleFishCaught}
-            onRoundComplete={handleRoundComplete}
-            onPassiveIncome={handlePassiveIncome}
-            clawSpeedMultiplier={clawSpeedMultiplier}
-            clawThrowSpeedMultiplier={clawThrowSpeedMultiplier}
-            fishDensityLevel={gameState.fishDensityLevel || 1}
-            trashFilterLevel={gameState.trashFilterLevel || 1}
-            paused={
-              isStoreOpen ||
-              isBagOpen ||
-              isSlotMachineOpen ||
-              isAchievementsOpen ||
-              isSettingsOpen ||
-              isAutoPaused
-            }
-            activePowerups={gameState.activePowerups}
-            weather={gameState.weather}
-            weatherExpiration={gameState.weatherExpiration}
-            isMusicOn={isMusicOn}
-            currentCombo={gameState.currentCombo}
-            equippedCostume={gameState.equippedCostume}
-            equippedPet={gameState.equippedPet}
-            unlockedPets={gameState.unlockedPets}
-            unlockedFish={gameState.unlockedFish}
-            lastPlaneRequestTime={lastPlaneRequestTime}
-            migrationActive={gameState.migrationActive}
-            migrationEndTime={gameState.migrationEndTime}
-            onClawRelease={() => audioManager.playClawRelease()}
-            onCatchNothing={() => audioManager.playCatchNothing()}
-          />
-
-          {/* Auto Pause Overlay */}
-          {isAutoPaused && (
-            <div
-              onClick={() => setIsAutoPaused(false)}
-              className="absolute inset-0 z-[100] bg-black/70 backdrop-blur-[2px] flex flex-col items-center justify-center cursor-pointer select-none animate-fade-in"
-            >
-              <div className="bg-[#5d4037] p-8 border-4 border-[#8d6e63] rounded-lg shadow-[0_0_20px_rgba(0,0,0,0.8)] text-center transform hover:scale-105 transition-transform duration-200">
-                <h1 className="text-4xl text-[#ffeb3b] mb-4 drop-shadow-[4px_4px_0_rgba(0,0,0,1)] tracking-widest">
-                  {t.paused}
-                </h1>
-                <div className="flex items-center justify-center gap-2 text-white animate-pulse">
-                  <Play size={20} fill="white" />
-                  <span className="text-sm font-bold uppercase">
-                    {t.resume}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Powerup Bar Overlay */}
-          <PowerupBar
-            gameState={gameState}
-            onActivate={handleActivatePowerup}
-          />
-
-          {/* Store Overlay */}
-          <StoreModal
-            isOpen={isStoreOpen}
-            onClose={() => setIsStoreOpen(false)}
-            gameState={gameState}
-            onBuy={handleBuyUpgrade}
-            onDowngrade={handleDowngradeUpgrade}
-            onBuyPowerup={handleBuyPowerup}
-            onBuyCostume={handleBuyCostume}
-            onEquipCostume={handleEquipCostume}
-            onBuyPet={handleBuyPet}
-            onEquipPet={handleEquipPet}
-            onApplyPromoCode={handleApplyPromoCode}
-            language={language}
-          />
-
-          {/* Bag Overlay */}
-          <BagModal
-            isOpen={isBagOpen}
-            onClose={() => setIsBagOpen(false)}
-            gameState={gameState}
-            language={language}
-          />
-
-          {/* Slot Machine Overlay */}
-          <SlotMachineModal
-            isOpen={isSlotMachineOpen}
-            onClose={() => setIsSlotMachineOpen(false)}
-            money={gameState.money}
-            onBet={handleSlotBet}
-            onWin={handleSlotWin}
-            language={language}
-          />
-
-          {/* Achievements Overlay */}
-          <AchievementsModal
-            isOpen={isAchievementsOpen}
-            onClose={() => setIsAchievementsOpen(false)}
-            gameState={gameState}
-            language={language}
-          />
-
-          {/* Settings Overlay */}
-          <SettingsModal
-            isOpen={isSettingsOpen}
-            onClose={() => setIsSettingsOpen(false)}
-            language={language}
-            onChangeLanguage={setLanguage}
-            isMusicOn={isMusicOn}
-            onToggleMusic={() => setIsMusicOn((p) => !p)}
-            isSoundEffectsOn={isSoundEffectsOn}
-            onToggleSoundEffects={() => setIsSoundEffectsOn((p) => !p)}
-            onExportSave={handleExportSave}
-            onImportSave={handleImportSave}
-          />
-
-          {/* Achievement Popup Toast */}
-          {currentAchievement && (
-            <AchievementToast
-              key={currentAchievement.id} // Re-mount for animation when ID changes
-              achievement={currentAchievement}
-              onComplete={handleAchievementToastComplete}
+    <>
+      {isLoading ? (
+        <LoadingScreen onLoadComplete={() => setIsLoading(false)} />
+      ) : (
+        <div className="min-h-screen flex flex-col items-center justify-center font-mono p-2 md:p-4">
+          <div className="w-full max-w-[1024px] flex flex-col shadow-[0_0_20px_rgba(0,0,0,0.5)]">
+            <StatsPanel
+              gameState={gameState}
+              onOpenStore={() => setIsStoreOpen(true)}
+              onOpenBag={() => setIsBagOpen(true)}
+              onOpenSlotMachine={() => setIsSlotMachineOpen(true)}
+              onOpenAchievements={() => setIsAchievementsOpen(true)}
+              onOpenSettings={() => setIsSettingsOpen(true)}
               language={language}
             />
-          )}
-        </div>
 
-        {/* Integrated Instructions Footer */}
-        <div className="bg-[#5d4037] border-x-8 border-b-8 border-[#5d4037] overflow-hidden">
-          <div className="bg-[#8d6e63] p-2 text-center text-[10px] text-[#3e2723] font-bold uppercase tracking-wide">
-            <p>{t.controls}</p>
+            {/* Game Area - Connected to StatsPanel (top) and Footer (bottom) */}
+            <div className="relative border-x-8 border-[#5d4037] bg-[#5d4037]">
+              <GameCanvas
+                onFishCaught={handleFishCaught}
+                onRoundComplete={handleRoundComplete}
+                onPassiveIncome={handlePassiveIncome}
+                clawSpeedMultiplier={clawSpeedMultiplier}
+                clawThrowSpeedMultiplier={clawThrowSpeedMultiplier}
+                fishDensityLevel={gameState.fishDensityLevel || 1}
+                trashFilterLevel={gameState.trashFilterLevel || 1}
+                paused={
+                  isStoreOpen ||
+                  isBagOpen ||
+                  isSlotMachineOpen ||
+                  isAchievementsOpen ||
+                  isSettingsOpen ||
+                  isAutoPaused
+                }
+                activePowerups={gameState.activePowerups}
+                weather={gameState.weather}
+                weatherExpiration={gameState.weatherExpiration}
+                isMusicOn={isMusicOn}
+                currentCombo={gameState.currentCombo}
+                equippedCostume={gameState.equippedCostume}
+                equippedPet={gameState.equippedPet}
+                unlockedPets={gameState.unlockedPets}
+                unlockedFish={gameState.unlockedFish}
+                lastPlaneRequestTime={lastPlaneRequestTime}
+                migrationActive={gameState.migrationActive}
+                migrationEndTime={gameState.migrationEndTime}
+                onClawRelease={() => audioManager.playClawRelease()}
+                onCatchNothing={() => audioManager.playCatchNothing()}
+              />
+
+              {/* Auto Pause Overlay */}
+              {isAutoPaused && (
+                <div
+                  onClick={() => setIsAutoPaused(false)}
+                  className="absolute inset-0 z-[100] bg-black/70 backdrop-blur-[2px] flex flex-col items-center justify-center cursor-pointer select-none animate-fade-in"
+                >
+                  <div className="bg-[#5d4037] p-8 border-4 border-[#8d6e63] rounded-lg shadow-[0_0_20px_rgba(0,0,0,0.8)] text-center transform hover:scale-105 transition-transform duration-200">
+                    <h1 className="text-4xl text-[#ffeb3b] mb-4 drop-shadow-[4px_4px_0_rgba(0,0,0,1)] tracking-widest">
+                      {t.paused}
+                    </h1>
+                    <div className="flex items-center justify-center gap-2 text-white animate-pulse">
+                      <Play size={20} fill="white" />
+                      <span className="text-sm font-bold uppercase">
+                        {t.resume}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Powerup Bar Overlay */}
+              <PowerupBar
+                gameState={gameState}
+                onActivate={handleActivatePowerup}
+              />
+
+              {/* Store Overlay */}
+              <StoreModal
+                isOpen={isStoreOpen}
+                onClose={() => setIsStoreOpen(false)}
+                gameState={gameState}
+                onBuy={handleBuyUpgrade}
+                onDowngrade={handleDowngradeUpgrade}
+                onBuyPowerup={handleBuyPowerup}
+                onBuyCostume={handleBuyCostume}
+                onEquipCostume={handleEquipCostume}
+                onBuyPet={handleBuyPet}
+                onEquipPet={handleEquipPet}
+                onApplyPromoCode={handleApplyPromoCode}
+                language={language}
+              />
+
+              {/* Bag Overlay */}
+              <BagModal
+                isOpen={isBagOpen}
+                onClose={() => setIsBagOpen(false)}
+                gameState={gameState}
+                language={language}
+              />
+
+              {/* Slot Machine Overlay */}
+              <SlotMachineModal
+                isOpen={isSlotMachineOpen}
+                onClose={() => setIsSlotMachineOpen(false)}
+                money={gameState.money}
+                onBet={handleSlotBet}
+                onWin={handleSlotWin}
+                language={language}
+              />
+
+              {/* Achievements Overlay */}
+              <AchievementsModal
+                isOpen={isAchievementsOpen}
+                onClose={() => setIsAchievementsOpen(false)}
+                gameState={gameState}
+                language={language}
+              />
+
+              {/* Settings Overlay */}
+              <SettingsModal
+                isOpen={isSettingsOpen}
+                onClose={() => setIsSettingsOpen(false)}
+                language={language}
+                onChangeLanguage={setLanguage}
+                isMusicOn={isMusicOn}
+                onToggleMusic={() => setIsMusicOn((p) => !p)}
+                isSoundEffectsOn={isSoundEffectsOn}
+                onToggleSoundEffects={() => setIsSoundEffectsOn((p) => !p)}
+                onExportSave={handleExportSave}
+                onImportSave={handleImportSave}
+              />
+
+              {/* Achievement Popup Toast */}
+              {currentAchievement && (
+                <AchievementToast
+                  key={currentAchievement.id}
+                  achievement={currentAchievement}
+                  onComplete={handleAchievementToastComplete}
+                  language={language}
+                />
+              )}
+            </div>
+
+            {/* Integrated Instructions Footer */}
+            <div className="bg-[#5d4037] border-x-8 border-b-8 border-[#5d4037] overflow-hidden">
+              <div className="bg-[#8d6e63] p-2 text-center text-[10px] text-[#3e2723] font-bold uppercase tracking-wide">
+                <p>{t.controls}</p>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 };
 
