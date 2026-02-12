@@ -7,12 +7,276 @@ This project is a React-based arcade game inspired by "Gold Miner," styled with 
 ## Tech Stack
 
 - **Framework:** React 19 (Hooks heavily used).
+- **Build Tool:** Vite 6.x (Fast development and optimized production builds).
+- **Mobile Framework:** Capacitor 6.x (Native Android wrapper for web app).
 - **Styling:** Tailwind CSS + Inline styles for specific dynamic values.
 - **Rendering:** HTML5 Canvas (managed within `GameCanvas.tsx` and `utils/drawing.ts`).
 - **State Management:** React `useState` for UI/Persistence, `useRef` for high-frequency game loop data.
 - **Persistence:** `localStorage` (Keys: `pixel-fish-miner-save`, `pixel-fish-miner-lang`, `pixel-fish-miner-music`, `pixel-fish-miner-sfx`).
 - **Audio:** HTML5 Audio API (managed via `audioManager.ts`).
 - **Encryption:** XOR cipher + Base64 encoding for save file export/import (`encryption.ts`).
+
+---
+
+## Mobile Deployment (Capacitor)
+
+The game is deployed as both a web application and a native Android app using Capacitor.
+
+### Platform Configuration
+
+- **Capacitor**: v6.x - Converts React web app to native Android
+- **App ID**: `com.woodylin.pixelfishminer`
+- **App Name**: Pixel Fish Miner
+- **Web Directory**: `dist/` (Vite build output)
+- **Target Platforms**: Android (iOS support possible but not configured)
+
+### Mobile-Specific Optimizations
+
+#### Audio System (`utils/audioManager.ts`)
+
+- **Platform Detection**: Uses `window.Capacitor` to detect mobile environment
+- **Mobile Strategy**: Audio files preloaded with `audio.load()` and `preload="auto"`
+- **Sound Effect Handling**:
+  - Web: Clones audio elements to allow overlapping sounds
+  - Mobile: Resets `currentTime` and replays original element (cloning causes loading issues)
+- **Background Music**: Force loads entire file before playback to prevent 1-second loop bug
+
+#### Loading Screen (`components/LoadingScreen.tsx`)
+
+- **Purpose**: Preloads all 6 audio files before game starts
+- **Minimum Display**: Shows for at least 2 seconds (audio loads instantly on mobile due to bundling)
+- **Progress Tracking**: Displays loading progress bar and current file being loaded
+- **Visual**: Animated bouncing fish icon with ocean blue progress bar
+- **Integration**: Wraps entire app in `App.tsx` with `isLoading` state
+
+#### Game Physics (`components/GameCanvas.tsx`)
+
+- **Claw Oscillation Speed**:
+  - Web: `angleSpeed = 0.03`
+  - Mobile: `angleSpeed = 0.02` (33% slower for better touch control)
+- **Detection**: Uses `window.Capacitor` check in claw initialization
+
+#### Keyboard Handling (`components/StoreModal.tsx`)
+
+- **Problem**: Mobile keyboard blocks promo code input
+- **Solution**:
+  - Input has `onFocus` handler that scrolls element into view with 300ms delay
+  - Modal content has `pb-32` padding to ensure space below input
+  - Uses `scrollIntoView({ behavior: 'smooth', block: 'center' })`
+
+#### UI Centering (`App.tsx`)
+
+- **Layout**: Main wrapper uses `justify-center` on both mobile and desktop
+- **Previous Issue**: Used `justify-start md:justify-center` causing game to stick to top on mobile
+- **Fixed**: Removed top margin and uses consistent centering across all devices
+
+#### Back Button Handling (`App.tsx`)
+
+- **Capacitor App Plugin**: Listens for Android back button
+- **Behavior**:
+  1. If any modal open → Close modal
+  2. If no modals → Show "Exit game?" confirmation
+  3. User confirms → App closes
+- **Implementation**: Uses `App.addListener('backButton')` event
+- **Cleanup**: Removes listeners on component unmount
+
+### Mobile Assets
+
+#### App Icons
+
+**Location**: `android/app/src/main/res/mipmap-*/`
+
+Square icons (`ic_launcher.png`):
+
+- mipmap-mdpi: 48×48px
+- mipmap-hdpi: 72×72px
+- mipmap-xhdpi: 96×96px
+- mipmap-xxhdpi: 144×144px
+- mipmap-xxxhdpi: 192×192px
+
+Round icons (`ic_launcher_round.png`):
+
+- Same sizes as square icons
+- Circular design for Pixel/modern Android launchers
+- Design: Orange pixel fish on ocean blue circular background
+
+#### Splash Screens
+
+**Location**: `android/app/src/main/res/drawable-*/splash.png`
+
+Portrait variants (drawable-port-\*):
+
+- mdpi: 320×480
+- hdpi: 480×800
+- xhdpi: 720×1280
+- xxhdpi: 1080×1920
+- xxxhdpi: 1440×2560
+
+Landscape variants (drawable-land-\*):
+
+- mdpi: 480×320
+- hdpi: 800×480
+- xhdpi: 1280×720
+- xxhdpi: 1920×1080
+- xxxhdpi: 2560×1440
+
+**Design**: Centered pixel fish icon (30% of screen size) on wood brown background (#4a3728)
+
+**Note**: Capacitor native splash disabled (`launchShowDuration: 0`) in favor of custom LoadingScreen component
+
+### Build & Deployment Process
+
+#### Development Workflow
+
+```bash
+# Install dependencies
+npm install
+
+# Install Capacitor plugins
+npm install @capacitor/core @capacitor/cli @capacitor/android
+npm install @capacitor/app @capacitor/status-bar @capacitor/keyboard @capacitor/splash-screen
+
+# Build React app
+npm run build
+
+# Sync to Android (copies dist/ to android project)
+npx cap sync
+
+# Open in Android Studio
+npx cap open android
+
+# Or run directly on device
+npx cap run android
+```
+
+#### Convenience Scripts (package.json)
+
+```json
+"scripts": {
+  "cap:sync": "npm run build && npx cap sync",
+  "cap:open": "npx cap open android",
+  "cap:run": "npx cap run android"
+}
+```
+
+#### Configuration Files
+
+**capacitor.config.ts**:
+
+```typescript
+{
+  appId: 'com.woodylin.pixelfishminer',
+  appName: 'Pixel Fish Miner',
+  webDir: 'dist',
+  server: { androidScheme: 'https' },
+  android: {
+    allowMixedContent: true,
+    captureInput: true
+  }
+}
+```
+
+**index.html** (Mobile Optimizations):
+
+```html
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+/>
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="theme-color" content="#4a3728" />
+
+<style>
+  * {
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+</style>
+```
+
+#### Android Project Structure
+
+```
+android/
+├── app/
+│   ├── src/
+│   │   └── main/
+│   │       ├── assets/
+│   │       │   └── public/        # Synced from dist/
+│   │       ├── res/
+│   │       │   ├── mipmap-*/      # App icons
+│   │       │   └── drawable-*/    # Splash screens
+│   │       ├── AndroidManifest.xml
+│   │       └── java/com/woodylin/pixelfishminer/
+│   └── build.gradle
+├── build.gradle
+└── gradle/
+```
+
+**Important**: `android/` folder is git-ignored and regenerated via `npx cap add android`
+
+### Mobile-Specific Considerations
+
+#### Storage
+
+- **localStorage** works identically on mobile and web
+- Save files persist across app updates
+- Location: Android app data directory (not accessible to user)
+- Maximum size: ~5-10MB depending on device (well above game needs)
+
+#### Audio Files
+
+- **Location**: Bundled in APK at `assets/public/sounds/`
+- **Loading**: Instant on mobile (no network delay)
+- **Format**: MP3 (maximum compatibility)
+- **Files**:
+  - background.mp3 (looping music)
+  - claw.mp3 (release sound)
+  - catchnothing.mp3 (miss sound)
+  - money.mp3 (catch sound)
+  - powerup.mp3 (powerup activation)
+  - button.mp3 (UI click sound)
+
+#### Performance
+
+- **Target**: 60 FPS on mid-range Android devices (2020+)
+- **Canvas Size**: Fixed 800×600 (scaled to fit screen)
+- **Particle Cap**: Same as web (managed per-type)
+- **Fish Cap**: Same as web (density level based)
+
+#### Network
+
+- **No Server Calls**: Game is 100% client-side
+- **No Analytics**: No tracking or data collection
+- **Offline**: Fully playable offline after initial install
+
+### Known Mobile Issues
+
+1. **App Icon Cache**: Android aggressively caches launcher icons
+   - **Solution**: Uninstall app completely + restart phone before reinstall
+2. **Splash Screen Priority**: Native splash may briefly show before LoadingScreen
+   - **Mitigation**: Disabled Capacitor splash via `launchShowDuration: 0`
+3. **Keyboard Behavior**: On-screen keyboard can push content up
+   - **Fixed**: Custom scroll-into-view handler in StoreModal
+
+4. **Audio Autoplay**: May be blocked on first app launch
+   - **Solution**: LoadingScreen interaction enables audio context
+   - **Fallback**: Music won't play until user taps screen
+
+### Testing Checklist
+
+Mobile-specific features to verify:
+
+- [ ] Audio loads and plays correctly
+- [ ] Back button closes modals before exiting app
+- [ ] LoadingScreen shows for 2+ seconds
+- [ ] Keyboard doesn't block promo input
+- [ ] Touch controls feel responsive (slower claw oscillation)
+- [ ] Game centered vertically on screen
+- [ ] Save/load persists across app restarts
+- [ ] Status bar hidden (fullscreen mode)
+- [ ] No performance drops during gameplay
 
 ---
 
@@ -524,6 +788,17 @@ React components for game interface.
   - Payout multipliers (2x-100x)
   - Jackpot animation
 
+### Loading & System Components
+
+- **`LoadingScreen.tsx`**: Asset preloading screen (mobile-focused)
+  - Preloads all 6 audio files before game starts
+  - Displays animated bouncing fish icon
+  - Shows progress bar (0-100%) and current file loading
+  - Minimum 2-second display time (audio loads instantly on mobile)
+  - Wood brown background (#4a3728) matching game aesthetic
+  - Calls `onLoadComplete()` callback when ready
+  - Prevents audio loading issues on mobile devices
+
 ### HUD Components
 
 - **`GameCanvas.tsx`**: Main game rendering component
@@ -721,7 +996,7 @@ To add new content:
 
 - **Static Fish**: Shell, Sea Cucumber, Coral, Anchor are spawned once at init and never despawn (decorative)
 - **Narwhal Spawning**: During Rainbow weather, standard random spawning excludes Narwhal; it only spawns via timed injection (10s intervals)
-- **Migration Event**: Pacific Saury, Mullet, and Anchovy only spawn during 30-second migration events. When migration starts, ALL existing fish (except static decorations) are immediately cleared from the screen, and only migration fish spawn. When migration ends, all migration fish are cleared. Auto-triggers every 5 minutes or via promo code "migration". Uses time-based checks (`Date.now() < migrationEndTime`) to handle instant end without waiting for state updates
+- **Migration Event**: Pacific Saury, Mullet, and Anchovy only spawn during 30-second migration events. When migration starts, ALL existing fish (except static decorations: shell, sea_cucumber, coral, anchor) are immediately cleared from the screen, and only migration fish spawn during the event. When migration ends, all migration fish are cleared. Auto-triggers every 5 minutes or via promo code "migration". Uses time-based state transition detection (`!previousMigrationActive.current && isMigrationActuallyActive`) to handle instant clearing without waiting for state updates
 - **Ghost Fish Unlock**: Phantom Perch, Spectral Sardine, and Ghost Squid only spawn after purchasing Kraken pet. Filtered in `getWeightedFishType` via `unlockedFish` check
 - **Ghost Boat**: Flying Dutchman only spawns after Kraken purchase. Features fade effect (opacity 0.0-1.0) and glowing green lanterns
 - **Trash Suppression**: Mystery Bag creates 20s period where trash doesn't spawn (separate from Super Bait)
