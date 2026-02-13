@@ -200,6 +200,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     ["ko", "한국어"],
                     ["ru", "RU"],
                     ["fr", "FR"],
+                    ["ar", "عربي"],
                   ] as [Language, string][]
                 ).map(([lang, label]) => (
                   <button

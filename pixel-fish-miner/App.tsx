@@ -84,7 +84,7 @@ const App: React.FC = () => {
 
   const [language, setLanguage] = useState<Language>(() => {
     const savedLang = localStorage.getItem("pixel-fish-miner-lang");
-    const validLangs = ["en", "es", "zh", "ja", "ko", "ru", "fr"];
+    const validLangs = ["en", "es", "zh", "ja", "ko", "ru", "fr", "ar"];
     return savedLang && validLangs.includes(savedLang)
       ? (savedLang as Language)
       : "en";
@@ -136,6 +136,13 @@ const App: React.FC = () => {
 
   useEffect(() => {
     localStorage.setItem("pixel-fish-miner-lang", language);
+  }, [language]);
+
+  // Set document direction for RTL languages (Arabic)
+  useEffect(() => {
+    const isRTL = language === "ar";
+    document.documentElement.dir = isRTL ? "rtl" : "ltr";
+    document.documentElement.lang = language;
   }, [language]);
 
   // ===== AUDIO: Sync audio manager with React state =====

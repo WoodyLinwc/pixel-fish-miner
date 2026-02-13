@@ -6,6 +6,7 @@ import { ja } from "./ja";
 import { ko } from "./ko";
 import { ru } from "./ru";
 import { fr } from "./fr";
+import { ar } from "./ar";
 
 export const TRANSLATIONS: Record<Language, typeof en> = {
   en,
@@ -15,4 +16,5 @@ export const TRANSLATIONS: Record<Language, typeof en> = {
   ko,
   ru,
   fr,
+  ar,
 };
