@@ -2,6 +2,9 @@
 // This prevents casual editing but isn't military-grade encryption
 // Good enough to stop users from easily modifying save files in text editors
 
+import { Filesystem, Directory, Encoding } from "@capacitor/filesystem";
+import { Share } from "@capacitor/share";
+
 const ENCRYPTION_KEY = "PixelFishMiner2026_WoodyLin_SecretKey_DoNotShare";
 
 // Convert string to bytes
@@ -176,14 +179,41 @@ export function decryptSaveData(encryptedData: string): string | null {
 }
 
 /**
- * Create a downloadable file from encrypted data
- * @param encryptedData - The encrypted save data
- * @param filename - The filename (default: pixel-fish-miner-save.fishsave)
+ * Create a downloadable file from encrypted data.
+ * Web: Uses hidden <a> element with blob URL (browser download manager).
+ * Mobile (Capacitor): Writes to cache via Filesystem plugin, then opens
+ * native share sheet via Share plugin so user can save/send the file.
  */
-export function downloadSaveFile(
+export async function downloadSaveFile(
   encryptedData: string,
   filename: string = "pixel-fish-miner-save.fishsave",
-): void {
+): Promise<void> {
+  // Mobile: use Capacitor Filesystem + Share
+  if ((window as any).Capacitor) {
+    try {
+      // Write file to app's cache directory
+      const result = await Filesystem.writeFile({
+        path: filename,
+        data: encryptedData,
+        directory: Directory.Cache,
+        encoding: Encoding.UTF8,
+      });
+
+      // Open native share sheet so user can save, email, send via messenger, etc.
+      await Share.share({
+        title: "Pixel Fish Miner Save",
+        text: "My Pixel Fish Miner save file",
+        url: result.uri,
+        dialogTitle: "Save your game progress",
+      });
+    } catch (error) {
+      console.error("Mobile save export error:", error);
+      throw error;
+    }
+    return;
+  }
+
+  // Web: use standard blob download
   const blob = new Blob([encryptedData], { type: "application/octet-stream" });
   const url = URL.createObjectURL(blob);
 

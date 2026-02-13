@@ -866,7 +866,7 @@ const App: React.FC = () => {
   };
 
   // Export Save
-  const handleExportSave = () => {
+  const handleExportSave = async () => {
     try {
       const saveData = JSON.stringify(gameState);
       const encrypted = encryptSaveData(saveData);
@@ -874,7 +874,7 @@ const App: React.FC = () => {
       const timestamp = new Date().toISOString().split("T")[0];
       const filename = `pixel-fish-miner-${timestamp}.fishsave`;
 
-      downloadSaveFile(encrypted, filename);
+      await downloadSaveFile(encrypted, filename);
 
       audioManager.playButtonSound();
       return { success: true, message: "Save exported!" };
