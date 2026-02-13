@@ -50,7 +50,12 @@ The game is deployed as both a web application and a native Android app using Ca
 
 #### Loading Screen (`components/LoadingScreen.tsx`)
 
-EMPTY
+- **Purpose**: 2-second animated loading screen shown on app start while audio loads
+- **Callback Stability**: Uses `useRef` to store `onLoadComplete` callback — prevents infinite re-render loop
+  - **Problem**: Inline arrow function prop `onLoadComplete={() => setIsLoading(false)}` creates new reference every render → triggers useEffect cleanup → restarts timer → infinite cycle
+  - **Solution**: `onLoadCompleteRef.current = onLoadComplete` + empty dependency array `[]` on useEffect
+  - **Belt-and-suspenders**: `App.tsx` also wraps callback in `useCallback` for extra stability
+- **User Interaction**: Tap/click on loading screen serves as first user interaction for Web Audio API autoplay policy
 
 #### Game Physics (`components/GameCanvas.tsx`)
 
@@ -138,6 +143,7 @@ npm install
 # Install Capacitor plugins
 npm install @capacitor/core @capacitor/cli @capacitor/android
 npm install @capacitor/app @capacitor/status-bar @capacitor/keyboard @capacitor/splash-screen
+npm install @capacitor/filesystem @capacitor/share
 
 # Build React app
 npm run build
@@ -685,17 +691,20 @@ lastMigrationTime: number; // Timestamp when last migration ended (for cooldown)
 - **Fish Clearing** (`GameCanvas.tsx`): When migration ends, all migration fish are immediately removed from screen
 - **Time-based Checks**: Uses `Date.now()` comparisons to handle migration end without waiting for React state updates
 
-**Translations**:
+**Translations** (sample — all 8 languages have full coverage):
 
 - English: Pacific Saury, Mullet, Anchovy
 - Spanish: Paparda del Pacífico, Mújol, Anchoa
 - Chinese: 秋刀鱼, 鲻鱼, 凤尾鱼
+- Japanese: サンマ, ボラ, カタクチイワシ
+- Korean: 꽁치, 숭어, 멸치
+- Arabic: سوري المحيط الهادي, بوري, أنشوفة
 
 ---
 
 ## Localization (`locales/`)
 
-Multi-language support with complete translations.
+Multi-language support with complete translations for 8 languages, including RTL support for Arabic.
 
 ### Structure
 
@@ -703,6 +712,17 @@ Multi-language support with complete translations.
 - **`locales/en.ts`**: English (default)
 - **`locales/es.ts`**: Spanish (Español)
 - **`locales/zh.ts`**: Chinese (中文)
+- **`locales/ja.ts`**: Japanese (日本語)
+- **`locales/ko.ts`**: Korean (한국어)
+- **`locales/ru.ts`**: Russian (RU)
+- **`locales/fr.ts`**: French (FR)
+- **`locales/ar.ts`**: Arabic (عربي) — RTL language
+
+### Language Type (`types.ts`)
+
+```typescript
+export type Language = "en" | "es" | "zh" | "ja" | "ko" | "ru" | "fr" | "ar";
+```
 
 ### Translation Objects
 
@@ -734,6 +754,30 @@ import { TRANSLATIONS } from "../locales/translations";
 const t = TRANSLATIONS[language];
 ```
 
+### RTL Support (Arabic)
+
+Arabic is the only RTL language. RTL direction is **not** applied globally (that would flip the entire game canvas and button layouts). Instead, it is scoped per-component:
+
+- **`App.tsx`**: Sets `document.documentElement.lang` attribute only — does NOT set `dir="rtl"` on root
+- **Modal components**: Each modal applies `dir={isRTL ? "rtl" : "ltr"}` on its inner content wrapper
+- **Game canvas**: Always renders LTR (pixel coordinates, not CSS flow)
+- **Stats panel / HUD**: Stays LTR to avoid flipping game layout
+
+To add RTL to a modal:
+
+```typescript
+const isRTL = language === "ar";
+// On the content wrapper div:
+<div dir={isRTL ? "rtl" : "ltr"} className="...">
+```
+
+### Language Selector UI (`SettingsModal.tsx`)
+
+- 8 language buttons displayed in a 4-column grid (`grid grid-cols-4 gap-1`)
+- Button labels: EN, ES, 中文, 日本語, 한국어, RU, FR, عربي
+- Active language highlighted in green, others in grey
+- Scrollbar padding flips for RTL: `pr-2` (LTR) → `pl-2` (RTL)
+
 ---
 
 ## UI Components (`components/`)
@@ -759,7 +803,8 @@ React components for game interface.
   - Categories: Fish count, Trash cleaned, Money earned, Combos, Weather fish, Narwhals, Mystery bags, Promo codes, Kraken (pet unlock)
 - **`SettingsModal.tsx`**: Game settings and save management
   - Music/SFX toggles
-  - Language selection (EN/ES/ZH)
+  - Language selection (8 languages in 4×2 grid: EN/ES/中文/日本語/한국어/RU/FR/عربي)
+  - RTL support scoped to modal content for Arabic
   - Save export/import with encryption
   - Credits display
 
@@ -771,7 +816,7 @@ React components for game interface.
 
 ### Loading & System Components
 
-- **`LoadingScreen.tsx`**: EMPTY
+- **`LoadingScreen.tsx`**: 2-second animated loading screen with progress bar. Uses `useRef` for callback to prevent infinite re-render loop on Vercel (see Mobile Deployment section for details).
 
 ### HUD Components
 
@@ -875,7 +920,10 @@ Players can download their game progress as an encrypted `.fishsave` file and up
 - **Key Functions**:
   - `encryptSaveData(jsonString)`: Adds checksum, XOR encrypts, Base64 encodes
   - `decryptSaveData(base64String)`: Base64 decodes, XOR decrypts, verifies checksum, validates JSON
-  - `downloadSaveFile(encrypted, filename)`: Creates blob and triggers browser download
+  - `downloadSaveFile(encrypted, filename)`: Platform-aware file export:
+    - **Web**: Creates Blob URL → hidden `<a download>` element → browser download
+    - **Mobile** (`Capacitor.isNativePlatform()`): Writes to cache via `Filesystem.writeFile()` → opens native share sheet via `Share.share()`
+    - **Platform Detection**: Uses `Capacitor.isNativePlatform()` (NOT `window.Capacitor`, which is truthy everywhere when @capacitor/core is installed)
 
 ### Encryption Flow
 
@@ -958,7 +1006,7 @@ To add new content:
 
 1. **New Fish**:
    - Add entry to `FISH_TYPES` in `constants.ts`
-   - Add translation in `locales/en.ts`, `es.ts`, `zh.ts`
+   - Add translation in all locale files (`locales/en.ts`, `es.ts`, `zh.ts`, `ja.ts`, `ko.ts`, `ru.ts`, `fr.ts`, `ar.ts`)
    - Create draw function in appropriate `utils/fish/*.ts` file
    - Export from `utils/fish/index.ts`
    - Use `showInBag: false` to hide from encyclopedia if needed
