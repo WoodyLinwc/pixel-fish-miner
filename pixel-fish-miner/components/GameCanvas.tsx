@@ -342,6 +342,37 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
   const update = useCallback(
     (time: number, dt: number) => {
+      // --- Handle Migration State Changes (BEFORE pause check) ---
+      // Must run even when paused so previousMigrationActive stays in sync.
+      // Otherwise, if migration starts/ends while a modal is open,
+      // the ref gets stale and the next migration won't clear regular fish.
+      const now = Date.now();
+      const isMigrationActuallyActive =
+        migrationActive && now < migrationEndTime;
+
+      // When migration STARTS, clear all non-static fish
+      if (!previousMigrationActive.current && isMigrationActuallyActive) {
+        fishes.current = fishes.current.filter(
+          (f) =>
+            f.type.id === "shell" ||
+            f.type.id === "sea_cucumber" ||
+            f.type.id === "coral" ||
+            f.type.id === "anchor",
+        );
+      }
+
+      // When migration ENDS, remove all migration fish from screen
+      if (previousMigrationActive.current && !isMigrationActuallyActive) {
+        fishes.current = fishes.current.filter(
+          (f) =>
+            f.type.id !== "pacific_saury" &&
+            f.type.id !== "mullet" &&
+            f.type.id !== "anchovy",
+        );
+      }
+
+      previousMigrationActive.current = isMigrationActuallyActive;
+
       if (paused) return;
 
       const isMultiClawActive = (activePowerups["multiClaw"] || 0) > Date.now();
@@ -351,8 +382,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       const isFishFrenzyActive =
         (activePowerups["fishFrenzy"] || 0) > Date.now();
       const isSuperNetActive = (activePowerups["superNet"] || 0) > Date.now();
-
-      const now = Date.now();
 
       // --- Pet Passive Income Logic ---
       if (equippedPet) {
@@ -502,34 +531,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       const totalMaxFish =
         baseMaxFish + (fishDensityLevel - 1) * extraFishPerLevel;
 
-      // --- Handle Migration State Changes ---
-      // Check both prop change AND time expiration (using 'now' from above)
-      const isMigrationActuallyActive =
-        migrationActive && now < migrationEndTime;
-
-      // When migration STARTS, clear all non-static fish
-      if (!previousMigrationActive.current && isMigrationActuallyActive) {
-        // Migration just started, remove all regular fish (keep only static items)
-        fishes.current = fishes.current.filter(
-          (f) =>
-            f.type.id === "shell" ||
-            f.type.id === "sea_cucumber" ||
-            f.type.id === "coral" ||
-            f.type.id === "anchor",
-        );
-      }
-
-      // When migration ENDS, remove all migration fish from screen
-      if (previousMigrationActive.current && !isMigrationActuallyActive) {
-        fishes.current = fishes.current.filter(
-          (f) =>
-            f.type.id !== "pacific_saury" &&
-            f.type.id !== "mullet" &&
-            f.type.id !== "anchovy",
-        );
-      }
-
-      previousMigrationActive.current = isMigrationActuallyActive;
+      // --- Migration state already handled at top of update() ---
 
       // Spawn rate also increases with level (decreases interval)
       // Base 500ms, -12ms per level
