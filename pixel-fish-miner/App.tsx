@@ -140,8 +140,8 @@ const App: React.FC = () => {
 
   // Set document direction for RTL languages (Arabic)
   useEffect(() => {
-    const isRTL = language === "ar";
-    document.documentElement.dir = isRTL ? "rtl" : "ltr";
+    // Only set lang attribute globally — do NOT set dir="rtl" on root
+    // as it flips the entire game layout. RTL is handled per-component.
     document.documentElement.lang = language;
   }, [language]);
 

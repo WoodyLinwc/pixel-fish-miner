@@ -37,6 +37,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   if (!isOpen) return null;
 
   const t = TRANSLATIONS[language];
+  const isRTL = language === "ar";
 
   const handleClose = () => {
     audioManager.playButtonSound();
@@ -114,7 +115,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
       {/* Wood Frame */}
       <div className="bg-[#e6c288] border-[6px] border-[#8d5524] rounded-lg w-full max-w-md shadow-[0_10px_20px_rgba(0,0,0,0.5)] relative animate-fade-in p-1 max-h-[75vh] md:max-h-[80vh] flex flex-col">
         {/* Inner Border */}
-        <div className="border-2 border-[#c68c53] p-2 md:p-4 rounded bg-[#e6c288] flex flex-col overflow-hidden h-full">
+        <div
+          dir={isRTL ? "rtl" : "ltr"}
+          className="border-2 border-[#c68c53] p-2 md:p-4 rounded bg-[#e6c288] flex flex-col overflow-hidden h-full"
+        >
           <button
             onClick={handleClose}
             className="absolute top-2 right-2 bg-[#d32f2f] text-white hover:bg-[#b71c1c] border-2 border-[#801313] rounded p-1 shadow-md active:translate-y-1 z-10"
@@ -127,7 +131,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           </h2>
 
           {/* Settings Options - Scrollable */}
-          <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar flex-1">
+          <div
+            className={`space-y-3 overflow-y-auto custom-scrollbar flex-1 ${isRTL ? "pl-2" : "pr-2"}`}
+          >
             {/* Background Music */}
             <div className="bg-[#fff3e0] p-2 md:p-2 md:p-3 rounded border-2 border-[#a1887f] shadow-sm">
               <div className="flex items-center justify-between">
