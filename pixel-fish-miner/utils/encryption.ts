@@ -2,6 +2,7 @@
 // This prevents casual editing but isn't military-grade encryption
 // Good enough to stop users from easily modifying save files in text editors
 
+import { Capacitor } from "@capacitor/core";
 import { Filesystem, Directory, Encoding } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
 
@@ -189,7 +190,7 @@ export async function downloadSaveFile(
   filename: string = "pixel-fish-miner-save.fishsave",
 ): Promise<void> {
   // Mobile: use Capacitor Filesystem + Share
-  if ((window as any).Capacitor) {
+  if (Capacitor.isNativePlatform()) {
     try {
       // Write file to app's cache directory
       const result = await Filesystem.writeFile({
