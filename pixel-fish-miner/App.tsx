@@ -84,8 +84,9 @@ const App: React.FC = () => {
 
   const [language, setLanguage] = useState<Language>(() => {
     const savedLang = localStorage.getItem("pixel-fish-miner-lang");
-    return savedLang === "en" || savedLang === "es" || savedLang === "zh"
-      ? savedLang
+    const validLangs = ["en", "es", "zh", "ja", "ko", "ru", "fr"];
+    return savedLang && validLangs.includes(savedLang)
+      ? (savedLang as Language)
       : "en";
   });
 

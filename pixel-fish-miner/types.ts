@@ -5,7 +5,7 @@ export enum FishRarity {
   LEGENDARY = "LEGENDARY",
 }
 
-export type Language = "en" | "es" | "zh";
+export type Language = "en" | "es" | "zh" | "ja" | "ko" | "ru" | "fr";
 
 export enum WeatherType {
   CLEAR = "CLEAR",

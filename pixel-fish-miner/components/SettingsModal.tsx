@@ -184,47 +184,36 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
 
             {/* Language */}
             <div className="bg-[#fff3e0] p-2 md:p-3 rounded border-2 border-[#a1887f] shadow-sm">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Globe size={24} className="text-[#5d4037]" />
-                  <div>
-                    <h3 className="text-sm font-bold text-[#3e2723]">
-                      {t.language}
-                    </h3>
-                  </div>
-                </div>
-                <div className="flex gap-1">
+              <div className="flex items-center gap-3 mb-2">
+                <Globe size={24} className="text-[#5d4037]" />
+                <h3 className="text-sm font-bold text-[#3e2723]">
+                  {t.language}
+                </h3>
+              </div>
+              <div className="grid grid-cols-4 gap-1">
+                {(
+                  [
+                    ["en", "EN"],
+                    ["es", "ES"],
+                    ["zh", "中文"],
+                    ["ja", "日本語"],
+                    ["ko", "한국어"],
+                    ["ru", "RU"],
+                    ["fr", "FR"],
+                  ] as [Language, string][]
+                ).map(([lang, label]) => (
                   <button
-                    onClick={() => handleLanguageChange("en")}
-                    className={`px-3 py-2 rounded font-bold text-xs border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
-                      language === "en"
+                    key={lang}
+                    onClick={() => handleLanguageChange(lang)}
+                    className={`px-2 py-2 rounded font-bold text-xs border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
+                      language === lang
                         ? "bg-[#66bb6a] border-[#2e7d32] text-white"
                         : "bg-[#cfd8dc] border-[#90a4ae] text-[#5d4037]"
                     }`}
                   >
-                    EN
+                    {label}
                   </button>
-                  <button
-                    onClick={() => handleLanguageChange("es")}
-                    className={`px-3 py-2 rounded font-bold text-xs border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
-                      language === "es"
-                        ? "bg-[#66bb6a] border-[#2e7d32] text-white"
-                        : "bg-[#cfd8dc] border-[#90a4ae] text-[#5d4037]"
-                    }`}
-                  >
-                    ES
-                  </button>
-                  <button
-                    onClick={() => handleLanguageChange("zh")}
-                    className={`px-3 py-2 rounded font-bold text-xs border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
-                      language === "zh"
-                        ? "bg-[#66bb6a] border-[#2e7d32] text-white"
-                        : "bg-[#cfd8dc] border-[#90a4ae] text-[#5d4037]"
-                    }`}
-                  >
-                    中文
-                  </button>
-                </div>
+                ))}
               </div>
             </div>
 
