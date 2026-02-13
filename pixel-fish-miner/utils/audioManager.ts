@@ -80,6 +80,22 @@ class AudioManager {
 
   // ─── Audio Loading ────────────────────────────────────────────
 
+  /**
+   * Preload all sounds during the loading screen (before any user gesture).
+   * Creates AudioContext (starts suspended on mobile) and fetches+decodes all MP3s.
+   * This way, when the user finally taps, we only need ctx.resume() which is instant.
+   */
+  async preload(): Promise<void> {
+    if (this.isLoaded || this.isLoading) return;
+
+    try {
+      this.ensureContext();
+      await this.loadAllSounds();
+    } catch (err) {
+      console.warn("Preload failed, will retry on interaction:", err);
+    }
+  }
+
   private async loadAllSounds(): Promise<void> {
     if (this.isLoaded || this.isLoading) return;
     this.isLoading = true;
@@ -127,12 +143,19 @@ class AudioManager {
       if (this.hasUserInteracted) return;
       this.hasUserInteracted = true;
 
-      // Create context and load all sounds on first interaction
+      // Resume AudioContext synchronously in the user gesture — critical for mobile browsers.
+      // Sounds should already be loaded via preload(), but load as fallback if not.
       const ctx = this.ensureContext();
       if (ctx.state === "suspended") {
-        await ctx.resume().catch(() => {});
+        // Do NOT await — calling resume() synchronously in the gesture is what
+        // mobile browsers require. Awaiting it can lose the gesture context.
+        ctx.resume().catch(() => {});
       }
-      await this.loadAllSounds();
+
+      // Fallback: load sounds if preload() wasn't called or failed
+      if (!this.isLoaded) {
+        await this.loadAllSounds();
+      }
 
       // Start music if it was waiting
       if (this.musicPendingPlay && this.isMusicEnabled) {
