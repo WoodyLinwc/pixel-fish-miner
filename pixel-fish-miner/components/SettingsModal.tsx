@@ -279,6 +279,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 <div>• Tailwind CSS</div>
                 <div>• Vite</div>
                 <div>• Lucide React</div>
+                <div>• Capacitor</div>
+                <div>• Web Audio API</div>
               </div>
 
               <h3 className="text-sm font-bold text-[#3e2723] mb-1 flex items-center gap-2">
