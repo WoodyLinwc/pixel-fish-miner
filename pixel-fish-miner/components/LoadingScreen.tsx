@@ -6,6 +6,7 @@ interface LoadingScreenProps {
 
 const LoadingScreen: React.FC<LoadingScreenProps> = ({ onLoadComplete }) => {
   const [progress, setProgress] = useState(0);
+  const [ready, setReady] = useState(false);
 
   // Store callback in a ref so the effect never re-triggers from parent re-renders
   const onLoadCompleteRef = useRef(onLoadComplete);
@@ -31,10 +32,10 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onLoadComplete }) => {
       }
     }, 50);
 
-    // Complete after LOADING_TIME
+    // Show "Tap to Start" after loading completes
     const timeout = setTimeout(() => {
-      console.log("🔵 LoadingScreen: Completing after 2 seconds");
-      onLoadCompleteRef.current();
+      console.log("🔵 LoadingScreen: Ready — waiting for user tap");
+      setReady(true);
     }, LOADING_TIME);
 
     return () => {
@@ -43,8 +44,19 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onLoadComplete }) => {
     };
   }, []); // No dependencies — runs once on mount, never re-triggers
 
+  const handleTapToStart = () => {
+    // This tap IS a user gesture — it will trigger audioManager's
+    // unlock listener (click/touchstart) which resumes AudioContext.
+    // This is critical for mobile browsers that block autoplay.
+    console.log("🔵 LoadingScreen: User tapped — completing");
+    onLoadCompleteRef.current();
+  };
+
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#4a3728]">
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#4a3728]"
+      onClick={ready ? handleTapToStart : undefined}
+    >
       {/* Fish Icon */}
       <div className="flex flex-col items-center gap-6">
         {/* Animated Fish */}
@@ -111,7 +123,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onLoadComplete }) => {
 
         {/* Status Text */}
         <div className="text-[#e0e0e0] text-xs font-mono animate-pulse">
-          Loading game...
+          {ready ? "🎣 Tap to Start!" : "Loading game..."}
         </div>
 
         {/* Pixel Fish Miner Title */}
