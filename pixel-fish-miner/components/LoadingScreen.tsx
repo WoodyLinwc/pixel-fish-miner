@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import { audioManager } from "../utils/audioManager";
 
 interface LoadingScreenProps {
   onLoadComplete: () => void;
@@ -14,6 +15,11 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onLoadComplete }) => {
 
   useEffect(() => {
     console.log("🔵 LoadingScreen: Starting 2 second delay...");
+
+    // Start preloading audio files immediately (before user interaction).
+    // This creates the AudioContext (suspended on mobile) and fetches+decodes all MP3s.
+    // When the user taps "Tap to Start", only ctx.resume() is needed (instant).
+    audioManager.preload();
 
     const startTime = Date.now();
     const LOADING_TIME = 2000; // 2 seconds to give audio time to load
