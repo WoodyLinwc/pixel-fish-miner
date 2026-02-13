@@ -1099,6 +1099,10 @@ const App: React.FC = () => {
     setAchievementQueue((prev) => prev.slice(1));
   };
 
+  const handleLoadComplete = useCallback(() => {
+    setIsLoading(false);
+  }, []);
+
   // Calculate multipliers based on levels
   const clawSpeedMultiplier = 1 + ((gameState.clawSpeedLevel || 1) - 1) * 0.2;
   const clawThrowSpeedMultiplier =
@@ -1114,7 +1118,7 @@ const App: React.FC = () => {
   return (
     <>
       {isLoading ? (
-        <LoadingScreen onLoadComplete={() => setIsLoading(false)} />
+        <LoadingScreen onLoadComplete={handleLoadComplete} />
       ) : (
         <div className="min-h-screen flex flex-col items-center justify-center font-mono p-2 md:p-4">
           <div className="w-full max-w-[1024px] flex flex-col shadow-[0_0_20px_rgba(0,0,0,0.5)]">

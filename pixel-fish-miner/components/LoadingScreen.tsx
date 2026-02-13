@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 
 interface LoadingScreenProps {
   onLoadComplete: () => void;
@@ -6,6 +6,10 @@ interface LoadingScreenProps {
 
 const LoadingScreen: React.FC<LoadingScreenProps> = ({ onLoadComplete }) => {
   const [progress, setProgress] = useState(0);
+
+  // Store callback in a ref so the effect never re-triggers from parent re-renders
+  const onLoadCompleteRef = useRef(onLoadComplete);
+  onLoadCompleteRef.current = onLoadComplete;
 
   useEffect(() => {
     console.log("🔵 LoadingScreen: Starting 2 second delay...");
@@ -30,14 +34,14 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onLoadComplete }) => {
     // Complete after LOADING_TIME
     const timeout = setTimeout(() => {
       console.log("🔵 LoadingScreen: Completing after 2 seconds");
-      onLoadComplete();
+      onLoadCompleteRef.current();
     }, LOADING_TIME);
 
     return () => {
       clearInterval(progressInterval);
       clearTimeout(timeout);
     };
-  }, [onLoadComplete]);
+  }, []); // No dependencies — runs once on mount, never re-triggers
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#4a3728]">
