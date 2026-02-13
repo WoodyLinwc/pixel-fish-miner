@@ -679,6 +679,10 @@ const App: React.FC = () => {
         money: prev.money - cost,
         purchasedPowerups: newPurchased,
         powerupPurchaseCounts: newCounts,
+        inventory: {
+          ...prev.inventory,
+          [powerupId]: (prev.inventory[powerupId] || 0) + 1,
+        },
       };
     });
   };
@@ -699,6 +703,10 @@ const App: React.FC = () => {
 
       let nextState = {
         ...prev,
+        inventory: {
+          ...prev.inventory,
+          [powerupId]: Math.max(0, (prev.inventory[powerupId] || 0) - 1),
+        },
         purchasedPowerups: newPurchased,
         activePowerups: {
           ...prev.activePowerups,
