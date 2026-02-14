@@ -87,7 +87,7 @@ export const ko = {
     squid: "오징어",
     sea_bass: "농어",
     red_snapper: "참돔",
-    salmon: "킹연어",
+    salmon: "연어",
     tuna: "참치",
     ribbonfish: "갈치",
     giant_grouper: "대왕 바리",

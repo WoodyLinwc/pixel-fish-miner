@@ -87,7 +87,7 @@ export const fr = {
     squid: "Calmar",
     sea_bass: "Bar",
     red_snapper: "Vivaneau rouge",
-    salmon: "Saumon royal",
+    salmon: "Saumon",
     tuna: "Thon",
     ribbonfish: "Poisson-ruban",
     giant_grouper: "Mérou géant",

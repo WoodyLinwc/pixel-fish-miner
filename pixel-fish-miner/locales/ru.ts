@@ -87,7 +87,7 @@ export const ru = {
     squid: "Кальмар",
     sea_bass: "Морской окунь",
     red_snapper: "Красный луциан",
-    salmon: "Королевский лосось",
+    salmon: "Лосось",
     tuna: "Тунец",
     ribbonfish: "Сабля-рыба",
     giant_grouper: "Гигантский групер",

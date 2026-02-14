@@ -87,7 +87,7 @@ export const ja = {
     squid: "烏賊（イカ）",
     sea_bass: "鱸（スズキ）",
     red_snapper: "真笛鯛（マフエダイ）",
-    salmon: "鱒之介（マスノスケ）",
+    salmon: "鮭（サケ）",
     tuna: "鮪（マグロ）",
     ribbonfish: "太刀魚（タチウオ）",
     giant_grouper: "タマカイ",

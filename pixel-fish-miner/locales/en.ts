@@ -87,7 +87,7 @@ export const en = {
     squid: "Squid",
     sea_bass: "Sea Bass",
     red_snapper: "Red Snapper",
-    salmon: "King Salmon",
+    salmon: "Salmon",
     tuna: "Tuna",
     ribbonfish: "Ribbonfish",
     giant_grouper: "Giant Grouper",

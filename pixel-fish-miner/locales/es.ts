@@ -87,7 +87,7 @@ export const es = {
     squid: "Calamar",
     sea_bass: "Lubina",
     red_snapper: "Huachinango",
-    salmon: "Salmón Real",
+    salmon: "Salmón",
     tuna: "Atún",
     ribbonfish: "Pez Sable",
     giant_grouper: "Mero Gigante",

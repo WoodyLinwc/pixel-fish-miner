@@ -87,7 +87,7 @@ export const ar = {
     squid: "حبّار",
     sea_bass: "قاروص",
     red_snapper: "نهاش أحمر",
-    salmon: "سلمون ملكي",
+    salmon: "سلمون",
     tuna: "تونة",
     ribbonfish: "سمكة الشريط",
     giant_grouper: "هامور عملاق",

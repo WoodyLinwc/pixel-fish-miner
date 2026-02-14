@@ -87,7 +87,7 @@ export const zh = {
     squid: "鱿鱼",
     sea_bass: "海鲈鱼",
     red_snapper: "红鲷鱼",
-    salmon: "帝王鲑",
+    salmon: "鲑鱼",
     tuna: "金枪鱼",
     ribbonfish: "带鱼",
     giant_grouper: "巨型石斑",
