@@ -362,7 +362,7 @@ export const FISH_TYPES: FishType[] = [
   },
   {
     id: "salmon",
-    name: "King Salmon",
+    name: "Salmon",
     rarity: FishRarity.UNCOMMON,
     weight: 45,
     value: 105,
