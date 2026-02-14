@@ -141,7 +141,7 @@ export const drawSalmon = (
   w: number,
   h: number,
 ) => {
-  // King Salmon: Pink/Orange body, Dark head
+  // Salmon: Pink/Orange body, Dark head
   const bodyColor = "#ff8a65"; // Deep Orange/Pink
   const headColor = "#607d8b"; // Blue Grey
   const finColor = "#37474f";
