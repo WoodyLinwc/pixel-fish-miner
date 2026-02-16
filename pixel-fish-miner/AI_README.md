@@ -50,12 +50,13 @@ The game is deployed as both a web application and a native Android app using Ca
 
 #### Loading Screen (`components/LoadingScreen.tsx`)
 
-- **Purpose**: 2-second animated loading screen shown on app start while audio loads
+- **Purpose**: 2-second animated loading screen shown on app start, followed by "Tap to Start" prompt
+- **Audio Preloading**: Calls `audioManager.preload()` on mount — creates AudioContext (suspended on mobile) and fetches+decodes all MP3s during the 2-second animation, so audio is ready before the user taps
+- **Tap to Start**: After progress bar completes, shows "🎣 Tap to Start!" prompt. The tap is a real user gesture, which is **required** by mobile browsers to call `AudioContext.resume()`. Without this, mobile browser audio is silently blocked.
 - **Callback Stability**: Uses `useRef` to store `onLoadComplete` callback — prevents infinite re-render loop
   - **Problem**: Inline arrow function prop `onLoadComplete={() => setIsLoading(false)}` creates new reference every render → triggers useEffect cleanup → restarts timer → infinite cycle
   - **Solution**: `onLoadCompleteRef.current = onLoadComplete` + empty dependency array `[]` on useEffect
   - **Belt-and-suspenders**: `App.tsx` also wraps callback in `useCallback` for extra stability
-- **User Interaction**: Tap/click on loading screen serves as first user interaction for Web Audio API autoplay policy
 
 #### Game Physics (`components/GameCanvas.tsx`)
 
@@ -278,7 +279,7 @@ android/
     - **Combo Timer**: Resets combo if 10s pass without a catch.
     - **Powerup Timer**: Updates UI for active effect duration and checks weather expiration.
   - **Global Events**:
-    - **Promo Codes**: Handles cheat codes for debugging/events.
+    - **Promo Codes**: Handles promo codes for weather control, currency, fishing bonuses, and events. See "Promo Codes" section below.
     - **Achievements**: Checks logic after every catch/round.
     - **Passive Income**: Updates money from Pet earnings every 30s.
       - Tier 1 (Goldfish, Parrot, Penguin): $1 per 30s
@@ -575,7 +576,7 @@ Defines all catchable entities with properties:
   - `anchovy`: Anchovy ($12, 26x10, Common) - Light grey-blue slender fish with lateral stripe
   - Only spawn during migration events (30-second duration)
   - Replace ALL other fish spawns during event
-  - Auto-triggers every 5 minutes, manual trigger via promo code "migration"
+  - Auto-triggers every 5 minutes
   - Visual indicator: "Migration Xs" countdown text below player boat
 - **Ghost Fish** (Unlockable via Kraken purchase):
   - `phantom_perch`: Pale blue translucent fish ($85, 42x22, Uncommon)
@@ -672,7 +673,6 @@ The migration system creates timed events where special migration fish temporari
 - **Effect**: During migration, ALL regular fish (common, uncommon, rare, legendary, weather) are filtered out of spawning
 - **Visual Indicator**: "Migration Xs" text displays below player boat with countdown (30s → 1s)
 - **Auto-trigger**: Automatically starts every 5 minutes after the last migration ends
-- **Manual trigger**: Promo code `"migration"` immediately starts a migration event and resets cooldown
 
 **State Management** (in `constants.ts` INITIAL_GAME_STATE):
 
@@ -688,7 +688,7 @@ lastMigrationTime: number; // Timestamp when last migration ended (for cooldown)
 - **Spawning Filter** (`utils/fish/fish.ts`): `getWeightedFishType()` accepts `migrationActive` parameter
   - If `migrationActive === true`: Only spawns pacific_saury, mullet, anchovy
   - If `migrationActive === false`: Filters out migration fish from spawn pool
-- **Fish Clearing** (`GameCanvas.tsx`): When migration ends, all migration fish are immediately removed from screen
+- **Fish Clearing** (`GameCanvas.tsx`): Migration state tracking runs **before** the `if (paused) return` check in `update()`. This ensures `previousMigrationActive` ref stays in sync even when modals are open. Without this, the ref gets stale during pause and the next migration fails to clear regular fish.
 - **Time-based Checks**: Uses `Date.now()` comparisons to handle migration end without waiting for React state updates
 
 **Translations** (sample — all 8 languages have full coverage):
@@ -816,7 +816,7 @@ React components for game interface.
 
 ### Loading & System Components
 
-- **`LoadingScreen.tsx`**: 2-second animated loading screen with progress bar. Uses `useRef` for callback to prevent infinite re-render loop on Vercel (see Mobile Deployment section for details).
+- **`LoadingScreen.tsx`**: 2-second animated loading screen with progress bar, then "Tap to Start" prompt. Calls `audioManager.preload()` on mount to decode audio during animation. Uses `useRef` for callback to prevent infinite re-render loop (see Mobile Deployment section for details).
 
 ### HUD Components
 
@@ -872,16 +872,18 @@ Located in `/public/sounds/` directory:
 ### Lifecycle
 
 1. **Constructor**: Reads music/SFX preferences from localStorage, sets up user interaction listeners
-2. **First interaction** (click/touch/keypress): Creates `AudioContext`, calls `fetch()` + `decodeAudioData()` for all 6 sound files in parallel, stores decoded `AudioBuffer`s in memory
-3. **After loading screen** (`startMusic()`): Creates `AudioBufferSourceNode` with `loop = true`, connects to `musicGain`, starts playback
-4. **App background** (`pauseMusic()`): Saves playback position (`musicOffset`), destroys source node, suspends `AudioContext`
-5. **App foreground** (`resumeMusic()`): Resumes `AudioContext` (needed for SFX too), creates new source node from saved offset. `AudioBuffer` data is still intact in memory
-6. **Toggle off** (`stopMusic()`): Resets offset to 0, destroys source node
+2. **Loading screen mount** (`preload()`): Creates `AudioContext` (starts suspended on mobile browsers), calls `fetch()` + `decodeAudioData()` for all 6 sound files in parallel, stores decoded `AudioBuffer`s in memory. This happens **before** any user gesture.
+3. **User taps "Tap to Start"**: Triggers `unlock` listener which calls `AudioContext.resume()` synchronously in the gesture (critical for mobile browsers — must NOT be awaited). Sounds are already decoded from step 2, so playback is instant.
+4. **After loading screen** (`startMusic()`): Creates `AudioBufferSourceNode` with `loop = true`, connects to `musicGain`, starts playback
+5. **App background** (`pauseMusic()`): Saves playback position (`musicOffset`), destroys source node, suspends `AudioContext`
+6. **App foreground** (`resumeMusic()`): Resumes `AudioContext` (needed for SFX too), creates new source node from saved offset. `AudioBuffer` data is still intact in memory
+7. **Toggle off** (`stopMusic()`): Resets offset to 0, destroys source node
 
 ### Public Methods
 
 | Method                  | Description                                        | Called From                                      |
 | ----------------------- | -------------------------------------------------- | ------------------------------------------------ |
+| `preload()`             | Preload AudioContext + decode all sounds           | `LoadingScreen.tsx` on mount                     |
 | `startMusic()`          | Start background music from beginning              | `App.tsx` after loading                          |
 | `pauseMusic()`          | Save position, destroy source, suspend context     | Capacitor `pause` event                          |
 | `resumeMusic()`         | Resume context + restart music from saved position | Capacitor `resume` event                         |
@@ -899,7 +901,7 @@ Located in `/public/sounds/` directory:
 - **Format**: All MP3 for maximum browser/WebView compatibility
 - **Volume**: Background music 30%, SFX 50% (constants at top of file)
 - **SFX Overlap**: Each `playSfx()` call creates a new `AudioBufferSourceNode` — these are lightweight objects that auto-GC after playback
-- **Auto-play Policy**: `AudioContext` + `loadAllSounds()` deferred to first user interaction. Music queued via `musicPendingPlay` flag if `startMusic()` called before interaction
+- **Auto-play Policy**: Audio preloaded during loading screen via `preload()` (AudioContext created suspended). On "Tap to Start", `ctx.resume()` is called synchronously in the user gesture — critical for mobile browsers. `resume()` must NOT be awaited or the gesture context expires. Music queued via `musicPendingPlay` flag if `startMusic()` called before interaction.
 - **Persistence**: Music/SFX toggle preferences saved to localStorage (`pixel-fish-miner-music`, `pixel-fish-miner-sfx`)
 - **Position Tracking**: `musicOffset` tracks seconds into the track, `musicStartTime` tracks `ctx.currentTime` at play start. On pause: `offset = (offset + elapsed) % duration`
 - **Singleton**: Exported as `audioManager` instance, imported throughout `App.tsx`
@@ -967,6 +969,49 @@ Import will fail and show error if:
 - **Backup**: Save progress before risky gameplay
 - **Recovery**: Restore after browser data cleared
 - **Sharing**: Share max-level saves with friends (not synced)
+
+---
+
+## Promo Codes (`handleApplyPromoCode` in App.tsx)
+
+Promo codes are entered in the Store modal input field. Some codes are **reusable** (can be entered multiple times), others are **one-time only** (tracked in `gameState.usedPromoCodes`).
+
+### Available Codes
+
+**💰 Currency & Rewards**:
+
+- `money` — Adds $500 to wallet (reusable)
+- `woody` — Toggles $9,999,999 max money + unlocks secret achievement (one-time)
+
+**🌦️ Weather Control**:
+
+- `rain` — Forces Rain weather (reusable, lasts until next natural cycle)
+- `snow` — Forces Snow weather (reusable)
+- `wind` — Forces Wind weather (reusable)
+- `fog` — Forces Fog weather (reusable)
+- `rainbow` — Forces Rainbow weather for 30s, enables Narwhal spawns (one-time)
+- `normal` — Resets to Clear weather (reusable)
+
+**🐟 Fishing Bonuses**:
+
+- `fish` — Activates Fish Frenzy for 30s: rapid spawn rate, weather-only fish (reusable, sets `activePowerups.fishFrenzy` directly)
+- `unlockall` — Unlocks all fish in Encyclopedia (one-time)
+
+**✈️ Special Events**:
+
+- `plane` / `airplane` — Summons Supply Drop airplane (reusable, calls `setLastPlaneRequestTime`)
+
+**⚠️ Dangerous**:
+
+- `reset` — Deletes ALL progress with confirmation dialog (always available)
+
+### Implementation Details
+
+- **One-time codes** (`rainbow`, `unlockall`, `woody`): Use `applyOneTime()` helper which adds to `usedPromoCodes` array and increments `successfulPromoCodes` counter for achievement tracking
+- **Reusable codes** (`money`, weather codes, `fish`, `plane`): Use `applyReusable()` helper which applies state changes without tracking in `usedPromoCodes`
+- **Feedback messages**: All use `t.promoMessages.*` translation keys (e.g., `t.promoMessages.weatherRain`, `t.promoMessages.invalidCode`)
+- **Input clearing**: Input field always clears after submit (both valid and invalid codes)
+- **Rainbow Jar powerup**: Only visible in the Store after `rainbow` promo code has been used (checked via `gameState.usedPromoCodes.includes("rainbow")`)
 
 ---
 
@@ -1071,7 +1116,7 @@ To add new content:
 
 - **Static Fish**: Shell, Sea Cucumber, Coral, Anchor are spawned once at init and never despawn (decorative)
 - **Narwhal Spawning**: During Rainbow weather, standard random spawning excludes Narwhal; it only spawns via timed injection (10s intervals)
-- **Migration Event**: Pacific Saury, Mullet, and Anchovy only spawn during 30-second migration events. When migration starts, ALL existing fish (except static decorations: shell, sea_cucumber, coral, anchor) are immediately cleared from the screen, and only migration fish spawn during the event. When migration ends, all migration fish are cleared. Auto-triggers every 5 minutes or via promo code "migration". Uses time-based state transition detection (`!previousMigrationActive.current && isMigrationActuallyActive`) to handle instant clearing without waiting for state updates
+- **Migration Event**: Pacific Saury, Mullet, and Anchovy only spawn during 30-second migration events. When migration starts, ALL existing fish (except static decorations: shell, sea_cucumber, coral, anchor) are immediately cleared from the screen, and only migration fish spawn during the event. When migration ends, all migration fish are cleared. Auto-triggers every 5 minutes. Migration state tracking runs before `if (paused) return` in `update()` to prevent stale ref when modals are open.
 - **Ghost Fish Unlock**: Phantom Perch, Spectral Sardine, and Ghost Squid only spawn after purchasing Kraken pet. Filtered in `getWeightedFishType` via `unlockedFish` check
 - **Ghost Boat**: Flying Dutchman only spawns after Kraken purchase. Features fade effect (opacity 0.0-1.0) and glowing green lanterns
 - **Trash Suppression**: Mystery Bag creates 20s period where trash doesn't spawn (separate from Super Bait)

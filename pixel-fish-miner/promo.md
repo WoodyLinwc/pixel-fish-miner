@@ -35,10 +35,10 @@ This document lists all available promo codes that can be entered in the Store M
 
 ### 🐟 Fishing Bonuses
 
-| Code     | Effect                                     | Duration   |
-| -------- | ------------------------------------------ | ---------- |
-| `fish`   | Activates "Fish Frenzy" - rapid spawn rate | 30 seconds |
-| `unlock` | Unlocks all fish in Encyclopedia           | Permanent  |
+| Code        | Effect                                     | Duration   |
+| ----------- | ------------------------------------------ | ---------- |
+| `fish`      | Activates "Fish Frenzy" - rapid spawn rate | 30 seconds |
+| `unlockall` | Unlocks all fish in Encyclopedia           | Permanent  |
 
 ### ✈️ Special Events
 

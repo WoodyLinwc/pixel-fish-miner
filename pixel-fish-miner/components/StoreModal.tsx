@@ -90,9 +90,8 @@ const StoreModal: React.FC<StoreModalProps> = ({
     const result = onApplyPromoCode(promoCode);
     setPromoFeedback(result);
 
-    if (result.success) {
-      setPromoCode("");
-    }
+    // Always clear input after submit
+    setPromoCode("");
 
     // Clear feedback after 3s
     setTimeout(() => {

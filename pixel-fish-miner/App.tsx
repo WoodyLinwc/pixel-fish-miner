@@ -948,15 +948,17 @@ const App: React.FC = () => {
     const cleanCode = code.trim().toLowerCase();
     const t = TRANSLATIONS[language];
 
-    // Check if code already used
-    if (gameState.usedPromoCodes.includes(cleanCode)) {
-      return { success: false, message: t.codeAlreadyUsed };
+    // One-time codes: check if already used
+    const oneTimeCodes = ["rainbow", "unlockall", "woody"];
+    if (
+      oneTimeCodes.includes(cleanCode) &&
+      gameState.usedPromoCodes.includes(cleanCode)
+    ) {
+      return { success: false, message: t.promoMessages.promoUsed };
     }
 
-    // Helper to increment the successful promo counter for achievement
-    const incrementPromoCounter = (
-      updateFn: (prev: GameState) => GameState,
-    ) => {
+    // Helper for one-time codes (tracks in usedPromoCodes + increments achievement counter)
+    const applyOneTime = (updateFn: (prev: GameState) => GameState) => {
       setGameState((prev) => {
         const nextState = updateFn(prev);
         return {
@@ -967,127 +969,23 @@ const App: React.FC = () => {
       });
     };
 
-    // Power-ups
-    if (cleanCode === "superbait") {
-      incrementPromoCounter((prev) => ({
+    // Helper for reusable codes (no usedPromoCodes tracking)
+    const applyReusable = (updateFn: (prev: GameState) => GameState) => {
+      setGameState((prev) => updateFn(prev));
+    };
+
+    // --- 💰 Currency & Rewards ---
+
+    if (cleanCode === "money") {
+      applyReusable((prev) => ({
         ...prev,
-        purchasedPowerups: [...prev.purchasedPowerups, "superBait"],
+        money: prev.money + 500,
       }));
-      return { success: true, message: t.superBaitUnlocked };
+      return { success: true, message: t.promoMessages.moneyAdded };
     }
 
-    if (cleanCode === "turbomode") {
-      incrementPromoCounter((prev) => ({
-        ...prev,
-        purchasedPowerups: [...prev.purchasedPowerups, "turboMode"],
-      }));
-      return { success: true, message: t.turboModeUnlocked };
-    }
-
-    if (cleanCode === "goldenhour") {
-      incrementPromoCounter((prev) => ({
-        ...prev,
-        purchasedPowerups: [...prev.purchasedPowerups, "goldenHour"],
-      }));
-      return { success: true, message: t.goldenHourUnlocked };
-    }
-
-    if (cleanCode === "mysterybag") {
-      incrementPromoCounter((prev) => ({
-        ...prev,
-        purchasedPowerups: [...prev.purchasedPowerups, "mysteryBag"],
-      }));
-      return { success: true, message: t.mysteryBagUnlocked };
-    }
-
-    if (cleanCode === "planebait") {
-      incrementPromoCounter((prev) => ({
-        ...prev,
-        purchasedPowerups: [...prev.purchasedPowerups, "planeBait"],
-      }));
-      return { success: true, message: t.planeBaitUnlocked };
-    }
-
-    if (cleanCode === "magicconch") {
-      incrementPromoCounter((prev) => ({
-        ...prev,
-        purchasedPowerups: [...prev.purchasedPowerups, "magicConch"],
-      }));
-      return { success: true, message: t.magicConchUnlocked };
-    }
-
-    // Instant Triggers
-    if (cleanCode === "rainbow") {
-      incrementPromoCounter((prev) => ({
-        ...prev,
-        weather: WeatherType.RAINBOW,
-        weatherExpiration: Date.now() + 30000,
-      }));
-      return { success: true, message: t.rainbowActivated };
-    }
-
-    if (cleanCode === "migration") {
-      incrementPromoCounter((prev) => ({
-        ...prev,
-        migrationActive: true,
-        migrationEndTime: Date.now() + 30000,
-      }));
-      return { success: true, message: t.migrationActivated };
-    }
-
-    if (cleanCode === "unlockall") {
-      incrementPromoCounter((prev) => {
-        const newFishCaught = { ...prev.fishCaught };
-        const newUnlockedFish = [...prev.unlockedFish];
-
-        FISH_TYPES.forEach((fish) => {
-          if (!newFishCaught[fish.id]) {
-            newFishCaught[fish.id] = 1;
-          }
-
-          // Add to unlocked list if not present
-          if (!newUnlockedFish.includes(fish.id)) {
-            newUnlockedFish.push(fish.id);
-          }
-        });
-
-        return {
-          ...prev,
-          fishCaught: newFishCaught,
-          unlockedFish: newUnlockedFish,
-        };
-      });
-      return { success: true, message: t.unlockAll };
-    }
-
-    // Reset Code - DANGEROUS!
-    if (cleanCode === "reset") {
-      const confirmed = window.confirm(
-        "⚠️ WARNING: This will DELETE ALL your progress!\n\n" +
-          "Your money, fish, achievements, upgrades, costumes, and pets will be PERMANENTLY LOST.\n\n" +
-          "This action is IRREVERSIBLE!\n\n" +
-          "Are you absolutely sure you want to reset?",
-      );
-
-      if (!confirmed) {
-        return { success: false, message: "Reset cancelled" };
-      }
-
-      // Clear localStorage and reset to initial state
-      localStorage.removeItem("pixel-fish-miner-save");
-      setGameState(INITIAL_GAME_STATE);
-
-      // Show message and reload after a moment
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-
-      return { success: true, message: "Game reset! Reloading..." };
-    }
-
-    // Secret Codes
     if (cleanCode === "woody") {
-      incrementPromoCounter((prev) => {
+      applyOneTime((prev) => {
         const CHEAT_AMOUNT = 9999999;
         const newMoney = prev.money >= CHEAT_AMOUNT ? 0 : CHEAT_AMOUNT;
 
@@ -1105,10 +1003,133 @@ const App: React.FC = () => {
 
         return nextState;
       });
-      return { success: true, message: t.secretUnlocked };
+      return { success: true, message: t.promoMessages.secretUnlocked };
     }
 
-    return { success: false, message: t.invalidCode };
+    // --- 🌦️ Weather Control ---
+
+    if (cleanCode === "rain") {
+      applyReusable((prev) => ({
+        ...prev,
+        weather: WeatherType.RAIN,
+        weatherExpiration: undefined, // Lasts until next natural cycle
+      }));
+      return { success: true, message: t.promoMessages.weatherRain };
+    }
+
+    if (cleanCode === "snow") {
+      applyReusable((prev) => ({
+        ...prev,
+        weather: WeatherType.SNOW,
+        weatherExpiration: undefined,
+      }));
+      return { success: true, message: t.promoMessages.weatherSnow };
+    }
+
+    if (cleanCode === "wind") {
+      applyReusable((prev) => ({
+        ...prev,
+        weather: WeatherType.WIND,
+        weatherExpiration: undefined,
+      }));
+      return { success: true, message: t.promoMessages.weatherWind };
+    }
+
+    if (cleanCode === "fog") {
+      applyReusable((prev) => ({
+        ...prev,
+        weather: WeatherType.FOG,
+        weatherExpiration: undefined,
+      }));
+      return { success: true, message: t.promoMessages.weatherFog };
+    }
+
+    if (cleanCode === "rainbow") {
+      applyOneTime((prev) => ({
+        ...prev,
+        weather: WeatherType.RAINBOW,
+        weatherExpiration: Date.now() + 30000, // 30 seconds, one-time only
+      }));
+      return { success: true, message: t.promoMessages.weatherRainbow };
+    }
+
+    if (cleanCode === "normal") {
+      applyReusable((prev) => ({
+        ...prev,
+        weather: WeatherType.CLEAR,
+        weatherExpiration: undefined,
+      }));
+      return { success: true, message: t.promoMessages.weatherClear };
+    }
+
+    // --- 🐟 Fishing Bonuses ---
+
+    if (cleanCode === "fish") {
+      applyReusable((prev) => ({
+        ...prev,
+        activePowerups: {
+          ...prev.activePowerups,
+          fishFrenzy: Date.now() + 30000, // 30 seconds
+        },
+      }));
+      return { success: true, message: t.promoMessages.fishFrenzy };
+    }
+
+    if (cleanCode === "unlockall") {
+      applyOneTime((prev) => {
+        const newFishCaught = { ...prev.fishCaught };
+        const newUnlockedFish = [...prev.unlockedFish];
+
+        FISH_TYPES.forEach((fish) => {
+          if (!newFishCaught[fish.id]) {
+            newFishCaught[fish.id] = 1;
+          }
+          if (!newUnlockedFish.includes(fish.id)) {
+            newUnlockedFish.push(fish.id);
+          }
+        });
+
+        return {
+          ...prev,
+          fishCaught: newFishCaught,
+          unlockedFish: newUnlockedFish,
+        };
+      });
+      return { success: true, message: t.promoMessages.unlockAll };
+    }
+
+    // --- ✈️ Special Events ---
+
+    if (cleanCode === "plane" || cleanCode === "airplane") {
+      setLastPlaneRequestTime(Date.now());
+      return { success: true, message: t.promoMessages.planeIncoming };
+    }
+
+    // --- ⚠️ Dangerous Codes ---
+
+    if (cleanCode === "reset") {
+      const confirmed = window.confirm(
+        "⚠️ WARNING: This will DELETE ALL your progress!\n\n" +
+          "Your money, fish, achievements, upgrades, costumes, and pets will be PERMANENTLY LOST.\n\n" +
+          "This action is IRREVERSIBLE!\n\n" +
+          "Are you absolutely sure you want to reset?",
+      );
+
+      if (!confirmed) {
+        return { success: false, message: "Reset cancelled" };
+      }
+
+      localStorage.removeItem("pixel-fish-miner-save");
+      setGameState(INITIAL_GAME_STATE);
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+
+      return { success: true, message: "Game reset! Reloading..." };
+    }
+
+    return { success: false, message: t.promoMessages.invalidCode };
   };
 
   const handleAchievementToastComplete = () => {
