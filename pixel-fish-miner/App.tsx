@@ -750,12 +750,27 @@ const App: React.FC = () => {
         setLastPlaneRequestTime(Date.now());
       }
 
-      // Special: Magic Conch - Force Rainbow for 30 seconds
+      // Special: Magic Conch - Random weather for 60 seconds
+      // Rainbow is rare (5%), other weathers equally distributed
       if (powerupId === "magicConch") {
+        const r = Math.random();
+        let newWeather: WeatherType;
+        if (r < 0.05) {
+          newWeather = WeatherType.RAINBOW; // 5% chance
+        } else if (r < 0.2875) {
+          newWeather = WeatherType.RAIN; // 23.75%
+        } else if (r < 0.525) {
+          newWeather = WeatherType.SNOW; // 23.75%
+        } else if (r < 0.7625) {
+          newWeather = WeatherType.WIND; // 23.75%
+        } else {
+          newWeather = WeatherType.FOG; // 23.75%
+        }
+
         nextState = {
           ...nextState,
-          weather: WeatherType.RAINBOW,
-          weatherExpiration: Date.now() + 30000, // 30 seconds
+          weather: newWeather,
+          weatherExpiration: Date.now() + 60000, // 60 seconds
         };
       }
 
