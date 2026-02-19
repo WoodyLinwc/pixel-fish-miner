@@ -178,6 +178,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
   // Migration tracking
   const previousMigrationActive = useRef<boolean>(migrationActive);
+  const migrationActiveRef = useRef<boolean>(migrationActive);
+  const migrationEndTimeRef = useRef<number>(migrationEndTime);
+  // Keep refs in sync with props on every render
+  migrationActiveRef.current = migrationActive;
+  migrationEndTimeRef.current = migrationEndTime;
 
   // Pet Income Timer
   const lastPetIncomeTime = useRef<number>(Date.now());
@@ -343,12 +348,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const update = useCallback(
     (time: number, dt: number) => {
       // --- Handle Migration State Changes (BEFORE pause check) ---
+      // Uses refs so values are always current regardless of useCallback staleness.
       // Must run even when paused so previousMigrationActive stays in sync.
-      // Otherwise, if migration starts/ends while a modal is open,
-      // the ref gets stale and the next migration won't clear regular fish.
       const now = Date.now();
       const isMigrationActuallyActive =
-        migrationActive && now < migrationEndTime;
+        migrationActiveRef.current && now < migrationEndTimeRef.current;
 
       // When migration STARTS, clear all non-static fish
       if (!previousMigrationActive.current && isMigrationActuallyActive) {
@@ -531,7 +535,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       const totalMaxFish =
         baseMaxFish + (fishDensityLevel - 1) * extraFishPerLevel;
 
-      // --- Migration state already handled at top of update() ---
+      // --- Migration state handled at top of update() via refs ---
+      // isMigrationActuallyActive is already computed above using refs
 
       // Spawn rate also increases with level (decreases interval)
       // Base 500ms, -12ms per level
