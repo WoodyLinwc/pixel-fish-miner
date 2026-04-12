@@ -1007,7 +1007,7 @@ Promo codes are entered in the Store modal input field. Some codes are **reusabl
 
 ### Implementation Details
 
-- **One-time codes** (`rainbow`, `unlockall`, `woody`): Use `applyOneTime()` helper which adds to `usedPromoCodes` array and increments `successfulPromoCodes` counter for achievement tracking
+- **One-time codes** (`rainbow`, `unlockall`, `woodylin`): Use `applyOneTime()` helper which adds to `usedPromoCodes` array and increments `successfulPromoCodes` counter for achievement tracking
 - **Reusable codes** (`money`, weather codes, `fish`, `plane`): Use `applyReusable()` helper which applies state changes without tracking in `usedPromoCodes`
 - **Feedback messages**: All use `t.promoMessages.*` translation keys (e.g., `t.promoMessages.weatherRain`, `t.promoMessages.invalidCode`)
 - **Input clearing**: Input field always clears after submit (both valid and invalid codes)
