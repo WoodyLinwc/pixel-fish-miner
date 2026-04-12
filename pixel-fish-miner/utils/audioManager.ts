@@ -15,12 +15,12 @@ const MUSIC_VOLUME = 0.3;
 const SFX_VOLUME = 0.5;
 
 const SOUND_PATHS: Record<string, string> = {
-  background: "/sounds/background.mp3",
-  button: "/sounds/button.mp3",
-  catchnothing: "/sounds/catchnothing.mp3",
-  claw: "/sounds/claw.mp3",
-  money: "/sounds/money.mp3",
-  powerup: "/sounds/powerup.mp3",
+  background: "./sounds/background.mp3",
+  button: "./sounds/button.mp3",
+  catchnothing: "./sounds/catchnothing.mp3",
+  claw: "./sounds/claw.mp3",
+  money: "./sounds/money.mp3",
+  powerup: "./sounds/powerup.mp3",
 };
 
 class AudioManager {
