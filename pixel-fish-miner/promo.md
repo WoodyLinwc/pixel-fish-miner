@@ -15,10 +15,10 @@ This document lists all available promo codes that can be entered in the Store M
 
 ### 💰 Currency & Rewards
 
-| Code    | Effect                         | Notes                                     |
-| ------- | ------------------------------ | ----------------------------------------- |
-| `money` | Adds $500 to wallet            | Can be used multiple times                |
-| `woody` | Max Money + Secret Achievement | Secret code - unlocks special achievement |
+| Code       | Effect                         | Notes                                     |
+| ---------- | ------------------------------ | ----------------------------------------- |
+| `money`    | Adds $500 to wallet            | Can be used multiple times                |
+| `woodylin` | Max Money + Secret Achievement | Secret code - unlocks special achievement |
 
 ### 🌦️ Weather Control
 
@@ -147,7 +147,7 @@ These codes are useful for:
 
 ### Secret Codes
 
-- `woody` (debug/testing)
+- `woodylin` (debug/testing)
 
 ### Dangerous Codes (⚠️ Use with Caution)
 
@@ -159,7 +159,7 @@ These codes are useful for:
 
 ```
 WEATHER:  rain | snow | wind | fog | rainbow | normal
-MONEY:    money | woody
+MONEY:    money | woodylin
 FISHING:  fish | unlock
 EVENTS:   plane | airplane
 DANGER:   reset (⚠️ DELETES ALL!)
@@ -169,7 +169,7 @@ DANGER:   reset (⚠️ DELETES ALL!)
 
 ## Version History
 
-- **v1.0**: Initial promo codes (money, weather, fish, unlock, woody)
+- **v1.0**: Initial promo codes (money, weather, fish, unlock, woodylin)
 - **v1.1**: Added airplane/plane codes for supply drops
 - **v1.2**: Added rainbow one-time use restriction
 - **v1.3**: Added `reset` code with safety confirmation

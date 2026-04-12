@@ -267,7 +267,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               <h3 className="text-sm font-bold text-[#3e2723] mb-2 flex items-center gap-2">
                 👨‍💻 {t.creator}
               </h3>
-              <p className="text-xs text-[#6d4c41] mb-3">Woody Lin / 林万程</p>
+              <p className="text-xs text-[#6d4c41] mb-3">Woody Lin</p>
 
               <h3 className="text-sm font-bold text-[#3e2723] mb-2 flex items-center gap-2">
                 🛠️ {t.techStack}

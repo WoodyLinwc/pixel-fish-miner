@@ -964,7 +964,7 @@ const App: React.FC = () => {
     const t = TRANSLATIONS[language];
 
     // One-time codes: check if already used
-    const oneTimeCodes = ["rainbow", "unlockall", "woody"];
+    const oneTimeCodes = ["rainbow", "unlockall", "woodylin"];
     if (
       oneTimeCodes.includes(cleanCode) &&
       gameState.usedPromoCodes.includes(cleanCode)
@@ -999,7 +999,7 @@ const App: React.FC = () => {
       return { success: true, message: t.promoMessages.moneyAdded };
     }
 
-    if (cleanCode === "woody") {
+    if (cleanCode === "woodylin") {
       applyOneTime((prev) => {
         const CHEAT_AMOUNT = 9999999;
         const newMoney = prev.money >= CHEAT_AMOUNT ? 0 : CHEAT_AMOUNT;

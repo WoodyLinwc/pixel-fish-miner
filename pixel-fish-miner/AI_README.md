@@ -981,7 +981,7 @@ Promo codes are entered in the Store modal input field. Some codes are **reusabl
 **💰 Currency & Rewards**:
 
 - `money` — Adds $500 to wallet (reusable)
-- `woody` — Toggles $9,999,999 max money + unlocks secret achievement (one-time)
+- `woodylin` — Toggles $9,999,999 max money + unlocks secret achievement (one-time)
 
 **🌦️ Weather Control**:
 
