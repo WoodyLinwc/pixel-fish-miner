@@ -33,6 +33,7 @@ import {
   decryptSaveData,
   downloadSaveFile,
 } from "./utils/encryption";
+import { initAds, showBannerAds } from "./utils/admob";
 import { App as CapApp } from "@capacitor/app";
 import { StatusBar } from "@capacitor/status-bar";
 import { Keyboard } from "@capacitor/keyboard";
@@ -98,6 +99,8 @@ const App: React.FC = () => {
   const [isAutoPaused, setIsAutoPaused] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  const isAndroid = !!window.Capacitor;
+
   const [isMusicOn, setIsMusicOn] = useState(() => {
     const savedMusicPref = localStorage.getItem("pixel-fish-miner-music");
     return savedMusicPref !== null ? savedMusicPref === "true" : true; // Default to true (ON)
@@ -154,10 +157,11 @@ const App: React.FC = () => {
     audioManager.setSfxEnabled(isSoundEffectsOn);
   }, [isSoundEffectsOn]);
 
-  // Start background music after loading screen finishes
+  // Start background music after loading screen finishes + init ads
   useEffect(() => {
     if (!isLoading) {
       audioManager.startMusic();
+      initAds().then(() => showBannerAds());
     }
   }, [isLoading]);
 
@@ -1172,7 +1176,9 @@ const App: React.FC = () => {
       {isLoading ? (
         <LoadingScreen onLoadComplete={handleLoadComplete} />
       ) : (
-        <div className="min-h-screen flex flex-col items-center justify-center font-mono p-2 md:p-4">
+        <div
+          className={`min-h-screen flex flex-col items-center justify-center font-mono p-2 md:p-4 ${isAndroid ? "pt-[50px] pb-[50px]" : ""}`}
+        >
           <div className="w-full max-w-[1024px] flex flex-col shadow-[0_0_20px_rgba(0,0,0,0.5)]">
             <StatsPanel
               gameState={gameState}
