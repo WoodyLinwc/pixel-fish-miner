@@ -632,6 +632,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       });
 
       // --- Update Claws ---
+      // Normalize dt to 60fps baseline so claw physics are frame-rate independent.
+      // At 60fps:  dt ≈ 16.67ms → dtFactor ≈ 1.0 (no change)
+      // At 120fps: dt ≈  8.33ms → dtFactor ≈ 0.5 (half per frame = same per second)
+      // Capped at 3 to prevent a huge jump if the tab was backgrounded and dt spikes.
+      const dtFactor = dt > 0 ? Math.min(dt / (1000 / 60), 3) : 1;
+
       clawsRef.current.forEach((claw, index) => {
         const isActive =
           index === 0 || isMultiClawActive || claw.state !== ClawState.IDLE;
@@ -650,22 +656,23 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         if (claw.state === ClawState.IDLE) {
           // Only rotate if not disabled or if it's just numbed (can sway slightly)
           if (!isDisabled) {
-            claw.angle += claw.angleSpeed;
+            claw.angle += claw.angleSpeed * dtFactor;
             if (claw.angle > 1.2 || claw.angle < -1.2) {
               claw.angleSpeed *= -1;
             }
           } else {
             // If severed, keep short. If numbed, just drift.
+            // Use Math.pow for frame-rate independent exponential decay.
             if (claw.debuffType === "SEVERED") {
-              claw.angle = claw.angle * 0.9;
+              claw.angle = claw.angle * Math.pow(0.9, dtFactor);
               claw.length = 60;
             } else if (claw.debuffType === "NUMBED") {
-              claw.angle = claw.angle * 0.95;
+              claw.angle = claw.angle * Math.pow(0.95, dtFactor);
             }
           }
         } else if (claw.state === ClawState.SHOOTING) {
           const shootSpeed = 8 * clawThrowSpeedMultiplier;
-          claw.length += shootSpeed;
+          claw.length += shootSpeed * dtFactor;
 
           const tipX = clawX + Math.sin(claw.angle) * claw.length;
           const tipY = clawY.current + Math.cos(claw.angle) * claw.length;
@@ -767,7 +774,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             }
           }
 
-          claw.length -= speed;
+          claw.length -= speed * dtFactor;
 
           if (claw.length <= 60) {
             claw.length = 60;
