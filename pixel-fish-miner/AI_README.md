@@ -95,6 +95,17 @@ playServicesAdsVersion = '23.3.0'
   - Web: `angleSpeed = 0.03`
   - Mobile: `angleSpeed = 0.02` (33% slower for better touch control)
 - **Detection**: Uses `window.Capacitor` check in claw initialization
+- **Frame-Rate Independent Physics**: All claw physics are normalized to a 60fps baseline using a `dtFactor` multiplier computed each frame:
+  ```typescript
+  const dtFactor = dt > 0 ? Math.min(dt / (1000 / 60), 3) : 1;
+  ```
+
+  - At 60fps: `dtFactor ≈ 1.0` (no change)
+  - At 120fps: `dtFactor ≈ 0.5` (half step per frame = same speed per second)
+  - Applied to: claw angle oscillation, shoot extension speed, and retract speed
+  - Debuff decays use `Math.pow(factor, dtFactor)` for correct frame-rate independent exponential decay
+  - Capped at `3` to prevent a large physics jump if the app was backgrounded and `dt` spikes on resume
+  - **Why this matters**: Native Capacitor apps receive the full display refresh rate (90Hz/120Hz on modern Android), whereas browsers often cap at 60Hz. Without this fix, claw swing and catch strength were device-dependent.
 
 #### Keyboard Handling (`components/StoreModal.tsx`)
 
@@ -1041,6 +1052,19 @@ Import will fail and show error if:
 - Missing required GameState fields (corrupted structure)
 - File was modified in text editor
 
+`decryptSaveData()` returns `string | null`. A null result (failed decryption/checksum) is explicitly checked before passing to `JSON.parse()`:
+
+```typescript
+const decrypted = decryptSaveData(text);
+if (!decrypted)
+  throw new Error(
+    "Invalid save file. Please make sure you're importing a Pixel Fish Miner save.",
+  );
+const imported = JSON.parse(decrypted);
+```
+
+This narrows the type to `string` for TypeScript and surfaces a player-friendly message via the existing `catch` block instead of a raw type error.
+
 ### Use Cases
 
 - **Cross-device play**: Export from PC, import on mobile
@@ -1210,3 +1234,5 @@ To add new content:
 - **AdMob Emulator**: Test ads will NOT show on Android emulator due to `adservices` being blocked. Always test on a physical device.
 - **AdMob Single Banner**: `@capacitor-community/admob` only supports one active banner at a time. A second `showBanner()` call replaces the first. Two simultaneous banners require native Android Java code.
 - **mipmap-anydpi-v26**: Delete this folder if it exists and you are using plain PNG icons. It causes a Gradle build error referencing a missing `ic_launcher_foreground` resource.
+- **TypeScript `never[]` arrays**: After VS Code / TS language server updates, empty array literals (`const stars = []`) are inferred as `never[]` when `noImplicitAny` is not explicitly set. Fix by typing them against their ref: `const stars: typeof starsRef.current = []`. This affects `stars` and `clouds` in the environment init `useEffect` in `GameCanvas.tsx`.
+- **TypeScript `noImplicitAny`**: If a VS Code update causes widespread implicit `any` errors despite all types being declared, add `"noImplicitAny": false` to `tsconfig.json` `compilerOptions` and restart the TS server. The game does not rely on implicit any — this suppresses false positives from TS server version changes.
