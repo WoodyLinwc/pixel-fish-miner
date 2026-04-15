@@ -926,7 +926,10 @@ const App: React.FC = () => {
     try {
       const text = await file.text();
       const decrypted = decryptSaveData(text);
-
+      if (!decrypted)
+        throw new Error(
+          "Invalid save file. Please make sure you're importing a Pixel Fish Miner save.",
+        );
       const imported = JSON.parse(decrypted);
 
       // Merge with INITIAL_GAME_STATE for migration safety

@@ -225,7 +225,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   // Init Environment Objects & Static Fish
   useEffect(() => {
     // Stars
-    const stars = [];
+    const stars: typeof starsRef.current = [];
     for (let i = 0; i < 50; i++) {
       stars.push({
         x: Math.random() * GAME_WIDTH,
@@ -237,7 +237,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     starsRef.current = stars;
 
     // Clouds
-    const clouds = [];
+    const clouds: typeof cloudsRef.current = [];
     for (let i = 0; i < 5; i++) {
       clouds.push({
         x: Math.random() * GAME_WIDTH,
