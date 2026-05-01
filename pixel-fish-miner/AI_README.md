@@ -57,10 +57,10 @@ The game is deployed as both a web application and a native Android app using Ca
 - **Android Only**: All admob functions check `window.Capacitor` and return early on web — itch.io web version shows no ads
 - **Initialization**: Called in `App.tsx` after loading screen completes (`isLoading` becomes `false`)
 - **Layout Padding**: When on Android (`isAndroid = !!window.Capacitor`), the main wrapper adds `pt-[50px] pb-[50px]` to prevent the game content from being hidden behind the banner
-- **AdMob Account**: Publisher ID `pub-1686915079603954`
-  - App ID: `ca-app-pub-1686915079603954~3485842688`
-  - Top Banner Ad Unit ID: `ca-app-pub-1686915079603954/6481326679`
-  - Bottom Banner Ad Unit ID: `ca-app-pub-1686915079603954/5853197751` (unused — plugin only supports one banner at a time)
+- **AdMob Account**: Publisher ID `pub-5626161990859268`
+  - App ID: `ca-app-pub-5626161990859268~5811954249`
+  - Top Banner Ad Unit ID: `ca-app-pub-5626161990859268/8223329318`
+  - Bottom Banner Ad Unit ID: (unused — plugin only supports one banner at a time)
 - **Testing**: Set `isTesting: true` in `admob.ts` during development. Switch to `false` before publishing.
 - **Known Limitation**: `@capacitor-community/admob` only supports one active banner at a time. A second `showBanner()` call replaces the first. Two simultaneous banners require native Android Java code.
 - **Emulator Note**: Test ads do NOT reliably load on Android emulators due to `adservices` being blocked. Always test on a physical device.
@@ -70,7 +70,7 @@ The game is deployed as both a web application and a native Android app using Ca
 ```xml
 <meta-data
     android:name="com.google.android.gms.ads.APPLICATION_ID"
-    android:value="ca-app-pub-1686915079603954~3485842688"/>
+    android:value="ca-app-pub-5626161990859268~5811954249"/>
 ```
 
 **Required `android/variables.gradle` entry**:
@@ -96,6 +96,7 @@ playServicesAdsVersion = '23.3.0'
   - Mobile: `angleSpeed = 0.02` (33% slower for better touch control)
 - **Detection**: Uses `window.Capacitor` check in claw initialization
 - **Frame-Rate Independent Physics**: All claw physics are normalized to a 60fps baseline using a `dtFactor` multiplier computed each frame:
+
   ```typescript
   const dtFactor = dt > 0 ? Math.min(dt / (1000 / 60), 3) : 1;
   ```

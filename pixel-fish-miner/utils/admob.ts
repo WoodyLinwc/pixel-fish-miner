@@ -5,7 +5,7 @@ import {
   BannerAdPosition,
 } from "@capacitor-community/admob";
 
-const TOP_BANNER_ID = "ca-app-pub-1686915079603954/6481326679";
+const TOP_BANNER_ID = "ca-app-pub-5626161990859268/8223329318";
 
 export async function initAds(): Promise<void> {
   if (!window.Capacitor) return;
