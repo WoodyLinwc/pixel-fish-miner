@@ -10,6 +10,8 @@ const config: CapacitorConfig = {
   android: {
     allowMixedContent: true,
     captureInput: true,
+    overrideUserAgent: undefined,
+    initialFocus: true,
   },
   plugins: {
     SplashScreen: {
@@ -23,6 +25,9 @@ const config: CapacitorConfig = {
       spinnerColor: "#999999",
       splashFullScreen: true,
       splashImmersive: true,
+    },
+    ScreenOrientation: {
+      default: "portrait",
     },
   },
 };
