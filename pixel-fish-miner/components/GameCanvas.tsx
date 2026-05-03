@@ -657,8 +657,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           // Only rotate if not disabled or if it's just numbed (can sway slightly)
           if (!isDisabled) {
             claw.angle += claw.angleSpeed * dtFactor;
-            if (claw.angle > 1.2 || claw.angle < -1.2) {
-              claw.angleSpeed *= -1;
+            if (claw.angle > 1.2) {
+              claw.angle = 1.2;
+              claw.angleSpeed = -Math.abs(claw.angleSpeed);
+            } else if (claw.angle < -1.2) {
+              claw.angle = -1.2;
+              claw.angleSpeed = Math.abs(claw.angleSpeed);
             }
           } else {
             // If severed, keep short. If numbed, just drift.
