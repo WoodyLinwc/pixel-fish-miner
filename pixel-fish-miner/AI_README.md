@@ -383,7 +383,6 @@ admob.ts exports:
 
 - App ID: `ca-app-pub-1686915079603954~3485842688`
 - Top Banner: `ca-app-pub-1686915079603954/6481326679`
-- Bottom Banner: `ca-app-pub-1686915079603954/5853197751` (not currently used)
 
 ### 3. Game Engine (`components/GameCanvas.tsx`)
 
