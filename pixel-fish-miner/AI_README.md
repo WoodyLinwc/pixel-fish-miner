@@ -768,7 +768,7 @@ The migration system creates timed events where special migration fish temporari
 **Three-phase lifecycle**:
 
 1. **Cooldown** (5 min): `migrationPending: false`, `migrationActive: false`
-2. **Warning** (20 sec): `migrationPending: true` — shows orange warning banner, no fish changes yet
+2. **Warning** (20 sec): `migrationPending: true` — shows yellow banner, no fish changes yet
 3. **Active** (30 sec): `migrationActive: true` — fish cleared and replaced with migration fish
 
 **State Management** (in `constants.ts` INITIAL_GAME_STATE and `types.ts` GameState):
