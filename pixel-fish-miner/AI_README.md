@@ -759,28 +759,39 @@ The migration system creates timed events where special migration fish temporari
 
 **Event Mechanics**:
 
-- **Duration**: 30 seconds per migration event
-- **Cooldown**: 5 minutes (300,000ms) between automatic migrations
-- **Effect**: During migration, ALL regular fish (common, uncommon, rare, legendary, weather) are filtered out of spawning
-- **Visual Indicator**: "Migration Xs" text displays below player boat with countdown (30s → 1s)
-- **Auto-trigger**: Automatically starts every 5 minutes after the last migration ends
+- **Warning phase**: 20-second countdown before migration starts — orange banner with light yellow text "⚠ Migration in Xs" displays below the boat
+- **Duration**: 30 seconds of active migration after the warning
+- **Cooldown**: 5 minutes (300,000ms) after migration ends before the next warning phase begins
+- **Effect**: During active migration, ALL regular fish (common, uncommon, rare, legendary, weather) are filtered out of spawning
+- **Visual Indicator**: During active migration, a blue "Migration Xs" countdown banner displays below the player boat
+- **Auto-trigger**: Fires 5 minutes after game load (or after last migration ends)
 
-**State Management** (in `constants.ts` INITIAL_GAME_STATE):
+**Three-phase lifecycle**:
+
+1. **Cooldown** (5 min): `migrationPending: false`, `migrationActive: false`
+2. **Warning** (20 sec): `migrationPending: true` — shows orange warning banner, no fish changes yet
+3. **Active** (30 sec): `migrationActive: true` — fish cleared and replaced with migration fish
+
+**State Management** (in `constants.ts` INITIAL_GAME_STATE and `types.ts` GameState):
 
 ```typescript
 migrationActive: boolean; // Is migration currently happening
-migrationEndTime: number; // Timestamp when migration ends (Date.now() + 30000)
+migrationEndTime: number; // Timestamp when active migration ends (Date.now() + 30000)
 lastMigrationTime: number; // Timestamp when last migration ended (for cooldown)
+migrationPending: boolean; // Is the 20-second warning phase active
+migrationPendingEndTime: number; // Timestamp when warning ends and active migration begins
 ```
 
 **Implementation Details**:
 
-- **Timer Logic** (`App.tsx`): Checks every 100ms for migration end/start conditions
+- **Timer Logic** (`App.tsx`): Checks every 100ms. Priority order: (1) end active migration, (2) transition pending → active, (3) trigger new warning after cooldown
+- **Initial seed fix**: On fresh game or old save where `lastMigrationTime === 0`, `App.tsx` seeds it to `Date.now()` so the first migration fires 5 minutes after load. Without this, the `lastMigrationTime > 0` guard permanently blocked migration on new installs.
 - **Spawning Filter** (`utils/fish/fish.ts`): `getWeightedFishType()` accepts `migrationActive` parameter
   - If `migrationActive === true`: Only spawns pacific_saury, mullet, anchovy
   - If `migrationActive === false`: Filters out migration fish from spawn pool
-- **Fish Clearing** (`GameCanvas.tsx`): Migration state tracking runs **before** the `if (paused) return` check in `update()`. This ensures `previousMigrationActive` ref stays in sync even when modals are open. Without this, the ref gets stale during pause and the next migration fails to clear regular fish.
-- **Time-based Checks**: Uses `Date.now()` comparisons to handle migration end without waiting for React state updates
+- **Fish Clearing** (`GameCanvas.tsx`): Migration state tracking runs **before** the `if (paused) return` check in `update()`. This ensures `previousMigrationActive` ref stays in sync even when modals are open.
+- **Time-based Checks**: Uses `Date.now()` comparisons to handle state transitions without waiting for React state updates
+- **Canvas refs**: `migrationPendingRef` and `migrationPendingEndTimeRef` are kept in sync with props each render, alongside the existing `migrationActiveRef` and `migrationEndTimeRef`
 
 **Translations** (sample — all 8 languages have full coverage):
 
@@ -899,10 +910,12 @@ React components for game interface.
   - Save export/import with encryption
   - Credits display
 - **`SlotMachineModal.tsx`**: Gambling mini-game
-  - Bet selection ($50-$500)
-  - Three-reel slot machine
-  - Payout multipliers (2x-100x)
-  - Jackpot animation
+  - Bet selection ($25, $50, $100, $250, $500)
+  - Five-reel slot machine with sequential reel stopping
+  - Payout multipliers: 2x (3-in-a-row), 5x (4-in-a-row), 20x (5-in-a-row)
+  - Jackpot animation with sound
+  - `onBet(betAmount)` deducts the selected bet; `onWin(winAmount)` adds winnings
+  - **Bug fixed**: `handleSlotBet` in `App.tsx` previously hardcoded `cost = 10` and ignored the `betAmount` argument. Fixed to accept and deduct the actual bet amount.
 
 ### Loading & System Components
 
@@ -1103,6 +1116,7 @@ Promo codes are entered in the Store modal input field. Some codes are **reusabl
 **✈️ Special Events**:
 
 - `plane` / `airplane` — Summons Supply Drop airplane (reusable, calls `setLastPlaneRequestTime`)
+- `migration` — Immediately starts the 20-second warning phase, then triggers a full migration event (reusable, good for testing the migration system)
 
 **⚠️ Dangerous**:
 
@@ -1111,8 +1125,8 @@ Promo codes are entered in the Store modal input field. Some codes are **reusabl
 ### Implementation Details
 
 - **One-time codes** (`rainbow`, `unlockall`, `woodylin`): Use `applyOneTime()` helper which adds to `usedPromoCodes` array and increments `successfulPromoCodes` counter for achievement tracking
-- **Reusable codes** (`money`, weather codes, `fish`, `plane`): Use `applyReusable()` helper which applies state changes without tracking in `usedPromoCodes`
-- **Feedback messages**: All use `t.promoMessages.*` translation keys (e.g., `t.promoMessages.weatherRain`, `t.promoMessages.invalidCode`)
+- **Reusable codes** (`money`, weather codes, `fish`, `plane`, `migration`): Use `applyReusable()` helper which applies state changes without tracking in `usedPromoCodes`
+- **Feedback messages**: All use `t.promoMessages.*` translation keys. The `migration` code uses `t.promoMessages.migrationIncoming` with a hardcoded fallback `"🐟 Migration incoming in 20s"` — add the key to locale files to translate it
 - **Input clearing**: Input field always clears after submit (both valid and invalid codes)
 - **Rainbow Jar powerup**: Only visible in the Store after `rainbow` promo code has been used (checked via `gameState.usedPromoCodes.includes("rainbow")`)
 
@@ -1219,7 +1233,7 @@ To add new content:
 
 - **Static Fish**: Shell, Sea Cucumber, Coral, Anchor are spawned once at init and never despawn (decorative)
 - **Narwhal Spawning**: During Rainbow weather, standard random spawning excludes Narwhal; it only spawns via timed injection (10s intervals)
-- **Migration Event**: Pacific Saury, Mullet, and Anchovy only spawn during 30-second migration events. When migration starts, ALL existing fish (except static decorations: shell, sea_cucumber, coral, anchor) are immediately cleared from the screen, and only migration fish spawn during the event. When migration ends, all migration fish are cleared. Auto-triggers every 5 minutes. Migration state tracking runs before `if (paused) return` in `update()` to prevent stale ref when modals are open.
+- **Migration Event**: Pacific Saury, Mullet, and Anchovy only spawn during 30-second migration events. A 20-second warning phase (`migrationPending`) precedes each migration, showing an orange "⚠ Migration in Xs" banner. When active migration starts, ALL existing fish (except static decorations) are cleared and only migration fish spawn. Auto-triggers 5 minutes after game load. **Bug fixed**: `lastMigrationTime` was initialized to `0`, causing the `lastMigrationTime > 0` guard to permanently block migration on fresh installs — fixed by seeding to `Date.now()` on load.
 - **Ghost Fish Unlock**: Phantom Perch, Spectral Sardine, and Ghost Squid only spawn after purchasing Kraken pet. Filtered in `getWeightedFishType` via `unlockedFish` check
 - **Ghost Boat**: Flying Dutchman only spawns after Kraken purchase. Features fade effect (opacity 0.0-1.0) and glowing green lanterns
 - **Trash Suppression**: Mystery Bag creates 20s period where trash doesn't spawn (separate from Super Bait)

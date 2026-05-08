@@ -58,6 +58,12 @@ export interface GameState {
   equippedCostume: string; // Current costume ID
   unlockedPets: string[]; // List of pet IDs
   equippedPet: string | null; // Current pet ID
+  // Migration state
+  migrationActive: boolean;
+  migrationEndTime: number;
+  lastMigrationTime: number;
+  migrationPending: boolean; // 20-second warning phase before migration starts
+  migrationPendingEndTime: number; // Timestamp when warning ends and migration begins
 }
 
 export interface Upgrade {

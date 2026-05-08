@@ -81,6 +81,8 @@ interface GameCanvasProps {
   lastPlaneRequestTime?: number; // Trigger for promo code plane
   migrationActive: boolean; // NEW: Migration active state
   migrationEndTime: number; // NEW: Migration end timestamp
+  migrationPending: boolean; // NEW: 20-second warning phase
+  migrationPendingEndTime: number; // NEW: When warning ends
   onPassiveIncome: (amount: number) => void;
   onClawRelease?: () => void; // Sound callback
   onCatchNothing?: () => void; // Sound callback
@@ -119,6 +121,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   lastPlaneRequestTime,
   migrationActive,
   migrationEndTime,
+  migrationPending,
+  migrationPendingEndTime,
   onPassiveIncome,
   onClawRelease,
   onCatchNothing,
@@ -180,9 +184,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const previousMigrationActive = useRef<boolean>(migrationActive);
   const migrationActiveRef = useRef<boolean>(migrationActive);
   const migrationEndTimeRef = useRef<number>(migrationEndTime);
+  const migrationPendingRef = useRef<boolean>(migrationPending);
+  const migrationPendingEndTimeRef = useRef<number>(migrationPendingEndTime);
   // Keep refs in sync with props on every render
   migrationActiveRef.current = migrationActive;
   migrationEndTimeRef.current = migrationEndTime;
+  migrationPendingRef.current = migrationPending;
+  migrationPendingEndTimeRef.current = migrationPendingEndTime;
 
   // Pet Income Timer
   const lastPetIncomeTime = useRef<number>(Date.now());
@@ -1087,7 +1095,33 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     // Use time-based check to hide immediately when expired
     const isMigrationActuallyActive =
       migrationActive && visualTime < migrationEndTime;
-    if (isMigrationActuallyActive) {
+    const isMigrationPendingActually =
+      migrationPending && visualTime < migrationPendingEndTime;
+
+    if (isMigrationPendingActually) {
+      const boatX = GAME_WIDTH / 2;
+      const boatY = SURFACE_Y + 20;
+
+      const remainingMs = migrationPendingEndTime - visualTime;
+      const remainingSecs = Math.max(0, Math.ceil(remainingMs / 1000));
+
+      ctx.save();
+      ctx.font = "10px 'Press Start 2P'";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
+      const text = `Migration in ${remainingSecs}s`;
+      const textWidth = ctx.measureText(text).width;
+      ctx.fillStyle = "rgba(255, 140, 0, 0.85)";
+      ctx.fillRect(boatX - textWidth / 2 - 6, boatY + 50, textWidth + 12, 16);
+
+      ctx.shadowColor = "#ffb300";
+      ctx.shadowBlur = 4;
+      ctx.fillStyle = "#fffde7";
+      ctx.fillText(text, boatX, boatY + 58);
+
+      ctx.restore();
+    } else if (isMigrationActuallyActive) {
       const boatX = GAME_WIDTH / 2;
       const boatY = SURFACE_Y + 20;
 
@@ -1121,6 +1155,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     currentCombo,
     migrationActive,
     migrationEndTime,
+    migrationPending,
+    migrationPendingEndTime,
     equippedCostume,
     equippedPet,
     fishDensityLevel,

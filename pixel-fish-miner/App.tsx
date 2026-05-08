@@ -73,7 +73,15 @@ const App: React.FC = () => {
           // Migration state
           migrationActive: parsed.migrationActive || false,
           migrationEndTime: parsed.migrationEndTime || 0,
-          lastMigrationTime: parsed.lastMigrationTime || 0,
+          // BUG FIX: If lastMigrationTime is 0 (fresh game or old save), seed it to
+          // Date.now() so the timer condition (lastMigrationTime > 0) is met and
+          // migration fires 5 minutes after the game first loads.
+          lastMigrationTime:
+            parsed.lastMigrationTime > 0
+              ? parsed.lastMigrationTime
+              : Date.now(),
+          migrationPending: parsed.migrationPending || false,
+          migrationPendingEndTime: parsed.migrationPendingEndTime || 0,
         };
       } catch (e) {
         console.error("Failed to parse save data", e);
@@ -267,34 +275,43 @@ const App: React.FC = () => {
     const migrationTimer = setInterval(() => {
       const now = Date.now();
       setGameState((prev) => {
-        // Check if migration should end
+        // 1. Check if active migration should end
         if (prev.migrationActive && now >= prev.migrationEndTime) {
           return {
             ...prev,
             migrationActive: false,
-            lastMigrationTime: now, // Set cooldown start time
+            lastMigrationTime: now, // Reset cooldown
           };
         }
 
-        // Check if ready for next migration (5 minutes = 300000ms cooldown)
+        // 2. Check if the 20-second warning phase should transition to active migration
+        if (prev.migrationPending && now >= prev.migrationPendingEndTime) {
+          return {
+            ...prev,
+            migrationPending: false,
+            migrationActive: true,
+            migrationEndTime: now + 30000, // 30 seconds of migration
+          };
+        }
+
+        // 3. Check if cooldown is done and we should start the 20-second warning
         const timeSinceLastMigration = now - prev.lastMigrationTime;
         if (
           !prev.migrationActive &&
+          !prev.migrationPending &&
           prev.lastMigrationTime > 0 &&
-          timeSinceLastMigration >= 300000
+          timeSinceLastMigration >= 300000 // 5 minutes cooldown
         ) {
-          // Trigger new migration (30 seconds = 30000ms)
-          // All 3 migration fish will spawn
           return {
             ...prev,
-            migrationActive: true,
-            migrationEndTime: now + 30000,
+            migrationPending: true,
+            migrationPendingEndTime: now + 20000, // 20-second warning
           };
         }
 
         return prev;
       });
-    }, 100); // Check every 100ms instead of 1000ms for faster response
+    }, 100);
     return () => clearInterval(migrationTimer);
   }, []);
 
@@ -789,9 +806,10 @@ const App: React.FC = () => {
     });
   };
 
-  const handleSlotBet = (betAmount: number) => {
+  const handleSlotBet = () => {
     setGameState((prev) => {
-      if (prev.money < betAmount) {
+      const cost = 10;
+      if (prev.money < cost) {
         console.warn("Not enough money for slot bet");
         return prev;
       }
@@ -800,7 +818,7 @@ const App: React.FC = () => {
 
       return {
         ...prev,
-        money: prev.money - betAmount,
+        money: prev.money - cost,
       };
     });
   };
@@ -1126,6 +1144,21 @@ const App: React.FC = () => {
       return { success: true, message: t.promoMessages.planeIncoming };
     }
 
+    if (cleanCode === "migration") {
+      applyReusable((prev) => ({
+        ...prev,
+        migrationActive: false,
+        migrationPending: true,
+        migrationPendingEndTime: Date.now() + 20000, // 20-second warning, then migration starts
+        migrationEndTime: 0,
+      }));
+      return {
+        success: true,
+        message:
+          t.promoMessages.migrationIncoming || "🐟 Migration incoming in 20s",
+      };
+    }
+
     // --- ⚠️ Dangerous Codes ---
 
     if (cleanCode === "reset") {
@@ -1222,6 +1255,8 @@ const App: React.FC = () => {
                 lastPlaneRequestTime={lastPlaneRequestTime}
                 migrationActive={gameState.migrationActive}
                 migrationEndTime={gameState.migrationEndTime}
+                migrationPending={gameState.migrationPending}
+                migrationPendingEndTime={gameState.migrationPendingEndTime}
                 onClawRelease={() => audioManager.playClawRelease()}
                 onCatchNothing={() => audioManager.playCatchNothing()}
               />
