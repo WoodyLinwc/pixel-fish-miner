@@ -1112,8 +1112,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
       const text = `Migration in ${remainingSecs}s`;
       const textWidth = ctx.measureText(text).width;
-      ctx.fillStyle = "rgba(255, 140, 0, 0.85)";
-      ctx.fillRect(boatX - textWidth / 2 - 6, boatY + 50, textWidth + 12, 16);
 
       ctx.shadowColor = "#ffb300";
       ctx.shadowBlur = 4;
