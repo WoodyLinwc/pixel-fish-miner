@@ -806,9 +806,9 @@ const App: React.FC = () => {
     });
   };
 
-  const handleSlotBet = () => {
+  const handleSlotBet = (betAmount: number) => {
     setGameState((prev) => {
-      const cost = 10;
+      const cost = betAmount;
       if (prev.money < cost) {
         console.warn("Not enough money for slot bet");
         return prev;
