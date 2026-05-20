@@ -52,15 +52,24 @@ The game is deployed as both a web application and a native Android app using Ca
 #### Ad System (`utils/admob.ts`)
 
 - **Plugin**: `@capacitor-community/admob`
-- **Ad Type**: Single adaptive banner at the top of the screen (`BannerAdPosition.TOP_CENTER`)
-- **Ad Size**: `BannerAdSize.ADAPTIVE_BANNER` — fills full screen width automatically
-- **Android Only**: All admob functions check `window.Capacitor` and return early on web — itch.io web version shows no ads
+- **Ad Types**:
+  - **Banner**: Single adaptive banner at the top of the screen (`BannerAdPosition.TOP_CENTER`, `BannerAdSize.ADAPTIVE_BANNER`)
+  - **Rewarded**: Full-screen opt-in video ad triggered by the TV icon button in `StatsPanel`. User earns **$1,500** on completion.
+- **Android Only**: All admob functions check `window.Capacitor` and return early on web — itch.io web version shows no ads. The TV icon button is also hidden on web (`isAndroid = !!window.Capacitor` check in `StatsPanel.tsx`).
 - **Initialization**: Called in `App.tsx` after loading screen completes (`isLoading` becomes `false`)
 - **Layout Padding**: When on Android (`isAndroid = !!window.Capacitor`), the main wrapper adds `pt-[50px] pb-[50px]` to prevent the game content from being hidden behind the banner
 - **AdMob Account**: Publisher ID `pub-5626161990859268`
   - App ID: `ca-app-pub-5626161990859268~5811954249`
   - Top Banner Ad Unit ID: `ca-app-pub-5626161990859268/8223329318`
+  - Rewarded Ad Unit ID: `ca-app-pub-5626161990859268/9051438634`
   - Bottom Banner Ad Unit ID: (unused — plugin only supports one banner at a time)
+- **Rewarded Ad Flow** (`utils/admob.ts` → `showRewardedAd()`):
+  1. Registers `RewardAdPluginEvents.Rewarded` listener — sets internal `rewarded = true` flag
+  2. Registers `RewardAdPluginEvents.Dismissed` listener — resolves the Promise with the reward flag and removes both listeners
+  3. Calls `prepareRewardVideoAd()` then `showRewardVideoAd()`
+  4. Returns `true` if user earned reward, `false` if skipped/failed
+  5. `App.tsx` `handleWatchAd()` adds `+1500` to both `money` and `lifetimeEarnings` on `true`
+- **Rewarded Button UX**: TV icon (`lucide-react` `Tv`) in `StatsPanel`, cyan color to distinguish from other buttons. Disabled + pulse animation while ad is loading/playing (`isAdWatching` state).
 - **Testing**: Set `isTesting: true` in `admob.ts` during development. Switch to `false` before publishing.
 - **Known Limitation**: `@capacitor-community/admob` only supports one active banner at a time. A second `showBanner()` call replaces the first. Two simultaneous banners require native Android Java code.
 - **Emulator Note**: Test ads do NOT reliably load on Android emulators due to `adservices` being blocked. Always test on a physical device.
