@@ -33,7 +33,7 @@ import {
   decryptSaveData,
   downloadSaveFile,
 } from "./utils/encryption";
-import { initAds, showBannerAds } from "./utils/admob";
+import { initAds, showBannerAds, showRewardedAd } from "./utils/admob";
 import { App as CapApp } from "@capacitor/app";
 import { StatusBar } from "@capacitor/status-bar";
 import { Keyboard } from "@capacitor/keyboard";
@@ -1190,6 +1190,17 @@ const App: React.FC = () => {
     setAchievementQueue((prev) => prev.slice(1));
   };
 
+  const handleWatchAd = async (): Promise<void> => {
+    const rewarded = await showRewardedAd();
+    if (rewarded) {
+      setGameState((prev) => ({
+        ...prev,
+        money: prev.money + 1500,
+        lifetimeEarnings: prev.lifetimeEarnings + 1500,
+      }));
+    }
+  };
+
   const handleLoadComplete = useCallback(() => {
     setIsLoading(false);
   }, []);
@@ -1222,6 +1233,7 @@ const App: React.FC = () => {
               onOpenSlotMachine={() => setIsSlotMachineOpen(true)}
               onOpenAchievements={() => setIsAchievementsOpen(true)}
               onOpenSettings={() => setIsSettingsOpen(true)}
+              onWatchAd={handleWatchAd}
               language={language}
             />
 

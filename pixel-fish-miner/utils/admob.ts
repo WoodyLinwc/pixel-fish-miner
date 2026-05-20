@@ -4,9 +4,12 @@ import {
   BannerAdSize,
   BannerAdPosition,
   BannerAdPluginEvents,
+  RewardAdOptions,
+  RewardAdPluginEvents,
 } from "@capacitor-community/admob";
 
 const TOP_BANNER_ID = "ca-app-pub-5626161990859268/8223329318";
+const REWARDED_AD_ID = "ca-app-pub-5626161990859268/9051438634";
 
 export async function initAds(): Promise<void> {
   if (!window.Capacitor) return;
@@ -45,4 +48,47 @@ export async function hideBannerAds(): Promise<void> {
   } catch (e) {
     console.warn("AdMob removeBanner failed:", e);
   }
+}
+
+// Returns true if the user watched the ad and earned the reward, false otherwise.
+export async function showRewardedAd(): Promise<boolean> {
+  if (!window.Capacitor) return false;
+  return new Promise(async (resolve) => {
+    let rewarded = false;
+    let rewardListener: any;
+    let dismissListener: any;
+
+    try {
+      // Set reward flag when user earns reward (watched enough of the ad)
+      rewardListener = await AdMob.addListener(
+        RewardAdPluginEvents.Rewarded,
+        () => {
+          rewarded = true;
+        },
+      );
+
+      // Resolve only when the ad is fully dismissed so UI state is restored correctly
+      dismissListener = await AdMob.addListener(
+        RewardAdPluginEvents.Dismissed,
+        () => {
+          rewardListener?.remove();
+          dismissListener?.remove();
+          resolve(rewarded);
+        },
+      );
+
+      const options: RewardAdOptions = {
+        adId: REWARDED_AD_ID,
+        isTesting: false,
+      };
+
+      await AdMob.prepareRewardVideoAd(options);
+      await AdMob.showRewardVideoAd();
+    } catch (e) {
+      console.warn("AdMob rewarded ad failed:", e);
+      rewardListener?.remove();
+      dismissListener?.remove();
+      resolve(false);
+    }
+  });
 }

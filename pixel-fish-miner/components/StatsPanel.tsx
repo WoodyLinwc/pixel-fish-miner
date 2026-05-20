@@ -1,7 +1,14 @@
-import React from "react";
+import React, { useState } from "react";
 import { GameState, Language } from "../types";
 import { TRANSLATIONS } from "../locales/translations";
-import { Coins, ShoppingBag, Backpack, Trophy, Settings } from "lucide-react";
+import {
+  Coins,
+  ShoppingBag,
+  Backpack,
+  Trophy,
+  Settings,
+  Tv,
+} from "lucide-react";
 import { audioManager } from "../utils/audioManager";
 
 interface StatsPanelProps {
@@ -11,6 +18,7 @@ interface StatsPanelProps {
   onOpenSlotMachine: () => void;
   onOpenAchievements: () => void;
   onOpenSettings: () => void;
+  onWatchAd: () => Promise<void>;
   language: Language;
 }
 
@@ -21,9 +29,20 @@ const StatsPanel: React.FC<StatsPanelProps> = ({
   onOpenSlotMachine,
   onOpenAchievements,
   onOpenSettings,
+  onWatchAd,
   language,
 }) => {
   const t = TRANSLATIONS[language];
+  const isAndroid = !!window.Capacitor;
+  const [isAdWatching, setIsAdWatching] = useState(false);
+
+  const handleWatchAd = async () => {
+    if (isAdWatching) return;
+    audioManager.playButtonSound();
+    setIsAdWatching(true);
+    await onWatchAd();
+    setIsAdWatching(false);
+  };
 
   return (
     <div className="w-full bg-[#d2a679] border-8 border-[#5d4037] border-b-0 p-2 md:p-3 flex flex-col md:flex-row items-center justify-between gap-2 md:gap-4 select-none shadow-inner relative">
@@ -87,6 +106,26 @@ const StatsPanel: React.FC<StatsPanelProps> = ({
         >
           <Trophy size={14} className="md:w-4 md:h-4" />
         </button>
+
+        {/* Rewarded Ad Button — Android only */}
+        {isAndroid && (
+          <button
+            onClick={handleWatchAd}
+            disabled={isAdWatching}
+            className={`group relative p-1.5 md:p-2 rounded-lg border-2 transition-all shadow-[0_4px_0_rgba(0,0,0,0.2)] active:shadow-none bg-[#26c6da] border-[#00838f] text-white
+              ${
+                isAdWatching
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:bg-[#00bcd4] active:translate-y-1"
+              }`}
+            title="Watch ad for $1,500"
+          >
+            <Tv
+              size={14}
+              className={`md:w-4 md:h-4 ${isAdWatching ? "animate-pulse" : ""}`}
+            />
+          </button>
+        )}
 
         {/* Settings Button */}
         <button
