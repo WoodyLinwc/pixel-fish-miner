@@ -54,7 +54,7 @@ The game is deployed as both a web application and a native Android app using Ca
 - **Plugin**: `@capacitor-community/admob`
 - **Ad Types**:
   - **Banner**: Single adaptive banner at the top of the screen (`BannerAdPosition.TOP_CENTER`, `BannerAdSize.ADAPTIVE_BANNER`)
-  - **Rewarded**: Full-screen opt-in video ad triggered by the TV icon button in `StatsPanel`. User earns **$1,500** on completion.
+  - **Rewarded**: Full-screen opt-in video ad triggered by the TV icon button in `StatsPanel`. On completion, user receives one of 6 equally-weighted random rewards (≈16.7% each): **$1,500 cash**, or one of the 5 store powerups (**Octopus Gear**, **Crazy Bait**, **Diamond Hook**, **Super Net**, **Magic Conch**). Powerups are added to inventory for free (no `powerupPurchaseCounts` increment) and activated via the PowerupBar like any purchased powerup.
 - **Android Only**: All admob functions check `window.Capacitor` and return early on web — itch.io web version shows no ads. The TV icon button is also hidden on web (`isAndroid = !!window.Capacitor` check in `StatsPanel.tsx`).
 - **Initialization**: Called in `App.tsx` after loading screen completes (`isLoading` becomes `false`)
 - **Layout Padding**: When on Android (`isAndroid = !!window.Capacitor`), the main wrapper adds `pt-[50px] pb-[50px]` to prevent the game content from being hidden behind the banner
@@ -68,7 +68,7 @@ The game is deployed as both a web application and a native Android app using Ca
   2. Registers `RewardAdPluginEvents.Dismissed` listener — resolves the Promise with the reward flag and removes both listeners
   3. Calls `prepareRewardVideoAd()` then `showRewardVideoAd()`
   4. Returns `true` if user earned reward, `false` if skipped/failed
-  5. `App.tsx` `handleWatchAd()` adds `+1500` to both `money` and `lifetimeEarnings` on `true`
+  5. `App.tsx` `handleWatchAd()` picks one of 6 equally-weighted rewards on `true`: `"money"` adds `+1500` to `money` and `lifetimeEarnings`; any of the 5 powerup IDs adds the powerup to `inventory` and `purchasedPowerups` for free (no cost, no `powerupPurchaseCounts` increment)
 - **Rewarded Button UX**: TV icon (`lucide-react` `Tv`) in `StatsPanel`, cyan color to distinguish from other buttons. Disabled + pulse animation while ad is loading/playing (`isAdWatching` state).
 - **Testing**: Set `isTesting: true` in `admob.ts` during development. Switch to `false` before publishing.
 - **Known Limitation**: `@capacitor-community/admob` only supports one active banner at a time. A second `showBanner()` call replaces the first. Two simultaneous banners require native Android Java code.
@@ -296,6 +296,7 @@ android/
 - Save files persist across app updates
 - Location: Android app data directory (not accessible to user)
 - Maximum size: ~5-10MB depending on device (well above game needs)
+- **Force-save on background**: A `gameStateRef` (kept in sync by the save `useEffect`) is written to `localStorage` directly in the Capacitor `pause` handler. This guards against Android suspending the process before React's async `useEffect` save can fire — prevents powerups/inventory earned just before exit from being lost.
 
 #### Audio Files
 
@@ -372,7 +373,7 @@ android/
     - `useEffect` syncs `isSoundEffectsOn` → `audioManager.setSfxEnabled()`
     - `useEffect` calls `audioManager.startMusic()` when `isLoading` becomes `false`
     - `useEffect` calls `initAds().then(() => showBannerAds())` when `isLoading` becomes `false`
-    - Capacitor lifecycle: `pause` → `audioManager.pauseMusic()`, `resume` → `audioManager.resumeMusic()` (always unconditional)
+    - Capacitor lifecycle: `pause` → `audioManager.pauseMusic()` + force-save via `gameStateRef`, `resume` → `audioManager.resumeMusic()` (always unconditional)
     - All game actions call `audioManager.playButtonSound()`, `playMoneySound()`, `playPowerupSound()`, etc.
   - **UI Composition**: Renders `GameCanvas`, HUD, and Modals.
   - **Android Detection**: `const isAndroid = !!window.Capacitor` used for layout padding and ad initialization.
@@ -1250,6 +1251,8 @@ To add new content:
 - **Crab Hidden**: Pinchy Crab appears in gameplay (cuts line) but is hidden from Bag/Encyclopedia (`showInBag: false`)
 - **Trash Filter**: Progressively reduces trash spawn rate. Formula: `((level-1)/19)*0.95` gives 0-95% reduction across 20 levels
 - **Powerup Pricing**: Dynamic pricing system - 1st purchase FREE, then $250, $500, $750, $1,000, capped at $1,250. Tracked per powerup in `gameState.powerupPurchaseCounts`
+- **Ad Reward Randomization**: Watching a rewarded ad gives one of 6 equally-weighted outcomes: $1,500 cash or one of the 5 store powerups (Octopus Gear, Crazy Bait, Diamond Hook, Super Net, Magic Conch). Powerup rewards land in `inventory`/`purchasedPowerups` without touching `powerupPurchaseCounts`, so store pricing is unaffected.
+- **Save-on-Pause (Android)**: `gameStateRef` mirrors the latest `gameState` and is written to `localStorage` in the Capacitor `pause` event handler. Fixes a race condition where React's async `useEffect` save could be skipped if Android suspended the app immediately after a state update (e.g. earning a powerup from an ad).
 - **Rendering Order**: Matters for layering - Sky → Celestial → Clouds → Rainbow → Airplane → Seagulls → Boats (including ghost boat) → Water → Boat → Fisherman/Costume → Pet → Fish (including ghost fish) → Claws → Particles → Overlays
 - **GameCanvas Size**: After refactoring, reduced from ~1500 lines to ~725 lines (52% reduction) by extracting rendering, collision, particles, and spawning logic into dedicated utility modules
 - **Pet Rendering**: Pet rendering system is modular with one file per pet in `utils/pets/`. Kraken renders at water level (translated +4px) with no body visible, only massive tentacles (15-12px thick). Gentleman Octopus renders with standard bob animation and all 8 tentacles properly connected to body bottom.

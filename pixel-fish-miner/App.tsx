@@ -122,6 +122,9 @@ const App: React.FC = () => {
   const hasInteractedRef = useRef(false);
   const musicStartAttemptedRef = useRef(false);
 
+  // Always holds the latest gameState so Capacitor pause handler can save reliably
+  const gameStateRef = useRef(gameState);
+
   // Persist Music Preferences
   useEffect(() => {
     localStorage.setItem("pixel-fish-miner-music", String(isMusicOn));
@@ -140,8 +143,9 @@ const App: React.FC = () => {
   // Track last plane request timestamp to trigger event
   const [lastPlaneRequestTime, setLastPlaneRequestTime] = useState<number>(0);
 
-  // Persist State
+  // Persist State — also keeps gameStateRef in sync for the Capacitor pause handler
   useEffect(() => {
+    gameStateRef.current = gameState;
     localStorage.setItem("pixel-fish-miner-save", JSON.stringify(gameState));
   }, [gameState]);
 
@@ -196,10 +200,15 @@ const App: React.FC = () => {
     let resumeListener: any;
 
     const setupAppListeners = async () => {
-      // App going to background — pause music and suspend AudioContext
+      // App going to background — pause music and force-save state immediately
+      // (React's useEffect save is async and may not fire before Android suspends the app)
       pauseListener = await CapApp.addListener("pause", () => {
         console.log("App going to background - pausing audio");
         audioManager.pauseMusic();
+        localStorage.setItem(
+          "pixel-fish-miner-save",
+          JSON.stringify(gameStateRef.current),
+        );
       });
 
       // App returning to foreground — ALWAYS call resumeMusic().
@@ -1193,11 +1202,36 @@ const App: React.FC = () => {
   const handleWatchAd = async (): Promise<void> => {
     const rewarded = await showRewardedAd();
     if (rewarded) {
-      setGameState((prev) => ({
-        ...prev,
-        money: prev.money + 1500,
-        lifetimeEarnings: prev.lifetimeEarnings + 1500,
-      }));
+      // 6 equally-weighted outcomes: $1,500 cash or one of 5 store powerups
+      const adRewards = [
+        "money",
+        "multiClaw",
+        "superBait",
+        "diamondHook",
+        "superNet",
+        "magicConch",
+      ];
+      const picked = adRewards[Math.floor(Math.random() * adRewards.length)];
+
+      if (picked === "money") {
+        setGameState((prev) => ({
+          ...prev,
+          money: prev.money + 1500,
+          lifetimeEarnings: prev.lifetimeEarnings + 1500,
+        }));
+      } else {
+        // Add powerup to inventory for free (no cost, no purchase count increment)
+        // Works seamlessly with the existing PowerupBar + handleActivatePowerup flow
+        setGameState((prev) => ({
+          ...prev,
+          purchasedPowerups: [...prev.purchasedPowerups, picked],
+          inventory: {
+            ...prev.inventory,
+            [picked]: (prev.inventory[picked] || 0) + 1,
+          },
+        }));
+        audioManager.playPowerupSound();
+      }
     }
   };
 
