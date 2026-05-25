@@ -18,6 +18,16 @@ const RARITY_WEIGHTS = {
   [FishRarity.LEGENDARY]: 4,
 };
 
+// All 6 migration fish IDs (3 normal + 3 kings)
+const MIGRATION_FISH_IDS = [
+  "pacific_saury",
+  "mullet",
+  "anchovy",
+  "king_saury",
+  "king_mullet",
+  "king_anchovy",
+];
+
 /**
  * Get weighted random fish type based on conditions
  */
@@ -104,18 +114,16 @@ export const getWeightedFishType = (
     return true;
   });
 
-  // NEW: MIGRATION - Only migration fish spawn, all others are filtered out
+  // MIGRATION - Only migration fish spawn (normal + king), all others filtered out
   if (migrationActive) {
-    // During migration, ONLY the 3 migration fish can spawn
-    availableFish = FISH_TYPES.filter(
-      (f) =>
-        f.id === "pacific_saury" || f.id === "mullet" || f.id === "anchovy",
-    );
+    // During migration, ONLY the 6 migration fish can spawn (3 normal + 3 kings).
+    // Kings use RARE weight (10) vs commons at COMMON weight (50), so they appear
+    // roughly 1-in-6 times — rare but catchable in a migration window.
+    availableFish = FISH_TYPES.filter((f) => MIGRATION_FISH_IDS.includes(f.id));
   } else {
-    // When not in migration, don't spawn migration fish
+    // Outside migration, exclude ALL migration fish (normal and kings)
     availableFish = availableFish.filter(
-      (f) =>
-        f.id !== "pacific_saury" && f.id !== "mullet" && f.id !== "anchovy",
+      (f) => !MIGRATION_FISH_IDS.includes(f.id),
     );
   }
 

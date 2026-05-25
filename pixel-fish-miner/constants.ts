@@ -217,6 +217,46 @@ export const FISH_TYPES: FishType[] = [
     minDepth: 0.1,
     maxDepth: 0.5,
   },
+  // King Migration Fish (rare variants — spawn during migration only)
+  {
+    id: "king_saury",
+    name: "King Saury",
+    rarity: FishRarity.RARE,
+    weight: 5, // Much rarer than normal pacific_saury (12)
+    value: 400,
+    speed: 6.5, // Noticeably faster than pacific_saury (2.8)
+    color: "#29b6f6",
+    width: 38,
+    height: 12,
+    minDepth: 0.15,
+    maxDepth: 0.55,
+  },
+  {
+    id: "king_mullet",
+    name: "King Mullet",
+    rarity: FishRarity.RARE,
+    weight: 4, // Much rarer than normal mullet (14)
+    value: 500,
+    speed: 5.5, // Faster than mullet (2.3)
+    color: "#607d8b",
+    width: 36,
+    height: 16,
+    minDepth: 0.2,
+    maxDepth: 0.6,
+  },
+  {
+    id: "king_anchovy",
+    name: "King Anchovy",
+    rarity: FishRarity.RARE,
+    weight: 5, // Much rarer than normal anchovy (8)
+    value: 300,
+    speed: 7.0, // Faster than anchovy (3.0) — tiny but zippy
+    color: "#90a4ae",
+    width: 26,
+    height: 10,
+    minDepth: 0.1,
+    maxDepth: 0.5,
+  },
   {
     id: "clownfish",
     name: "Clownfish",
@@ -590,6 +630,19 @@ export const FISH_TYPES: FishType[] = [
     minDepth: 0.5,
     maxDepth: 0.9,
     requiredWeather: [WeatherType.RAINBOW],
+  },
+  {
+    id: "sailfish",
+    name: "Sailfish",
+    rarity: FishRarity.LEGENDARY,
+    weight: 80, // legendary — uncommon but not as gated as narwhal
+    value: 350,
+    speed: 4.0, // fast — sailfish are the fastest fish in the ocean
+    color: "#1565c0",
+    width: 52,
+    height: 18, // sleek body; sail renders above this visually
+    minDepth: 0.3,
+    maxDepth: 0.8,
   },
   // Special
   {

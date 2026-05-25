@@ -28,7 +28,14 @@ import {
   drawPomfret,
   drawPufferfish,
 } from "./commonFish";
-import { drawPacificSaury, drawMullet, drawAnchovy } from "./migrationFish";
+import {
+  drawPacificSaury,
+  drawMullet,
+  drawAnchovy,
+  drawKingSaury,
+  drawKingMullet,
+  drawKingAnchovy,
+} from "./migrationFish";
 import {
   drawClownfish,
   drawSquid,
@@ -52,7 +59,7 @@ import {
   drawCrab,
   drawElectricJelly,
 } from "./rareFish";
-import { drawWhale, drawNarwhal } from "./legendaryFish";
+import { drawWhale, drawNarwhal, drawSailfish } from "./legendaryFish";
 import {
   drawThunderEel,
   drawIceFin,
@@ -93,9 +100,14 @@ export const drawEntity = (
   else if (type.id === "small_yellow_croaker")
     drawSmallYellowCroaker(ctx, w, h);
   else if (type.id === "mackerel") drawMackerel(ctx, w, h);
+  // Standard migration fish
   else if (type.id === "pacific_saury") drawPacificSaury(ctx, w, h);
   else if (type.id === "mullet") drawMullet(ctx, w, h);
   else if (type.id === "anchovy") drawAnchovy(ctx, w, h);
+  // King migration fish
+  else if (type.id === "king_saury") drawKingSaury(ctx, w, h);
+  else if (type.id === "king_mullet") drawKingMullet(ctx, w, h);
+  else if (type.id === "king_anchovy") drawKingAnchovy(ctx, w, h);
   else if (type.id === "cod") drawCod(ctx, w, h);
   else if (type.id === "clownfish") drawClownfish(ctx, w, h);
   else if (type.id === "squid") drawSquid(ctx, w, h);
@@ -121,6 +133,7 @@ export const drawEntity = (
   else if (type.id === "boxfish") drawBoxfish(ctx, w, h);
   else if (type.id === "whale") drawWhale(ctx, w, h);
   else if (type.id === "narwhal") drawNarwhal(ctx, w, h, time);
+  else if (type.id === "sailfish") drawSailfish(ctx, w, h, time);
   else if (type.id === "thunder_eel") drawThunderEel(ctx, w, h);
   else if (type.id === "ice_fin") drawIceFin(ctx, w, h);
   else if (type.id === "wind_ray") drawWindRay(ctx, w, h);

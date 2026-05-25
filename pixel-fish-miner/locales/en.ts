@@ -84,6 +84,10 @@ export const en = {
     pacific_saury: "Pacific Saury",
     mullet: "Mullet",
     anchovy: "Anchovy",
+    // King migration fish
+    king_saury: "King Saury",
+    king_mullet: "King Mullet",
+    king_anchovy: "King Anchovy",
     clownfish: "Clownfish",
     cod: "Atlantic Cod",
     squid: "Squid",
@@ -101,6 +105,7 @@ export const en = {
     wind_ray: "Wind Ray",
     sea_turtle: "Sea Turtle",
     narwhal: "Narwhal",
+    sailfish: "Sailfish",
     anglerfish: "Anglerfish",
     old_boot: "Old Boot",
     rusty_can: "Rusty Can",
