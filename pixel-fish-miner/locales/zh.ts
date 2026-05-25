@@ -74,6 +74,8 @@ export const zh = {
     invalidCode: "无效代码 ❌",
     promoUsed: "代码已使用！请在商店购买。",
     planeIncoming: "空中支援到达！✈️",
+    timeNight: "现在是夜晚！🌙",
+    timeDay: "现在是白天！☀️",
   },
   fish: {
     sardine: "沙丁鱼",

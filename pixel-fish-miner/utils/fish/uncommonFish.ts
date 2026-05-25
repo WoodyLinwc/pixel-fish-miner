@@ -501,13 +501,6 @@ export const drawFluorescentSquid = (
   ctx.fillRect(-w / 4, h / 2 + 1, 2, 2);
   ctx.fillRect(w / 4, h / 3, 2, 2);
 
-  // Glowing aura particles outside body
-  ctx.fillStyle = "rgba(0, 229, 255, 0.6)";
-  ctx.fillRect(-w / 3, -h / 2 - 5, 2, 2); // top
-  ctx.fillRect(-w / 4, h / 2 + 3, 2, 2); // bottom
-  ctx.fillRect(-w / 2 - 4, -h / 4, 2, 2); // left
-  ctx.fillRect(w / 2 + 2, -h / 5, 2, 2); // right
-
   if (Math.random() > 0.97) {
     ctx.fillStyle = "white";
     const px = (Math.random() - 0.5) * (w + 20);

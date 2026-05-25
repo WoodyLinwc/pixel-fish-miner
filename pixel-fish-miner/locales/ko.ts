@@ -74,6 +74,8 @@ export const ko = {
     invalidCode: "잘못된 코드 ❌",
     promoUsed: "이미 사용됨! 상점에서 구매하세요.",
     planeIncoming: "공중 지원 도착! ✈️",
+    timeNight: "밤이 됐어요! 🌙",
+    timeDay: "낮이 됐어요! ☀️",
   },
   fish: {
     sardine: "정어리",

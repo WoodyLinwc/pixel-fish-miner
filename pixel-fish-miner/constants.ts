@@ -862,6 +862,7 @@ export const INITIAL_GAME_STATE = {
   lastMigrationTime: 0, // 0 = fresh game; App.tsx initializes to Date.now() on load
   migrationPending: false,
   migrationPendingEndTime: 0,
+  jumpToGameHour: undefined,
 };
 
 export const ACHIEVEMENTS: Achievement[] = [

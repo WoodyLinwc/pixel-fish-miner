@@ -74,6 +74,8 @@ export const ja = {
     invalidCode: "無効なコード ❌",
     promoUsed: "使用済み！ショップで購入してください。",
     planeIncoming: "空からの支援到着！✈️",
+    timeNight: "夜になりました！🌙",
+    timeDay: "朝になりました！☀️",
   },
   fish: {
     sardine: "鰯（イワシ）",

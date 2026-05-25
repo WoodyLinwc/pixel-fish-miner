@@ -74,6 +74,8 @@ export const en = {
     invalidCode: "Invalid Code ❌",
     promoUsed: "Already redeemed! Buy in shop.",
     planeIncoming: "Air Support Inbound! ✈️",
+    timeNight: "It's nighttime! 🌙",
+    timeDay: "It's daytime! ☀️",
   },
   fish: {
     sardine: "Sardine",

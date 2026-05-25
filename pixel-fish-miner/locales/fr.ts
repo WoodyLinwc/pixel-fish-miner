@@ -74,6 +74,8 @@ export const fr = {
     invalidCode: "Code invalide ❌",
     promoUsed: "Déjà utilisé ! Achetez en boutique.",
     planeIncoming: "Soutien aérien en approche ! ✈️",
+    timeNight: "C'est la nuit ! 🌙",
+    timeDay: "C'est le jour ! ☀️",
   },
   fish: {
     sardine: "Sardine",

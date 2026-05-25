@@ -74,6 +74,8 @@ export const ar = {
     invalidCode: "رمز غير صالح ❌",
     promoUsed: "تم الاستخدام بالفعل! اشترِ من المتجر.",
     planeIncoming: "دعم جوي في الطريق! ✈️",
+    timeNight: "حلّ الليل! 🌙",
+    timeDay: "حلّ النهار! ☀️",
   },
   fish: {
     sardine: "سردين",

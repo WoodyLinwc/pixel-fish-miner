@@ -58,6 +58,7 @@ export interface GameState {
   equippedCostume: string; // Current costume ID
   unlockedPets: string[]; // List of pet IDs
   equippedPet: string | null; // Current pet ID
+  jumpToGameHour?: { hour: number; requestedAt: number };
   // Migration state
   migrationActive: boolean;
   migrationEndTime: number;

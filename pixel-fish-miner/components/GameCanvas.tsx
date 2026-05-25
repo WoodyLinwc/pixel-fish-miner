@@ -86,6 +86,7 @@ interface GameCanvasProps {
   onPassiveIncome: (amount: number) => void;
   onClawRelease?: () => void; // Sound callback
   onCatchNothing?: () => void; // Sound callback
+  forcedGameHour?: { hour: number; requestedAt: number };
 }
 
 // --- Day/Night Cycle Constants ---
@@ -126,6 +127,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   onPassiveIncome,
   onClawRelease,
   onCatchNothing,
+  forcedGameHour,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const requestRef = useRef<number>(0);
@@ -133,6 +135,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
   // Game State Refs
   const gameHour = useRef<number>(START_HOUR);
+  const lastAppliedJumpRef = useRef<number>(0);
   const starsRef = useRef<
     { x: number; y: number; size: number; blinkOffset: number }[]
   >([]);
@@ -429,8 +432,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       }
 
       // --- Update Time ---
-      const deltaHours = (dt / 1000) * GAME_HOURS_PER_SECOND;
-      gameHour.current = (gameHour.current + deltaHours) % 24;
+      if (
+        forcedGameHour !== undefined &&
+        forcedGameHour.requestedAt > lastAppliedJumpRef.current
+      ) {
+        gameHour.current = forcedGameHour.hour;
+        lastAppliedJumpRef.current = forcedGameHour.requestedAt;
+      } else {
+        const deltaHours = (dt / 1000) * GAME_HOURS_PER_SECOND;
+        gameHour.current = (gameHour.current + deltaHours) % 24;
+      }
 
       // --- Update Airplane Logic ---
       const hasSupplyBox = fishes.current.some(

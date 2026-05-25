@@ -74,6 +74,8 @@ export const ru = {
     invalidCode: "Неверный код ❌",
     promoUsed: "Уже использован! Купите в магазине.",
     planeIncoming: "Воздушная поддержка! ✈️",
+    timeNight: "Наступила ночь! 🌙",
+    timeDay: "Наступил день! ☀️",
   },
   fish: {
     sardine: "Сардина",

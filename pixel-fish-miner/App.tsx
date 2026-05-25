@@ -143,6 +143,11 @@ const App: React.FC = () => {
   // Track last plane request timestamp to trigger event
   const [lastPlaneRequestTime, setLastPlaneRequestTime] = useState<number>(0);
 
+  // One-time hour jump for day/night promo codes (not persisted)
+  const [jumpToGameHour, setJumpToGameHour] = useState<
+    { hour: number; requestedAt: number } | undefined
+  >(undefined);
+
   // Persist State — also keeps gameStateRef in sync for the Capacitor pause handler
   useEffect(() => {
     gameStateRef.current = gameState;
@@ -1153,6 +1158,16 @@ const App: React.FC = () => {
       return { success: true, message: t.promoMessages.planeIncoming };
     }
 
+    if (cleanCode === "night") {
+      setJumpToGameHour({ hour: 19, requestedAt: Date.now() });
+      return { success: true, message: t.promoMessages.timeNight };
+    }
+
+    if (cleanCode === "day") {
+      setJumpToGameHour({ hour: 6, requestedAt: Date.now() });
+      return { success: true, message: t.promoMessages.timeDay };
+    }
+
     if (cleanCode === "migration") {
       applyReusable((prev) => ({
         ...prev,
@@ -1299,6 +1314,7 @@ const App: React.FC = () => {
                 unlockedPets={gameState.unlockedPets}
                 unlockedFish={gameState.unlockedFish}
                 lastPlaneRequestTime={lastPlaneRequestTime}
+                forcedGameHour={jumpToGameHour}
                 migrationActive={gameState.migrationActive}
                 migrationEndTime={gameState.migrationEndTime}
                 migrationPending={gameState.migrationPending}
