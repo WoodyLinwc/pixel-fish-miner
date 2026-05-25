@@ -541,7 +541,7 @@ The fish rendering system is organized in a modular folder structure with entity
 - **Individual Fish Category Files**:
   - `commonFish.ts`: Sardine, Herring, Small Yellow Croaker, Mackerel, Cod, Boxfish, Pomfret, Pufferfish
   - **`migrationFish.ts`**: Pacific Saury, Mullet, Anchovy (only spawn during migration events)
-  - `uncommonFish.ts`: Clownfish, Squid, Sea Bass, Red Snapper, Salmon, Tuna, Needlefish, Phantom Perch, Spectral Sardine, Ghost Squid
+  - `uncommonFish.ts`: Clownfish, Squid, Fluorescent Squid, Sea Bass, Red Snapper, Salmon, Tuna, Needlefish, Phantom Perch, Spectral Sardine, Ghost Squid
   - `rareFish.ts`: Large Yellow Croaker, Turbot, Ribbonfish, Giant Grouper, Anglerfish, Wolffish, Crab, Electric Jelly
   - `legendaryFish.ts`: Whale, Narwhal
   - `weatherFish.ts`: Thunder Eel (Rain), Ice Fin (Snow), Wind Ray (Wind), Sea Turtle (Fog)
@@ -1126,6 +1126,8 @@ Promo codes are entered in the Store modal input field. Some codes are **reusabl
 
 - `plane` / `airplane` — Summons Supply Drop airplane (reusable, calls `setLastPlaneRequestTime`)
 - `migration` — Immediately starts the 20-second warning phase, then triggers a full migration event (reusable, good for testing the migration system)
+- `night` — Instantly jumps the day/night cycle to 19:00 (moon rising from left), then continues ticking normally (reusable, calls `setJumpToGameHour`)
+- `day` — Instantly jumps the cycle to 06:00 (sun rising from left), then continues ticking normally (reusable)
 
 **⚠️ Dangerous**:
 
@@ -1134,7 +1136,8 @@ Promo codes are entered in the Store modal input field. Some codes are **reusabl
 ### Implementation Details
 
 - **One-time codes** (`rainbow`, `unlockall`, `woodylin`): Use `applyOneTime()` helper which adds to `usedPromoCodes` array and increments `successfulPromoCodes` counter for achievement tracking
-- **Reusable codes** (`money`, weather codes, `fish`, `plane`, `migration`): Use `applyReusable()` helper which applies state changes without tracking in `usedPromoCodes`
+- **Reusable codes** (`money`, weather codes, `fish`, `plane`, `migration`, `night`, `day`): Use `applyReusable()` helper which applies state changes without tracking in `usedPromoCodes`
+- **Day/Night jump**: `night` and `day` codes call `setJumpToGameHour({ hour, requestedAt: Date.now() })` — a standalone `useState` in `App.tsx` that is **not** part of `GameState` and therefore never persisted to `localStorage`. `GameCanvas` compares `requestedAt` against `lastAppliedJumpRef`; if newer, snaps `gameHour` once and resumes normal ticking. This prevents the hour from freezing or re-applying on next session load.
 - **Feedback messages**: All use `t.promoMessages.*` translation keys. The `migration` code uses `t.promoMessages.migrationIncoming` with a hardcoded fallback `"🐟 Migration incoming in 20s"` — add the key to locale files to translate it
 - **Input clearing**: Input field always clears after submit (both valid and invalid codes)
 - **Rainbow Jar powerup**: Only visible in the Store after `rainbow` promo code has been used (checked via `gameState.usedPromoCodes.includes("rainbow")`)
@@ -1176,11 +1179,16 @@ Promo codes are entered in the Store modal input field. Some codes are **reusabl
 To add new content:
 
 1. **New Fish**:
-   - Add entry to `FISH_TYPES` in `constants.ts`
+   - Add entry to `FISH_TYPES` in `constants.ts` (set `isNightOnly: true` for night-only fish)
    - Add translation in all locale files (`locales/en.ts`, `es.ts`, `zh.ts`, `ja.ts`, `ko.ts`, `ru.ts`, `fr.ts`, `ar.ts`)
-   - Create draw function in appropriate `utils/fish/*.ts` file
-   - Export from `utils/fish/index.ts`
+   - Create draw function in appropriate `utils/fish/*.ts` file:
+     - Common/cheap fish → `commonFish.ts`
+     - Mid-tier fish → `uncommonFish.ts` (e.g. Fluorescent Squid)
+     - Night/rare fish → `rareFish.ts`
+     - Weather-gated fish → `weatherFish.ts`
+   - Import and add `else if (type.id === "your_id")` case in `utils/fish/index.ts`
    - Use `showInBag: false` to hide from encyclopedia if needed
+   - Night-only fish (`isNightOnly: true`) are filtered automatically by `getWeightedFishType` — no special injection needed
 
 2. **New Powerup**:
    - Add to `POWERUPS` in `constants.ts`
@@ -1244,6 +1252,8 @@ To add new content:
 - **Narwhal Spawning**: During Rainbow weather, standard random spawning excludes Narwhal; it only spawns via timed injection (10s intervals)
 - **Migration Event**: Pacific Saury, Mullet, and Anchovy only spawn during 30-second migration events. A 20-second warning phase (`migrationPending`) precedes each migration, showing an orange "⚠ Migration in Xs" banner. When active migration starts, ALL existing fish (except static decorations) are cleared and only migration fish spawn. Auto-triggers 5 minutes after game load. **Bug fixed**: `lastMigrationTime` was initialized to `0`, causing the `lastMigrationTime > 0` guard to permanently block migration on fresh installs — fixed by seeding to `Date.now()` on load.
 - **Ghost Fish Unlock**: Phantom Perch, Spectral Sardine, and Ghost Squid only spawn after purchasing Kraken pet. Filtered in `getWeightedFishType` via `unlockedFish` check
+- **Fluorescent Squid**: Night-only (`isNightOnly: true`), spawns 19:00–05:00 same window as Anglerfish. No special injection logic — filtered automatically by the `isNight` guard in `getWeightedFishType`. Art in `uncommonFish.ts` uses the same squid silhouette with a bioluminescent cyan palette and random cross sparkles (3% per frame) on body spots and tentacle tips.
+- **Day/Night Promo Jump**: `night` and `day` promo codes use a standalone `useState<{ hour, requestedAt }>` (`jumpToGameHour`) in `App.tsx` that is NOT part of `GameState` — so it is never written to `localStorage`. `GameCanvas` applies the jump once (checked via `lastAppliedJumpRef`) then resumes normal ticking. This prevents the hour from being frozen or re-applied on session reload.
 - **Ghost Boat**: Flying Dutchman only spawns after Kraken purchase. Features fade effect (opacity 0.0-1.0) and glowing green lanterns
 - **Trash Suppression**: Mystery Bag creates 20s period where trash doesn't spawn (separate from Super Bait)
 - **Combo Pause**: Combo timer pauses when any modal is open
