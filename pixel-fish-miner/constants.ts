@@ -520,6 +520,19 @@ export const FISH_TYPES: FishType[] = [
     isNightOnly: true,
   },
   {
+    id: "sailfish",
+    name: "Sailfish",
+    rarity: FishRarity.LEGENDARY,
+    weight: 80, // legendary — uncommon but not as gated as narwhal
+    value: 350,
+    speed: 4.0, // fast — sailfish are the fastest fish in the ocean
+    color: "#1565c0",
+    width: 52,
+    height: 18, // sleek body; sail renders above this visually
+    minDepth: 0.3,
+    maxDepth: 0.8,
+  },
+  {
     id: "whale",
     name: "Minke Whale",
     rarity: FishRarity.LEGENDARY,
@@ -631,19 +644,7 @@ export const FISH_TYPES: FishType[] = [
     maxDepth: 0.9,
     requiredWeather: [WeatherType.RAINBOW],
   },
-  {
-    id: "sailfish",
-    name: "Sailfish",
-    rarity: FishRarity.LEGENDARY,
-    weight: 80, // legendary — uncommon but not as gated as narwhal
-    value: 350,
-    speed: 4.0, // fast — sailfish are the fastest fish in the ocean
-    color: "#1565c0",
-    width: 52,
-    height: 18, // sleek body; sail renders above this visually
-    minDepth: 0.3,
-    maxDepth: 0.8,
-  },
+
   // Special
   {
     id: "mystery_bag",
