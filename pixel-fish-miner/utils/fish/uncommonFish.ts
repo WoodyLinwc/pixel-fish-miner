@@ -434,3 +434,85 @@ export const drawGhostSquid = (
   ctx.fillRect(-w / 4, h / 2 + 1, 2, 2);
   ctx.fillRect(w / 4, h / 3, 2, 2);
 };
+
+export const drawFluorescentSquid = (
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+) => {
+  const bodyColor = "rgba(0, 200, 220, 0.5)";
+
+  // Mantle tip (triangle)
+  ctx.fillStyle = bodyColor;
+  ctx.beginPath();
+  ctx.moveTo(w / 2, 0);
+  ctx.lineTo(0, -h / 3);
+  ctx.lineTo(0, h / 3);
+  ctx.fill();
+
+  // Mantle body
+  ctx.fillRect(-w / 3, -h / 3, w / 3, h * 0.66);
+
+  // Glowing stripe along mantle tip
+  ctx.fillStyle = "rgba(0, 229, 255, 0.6)";
+  ctx.fillRect(w / 4, -2, w / 4, 4);
+
+  // 8 wispy tentacles
+  ctx.fillStyle = "rgba(0, 220, 240, 0.35)";
+  const tentacleLength = w / 2;
+
+  // Top tentacles
+  ctx.fillRect(-w / 4 - tentacleLength, -h / 3 + 2, tentacleLength, 2);
+  ctx.fillRect(-w / 4 - tentacleLength + 3, -h / 4, tentacleLength - 3, 2);
+
+  // Middle tentacles
+  ctx.fillRect(-w / 4 - tentacleLength + 2, -2, tentacleLength - 2, 2);
+  ctx.fillRect(-w / 4 - tentacleLength, 2, tentacleLength, 2);
+
+  // Bottom tentacles
+  ctx.fillRect(-w / 4 - tentacleLength + 3, h / 4 - 2, tentacleLength - 3, 2);
+  ctx.fillRect(-w / 4 - tentacleLength, h / 3 - 4, tentacleLength, 2);
+
+  // Wispy tentacle ends
+  ctx.fillStyle = "rgba(0, 200, 230, 0.3)";
+  ctx.fillRect(-w / 4 - tentacleLength - 4, -h / 3 + 2, 3, 2);
+  ctx.fillRect(-w / 4 - tentacleLength - 3, -2, 3, 2);
+  ctx.fillRect(-w / 4 - tentacleLength - 4, h / 3 - 4, 3, 2);
+
+  // Glowing eyes
+  ctx.fillStyle = "rgba(0, 229, 255, 0.8)";
+  ctx.fillRect(-w / 8, -6, 3, 3);
+  ctx.fillRect(-w / 8, 3, 3, 3);
+  ctx.fillStyle = "rgba(200, 255, 255, 0.95)";
+  ctx.fillRect(-w / 8 + 1, -5, 2, 2);
+  ctx.fillRect(-w / 8 + 1, 4, 2, 2);
+
+  // Bioluminescent spots on mantle
+  ctx.fillStyle = "rgba(0, 210, 240, 0.4)";
+  ctx.fillRect(w / 4, -4, 2, 2);
+  ctx.fillRect(w / 6, 2, 2, 2);
+  ctx.fillRect(0, -6, 2, 2);
+  ctx.fillRect(0, 4, 2, 2);
+
+  // Aura particles
+  ctx.fillStyle = "rgba(0, 220, 255, 0.5)";
+  ctx.fillRect(-w / 3, -h / 2 - 3, 2, 2);
+  ctx.fillRect(w / 3, -h / 3, 2, 2);
+  ctx.fillRect(-w / 4, h / 2 + 1, 2, 2);
+  ctx.fillRect(w / 4, h / 3, 2, 2);
+
+  // Glowing aura particles outside body
+  ctx.fillStyle = "rgba(0, 229, 255, 0.6)";
+  ctx.fillRect(-w / 3, -h / 2 - 5, 2, 2); // top
+  ctx.fillRect(-w / 4, h / 2 + 3, 2, 2); // bottom
+  ctx.fillRect(-w / 2 - 4, -h / 4, 2, 2); // left
+  ctx.fillRect(w / 2 + 2, -h / 5, 2, 2); // right
+
+  if (Math.random() > 0.97) {
+    ctx.fillStyle = "white";
+    const px = (Math.random() - 0.5) * (w + 20);
+    const py = (Math.random() - 0.5) * (h + 20);
+    ctx.fillRect(px - 1, py - 3, 2, 6);
+    ctx.fillRect(px - 3, py - 1, 6, 2);
+  }
+};

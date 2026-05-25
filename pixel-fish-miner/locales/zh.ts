@@ -120,6 +120,7 @@ export const zh = {
     phantom_perch: "幻影鲈鱼",
     spectral_sardine: "光谱沙丁鱼",
     ghost_squid: "幽灵鱿鱼",
+    fluorescent_squid: "荧光鱿鱼",
   },
   upgrades: {
     clawSpeed: {

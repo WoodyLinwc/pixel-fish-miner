@@ -120,6 +120,7 @@ export const ru = {
     phantom_perch: "Призрачный окунь",
     spectral_sardine: "Спектральная сардина",
     ghost_squid: "Кальмар-призрак",
+    fluorescent_squid: "Флуоресцентный кальмар",
   },
   upgrades: {
     clawSpeed: {

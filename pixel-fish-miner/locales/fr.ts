@@ -120,6 +120,7 @@ export const fr = {
     phantom_perch: "Perche fantôme",
     spectral_sardine: "Sardine spectrale",
     ghost_squid: "Calmar fantôme",
+    fluorescent_squid: "Calmar Fluorescent",
   },
   upgrades: {
     clawSpeed: {

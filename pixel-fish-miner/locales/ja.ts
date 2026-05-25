@@ -120,6 +120,7 @@ export const ja = {
     phantom_perch: "幻影鱸（ファントムパーチ）",
     spectral_sardine: "幽光鰯（スペクトルイワシ）",
     ghost_squid: "幽霊烏賊（ゴーストイカ）",
+    fluorescent_squid: "蛍光烏賊（ケイコウイカ）",
   },
   upgrades: {
     clawSpeed: {
