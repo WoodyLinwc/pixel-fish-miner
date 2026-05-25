@@ -540,10 +540,10 @@ The fish rendering system is organized in a modular folder structure with entity
 
 - **Individual Fish Category Files**:
   - `commonFish.ts`: Sardine, Herring, Small Yellow Croaker, Mackerel, Cod, Boxfish, Pomfret, Pufferfish
-  - **`migrationFish.ts`**: Pacific Saury, Mullet, Anchovy (only spawn during migration events)
+  - **`migrationFish.ts`**: Pacific Saury, Mullet, Anchovy + King Saury, King Mullet, King Anchovy (only spawn during migration events). Contains `drawCrown` helper for king variants.
   - `uncommonFish.ts`: Clownfish, Squid, Fluorescent Squid, Sea Bass, Red Snapper, Salmon, Tuna, Needlefish, Phantom Perch, Spectral Sardine, Ghost Squid
   - `rareFish.ts`: Large Yellow Croaker, Turbot, Ribbonfish, Giant Grouper, Anglerfish, Wolffish, Crab, Electric Jelly
-  - `legendaryFish.ts`: Whale, Narwhal
+  - `legendaryFish.ts`: Whale, Narwhal, Sailfish
   - `weatherFish.ts`: Thunder Eel (Rain), Ice Fin (Snow), Wind Ray (Wind), Sea Turtle (Fog)
   - `staticItems.ts`: Shell, Sea Cucumber, Coral, Anchor, Mystery Bag, Supply Box
   - `trash.ts`: Old Boot, Rusty Can, Plastic Bottle, Straw
@@ -638,7 +638,7 @@ Intelligent entity spawning with weighted randomization.
 - **Uncommon** (30% spawn weight): Clownfish, Squid, Salmon, etc.
   - **Ghost Fish** (unlockable): Phantom Perch, Spectral Sardine, Ghost Squid (Kraken unlock)
 - **Rare** (15% spawn weight): Turbot, Giant Grouper, Anglerfish, etc.
-- **Legendary** (5% spawn weight): Whale, Narwhal (weather-dependent)
+- **Legendary** (5% spawn weight): Whale, Narwhal (weather-dependent), Sailfish
 
 **Technical Details:**
 
@@ -674,10 +674,15 @@ Defines all catchable entities with properties:
   - `pacific_saury`: Pacific Saury ($18, 38x12, Common) - Light cyan elongated fish with beak-like mouth
   - `mullet`: Mullet ($22, 36x16, Common) - Blue-grey robust fish with forked tail
   - `anchovy`: Anchovy ($12, 26x10, Common) - Light grey-blue slender fish with lateral stripe
+  - `king_saury`: King Saury ($400, 38x12, Rare) - Same body as Pacific Saury with gold pixel-art crown above head; speed 6.5
+  - `king_mullet`: King Mullet ($500, 36x16, Rare) - Same body as Mullet with gold crown; speed 5.5
+  - `king_anchovy`: King Anchovy ($300, 26x10, Rare) - Same body as Anchovy with gold crown; speed 7.0 (fastest entity in game)
+  - All 6 migration fish IDs are defined in `MIGRATION_FISH_IDS` constant in `utils/spawning/fish.ts`
   - Only spawn during migration events (30-second duration)
   - Replace ALL other fish spawns during event
   - Auto-triggers every 5 minutes
   - Visual indicator: "Migration Xs" countdown text below player boat
+  - **King fish rarity within migration**: Rare weight (10) vs Common weight (50) — roughly 1-in-6 chance relative to normal variants
 - **Ghost Fish** (Unlockable via Kraken purchase):
   - `phantom_perch`: Pale blue translucent fish ($85, 42x22, Uncommon)
   - `spectral_sardine`: Pale purple wispy fish ($70, 38x16, Uncommon)
@@ -765,6 +770,11 @@ The migration system creates timed events where special migration fish temporari
 - **Pacific Saury** (`pacific_saury`): $18, 38x12px, Light cyan-blue elongated body with beak-like mouth, forked tail
 - **Mullet** (`mullet`): $22, 36x16px, Blue-grey robust body with deeply forked tail, silver belly stripe
 - **Anchovy** (`anchovy`): $12, 26x10px, Light grey-blue slender body with signature lateral stripe
+- **King Saury** (`king_saury`): $400, 38x12px, Rare — same body as Pacific Saury, gold pixel-art 3-prong crown (drawn via `drawCrown` helper), speed 6.5
+- **King Mullet** (`king_mullet`): $500, 36x16px, Rare — same body as Mullet, gold crown, speed 5.5
+- **King Anchovy** (`king_anchovy`): $300, 26x10px, Rare — same body as Anchovy, gold crown, speed 7.0
+
+**Crown Art** (`drawCrown` helper in `migrationFish.ts`): Single filled polygon path — flat base, left/right prongs (shorter), tall centre prong — solid `#FFD700`. Takes `topY`, `crownW`, and `offsetX` parameters so the crown sits above the fish head (right side). Crown widths: 9px (saury), 11px (mullet), 8px (anchovy).
 
 **Event Mechanics**:
 
@@ -796,20 +806,23 @@ migrationPendingEndTime: number; // Timestamp when warning ends and active migra
 - **Timer Logic** (`App.tsx`): Checks every 100ms. Priority order: (1) end active migration, (2) transition pending → active, (3) trigger new warning after cooldown
 - **Initial seed fix**: On fresh game or old save where `lastMigrationTime === 0`, `App.tsx` seeds it to `Date.now()` so the first migration fires 5 minutes after load. Without this, the `lastMigrationTime > 0` guard permanently blocked migration on new installs.
 - **Spawning Filter** (`utils/fish/fish.ts`): `getWeightedFishType()` accepts `migrationActive` parameter
-  - If `migrationActive === true`: Only spawns pacific_saury, mullet, anchovy
-  - If `migrationActive === false`: Filters out migration fish from spawn pool
+  - If `migrationActive === true`: Only spawns fish whose IDs are in `MIGRATION_FISH_IDS` (all 6: pacific_saury, mullet, anchovy, king_saury, king_mullet, king_anchovy)
+  - If `migrationActive === false`: Filters out ALL migration fish (normal + king) from spawn pool
+  - `MIGRATION_FISH_IDS` constant centralises all 6 IDs — add new migration fish here
 - **Fish Clearing** (`GameCanvas.tsx`): Migration state tracking runs **before** the `if (paused) return` check in `update()`. This ensures `previousMigrationActive` ref stays in sync even when modals are open.
 - **Time-based Checks**: Uses `Date.now()` comparisons to handle state transitions without waiting for React state updates
 - **Canvas refs**: `migrationPendingRef` and `migrationPendingEndTimeRef` are kept in sync with props each render, alongside the existing `migrationActiveRef` and `migrationEndTimeRef`
 
 **Translations** (sample — all 8 languages have full coverage):
 
-- English: Pacific Saury, Mullet, Anchovy
-- Spanish: Paparda del Pacífico, Mújol, Anchoa
-- Chinese: 秋刀鱼, 鲻鱼, 凤尾鱼
-- Japanese: サンマ, ボラ, カタクチイワシ
-- Korean: 꽁치, 숭어, 멸치
-- Arabic: سوري المحيط الهادي, بوري, أنشوفة
+- English: Pacific Saury, Mullet, Anchovy / King Saury, King Mullet, King Anchovy / Sailfish
+- Spanish: Paparda del Pacífico, Mújol, Anchoa / Paparda Real, Mújol Real, Anchoa Real / Pez Vela
+- Chinese: 秋刀鱼, 鲻鱼, 凤尾鱼 / 秋刀鱼王, 鲻鱼王, 凤尾鱼王 / 旗鱼
+- Japanese: サンマ, ボラ, カタクチイワシ / 秋刀魚王, 鯔王, 片口鰯王 / 帆魚（カジキ）
+- Korean: 꽁치, 숭어, 멸치 / 왕꽁치, 왕숭어, 왕멸치 / 돛새치
+- Russian: Сайра, Кефаль, Анчоус / Царская сайра, Царская кефаль, Царский анчоус / Парусник
+- French: Balaou du Pacifique, Mulet, Anchois / Balaou Royal, Mulet Royal, Anchois Royal / Voilier
+- Arabic: سوري المحيط الهادي, بوري, أنشوفة / سوري الملكي, البوري الملكي, الأنشوفة الملكية / سمكة الشراع
 
 ---
 
@@ -1250,7 +1263,9 @@ To add new content:
 
 - **Static Fish**: Shell, Sea Cucumber, Coral, Anchor are spawned once at init and never despawn (decorative)
 - **Narwhal Spawning**: During Rainbow weather, standard random spawning excludes Narwhal; it only spawns via timed injection (10s intervals)
-- **Migration Event**: Pacific Saury, Mullet, and Anchovy only spawn during 30-second migration events. A 20-second warning phase (`migrationPending`) precedes each migration, showing an orange "⚠ Migration in Xs" banner. When active migration starts, ALL existing fish (except static decorations) are cleared and only migration fish spawn. Auto-triggers 5 minutes after game load. **Bug fixed**: `lastMigrationTime` was initialized to `0`, causing the `lastMigrationTime > 0` guard to permanently block migration on fresh installs — fixed by seeding to `Date.now()` on load.
+- **Migration Event**: Pacific Saury, Mullet, Anchovy, King Saury, King Mullet, and King Anchovy only spawn during 30-second migration events. All 6 IDs are centralised in `MIGRATION_FISH_IDS` in `utils/spawning/fish.ts`. A 20-second warning phase (`migrationPending`) precedes each migration. When active migration starts, ALL existing fish (except static decorations) are cleared and only migration fish spawn. Auto-triggers 5 minutes after game load. **Bug fixed**: `lastMigrationTime` was initialized to `0`, causing the `lastMigrationTime > 0` guard to permanently block migration on fresh installs — fixed by seeding to `Date.now()` on load.
+- **King Migration Fish**: King Saury, King Mullet, King Anchovy are Rare-weight entries that only appear in the migration pool. They use the same body art as their normal counterparts with a `drawCrown(ctx, topY, crownW, offsetX)` polygon crown drawn above the head (right side). Speeds are 5.5–7.0 — King Anchovy (7.0) is the fastest entity in the game.
+- **Sailfish**: Legendary fish ($350, 52x18, speed 4.0) that spawns randomly like the Whale (no weather requirement). Art in `legendaryFish.ts` uses flat `fillRect`/`beginPath` style matching the rest of the codebase — dark blue body, silver belly, lateral stripe, long bill, forked tail, tall sail dorsal fin, and downward-pointing bottom fin.
 - **Ghost Fish Unlock**: Phantom Perch, Spectral Sardine, and Ghost Squid only spawn after purchasing Kraken pet. Filtered in `getWeightedFishType` via `unlockedFish` check
 - **Fluorescent Squid**: Night-only (`isNightOnly: true`), spawns 19:00–05:00 same window as Anglerfish. No special injection logic — filtered automatically by the `isNight` guard in `getWeightedFishType`. Art in `uncommonFish.ts` uses the same squid silhouette with a bioluminescent cyan palette and random cross sparkles (3% per frame) on body spots and tentacle tips.
 - **Day/Night Promo Jump**: `night` and `day` promo codes use a standalone `useState<{ hour, requestedAt }>` (`jumpToGameHour`) in `App.tsx` that is NOT part of `GameState` — so it is never written to `localStorage`. `GameCanvas` applies the jump once (checked via `lastAppliedJumpRef`) then resumes normal ticking. This prevents the hour from being frozen or re-applied on session reload.
