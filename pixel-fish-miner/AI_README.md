@@ -711,7 +711,10 @@ Single-use consumables with **dynamic pricing system** (NEW):
 - 3rd purchase: $500
 - 4th purchase: $750
 - 5th purchase: $1,000
-- 6th+ purchases: $1,250 (MAXIMUM CAP)
+- 6th purchase: $1,250
+- 7th purchase: $1,500
+- 8th purchase: $1,750
+- 9th+ purchases: $2,000 (MAXIMUM CAP)
 
 **Available Powerups**:
 
@@ -1275,7 +1278,7 @@ To add new content:
 - **Weather Priority**: Fog and Rainbow override normal day/night sky colors
 - **Crab Hidden**: Pinchy Crab appears in gameplay (cuts line) but is hidden from Bag/Encyclopedia (`showInBag: false`)
 - **Trash Filter**: Progressively reduces trash spawn rate. Formula: `((level-1)/19)*0.95` gives 0-95% reduction across 20 levels
-- **Powerup Pricing**: Dynamic pricing system - 1st purchase FREE, then $250, $500, $750, $1,000, capped at $1,250. Tracked per powerup in `gameState.powerupPurchaseCounts`
+- **Powerup Pricing**: Dynamic pricing system - 1st purchase FREE, then $250, $500, $750, $1,000, $1,250, $1,500, $1,750, capped at $2,000. Tracked per powerup in `gameState.powerupPurchaseCounts`
 - **Ad Reward Randomization**: Watching a rewarded ad gives one of 6 equally-weighted outcomes: $1,500 cash or one of the 5 store powerups (Octopus Gear, Crazy Bait, Diamond Hook, Super Net, Magic Conch). Powerup rewards land in `inventory`/`purchasedPowerups` without touching `powerupPurchaseCounts`, so store pricing is unaffected.
 - **Save-on-Pause (Android)**: `gameStateRef` mirrors the latest `gameState` and is written to `localStorage` in the Capacitor `pause` event handler. Fixes a race condition where React's async `useEffect` save could be skipped if Android suspended the app immediately after a state update (e.g. earning a powerup from an ad).
 - **Rendering Order**: Matters for layering - Sky → Celestial → Clouds → Rainbow → Airplane → Seagulls → Boats (including ghost boat) → Water → Boat → Fisherman/Costume → Pet → Fish (including ghost fish) → Claws → Particles → Overlays
