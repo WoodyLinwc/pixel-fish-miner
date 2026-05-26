@@ -685,12 +685,8 @@ const App: React.FC = () => {
       // Calculate current purchase count for this powerup
       const currentCount = prev.powerupPurchaseCounts?.[powerupId] || 0;
 
-      // Pricing tiers: 1st FREE, then $250, $500, $750, $1000, capped at $1250
-      const pricePerPurchase = [0, 250, 500, 750, 1000];
-      const cost =
-        currentCount < pricePerPurchase.length
-          ? pricePerPurchase[currentCount]
-          : 1250;
+      // Pricing tiers: 1st FREE, then +$250 per purchase, capped at $2000
+      const cost = currentCount === 0 ? 0 : Math.min(currentCount * 250, 2000);
 
       if (prev.money < cost) {
         console.warn("Not enough money for powerup");

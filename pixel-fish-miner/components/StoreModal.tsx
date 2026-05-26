@@ -581,11 +581,11 @@ const StoreModal: React.FC<StoreModalProps> = ({
 
                 const ownedCount = gameState.inventory[powerupId] || 0;
 
-                // Dynamic pricing based on purchase count (capped at $1,250)
+                // Dynamic pricing based on purchase count (capped at $2,000)
                 const purchaseCount =
                   gameState.powerupPurchaseCounts?.[powerupId] || 0;
                 const displayCost =
-                  purchaseCount === 0 ? 0 : Math.min(purchaseCount * 250, 1250);
+                  purchaseCount === 0 ? 0 : Math.min(purchaseCount * 250, 2000);
                 const isFree = displayCost === 0;
 
                 return (
