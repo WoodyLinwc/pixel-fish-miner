@@ -331,7 +331,6 @@ android/
 
 ### Google Play Store
 
-- **Status**: Not yet published (AdMob app linked via Amazon Appstore placeholder)
 - **Package**: `com.woodylin.pixelfishminer`
 - **Build**: Generate signed AAB via Android Studio → Build → Generate Signed Bundle/APK
 - **AdMob**: Will auto-link once app is live on Play Store. Update App settings in AdMob console after publishing.
