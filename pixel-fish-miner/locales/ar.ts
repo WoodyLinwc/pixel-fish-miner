@@ -26,7 +26,7 @@ export const ar = {
   costumesTitle: "الأزياء",
   petsTitle: "الحيوانات الأليفة",
   wallet: "المحفظة",
-  controls: "التحكم: اضغط مسافة أو انقر للصيد",
+  controls: "التحكم: اضغط مسافة أو المس الشاشة للصيد",
   lvl: "مس",
   caught: "صيد",
   value: "القيمة",

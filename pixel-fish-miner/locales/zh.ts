@@ -26,7 +26,7 @@ export const zh = {
   costumesTitle: "服装",
   petsTitle: "宠物",
   wallet: "钱包",
-  controls: "控制：按空格键或点击鼠标捕鱼",
+  controls: "控制：按空格键或轻触屏幕捕鱼",
   lvl: "等级",
   caught: "捕获",
   value: "价值",

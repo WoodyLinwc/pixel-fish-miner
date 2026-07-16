@@ -26,7 +26,7 @@ export const es = {
   costumesTitle: "Disfraces",
   petsTitle: "Mascotas",
   wallet: "Billetera",
-  controls: "CONTROLES: Presiona ESPACIO o CLIC para pescar",
+  controls: "CONTROLES: Presiona ESPACIO o TOCA la pantalla para pescar",
   lvl: "Nvl",
   caught: "Atrapados",
   value: "Valor",

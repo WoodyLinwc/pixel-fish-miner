@@ -26,7 +26,7 @@ export const ja = {
   costumesTitle: "コスチューム",
   petsTitle: "ペット",
   wallet: "財布",
-  controls: "操作：スペースキーまたはクリックで釣る",
+  controls: "操作：スペースキーまたは画面タップで釣る",
   lvl: "Lv",
   caught: "釣果",
   value: "価値",

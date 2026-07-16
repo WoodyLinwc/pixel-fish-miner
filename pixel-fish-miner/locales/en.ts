@@ -26,7 +26,7 @@ export const en = {
   costumesTitle: "Costumes",
   petsTitle: "Pets",
   wallet: "Wallet",
-  controls: "CONTROLS: Press SPACE or CLICK to fish",
+  controls: "CONTROLS: Press SPACE or TAP the screen to fish",
   lvl: "Lvl",
   caught: "Caught",
   value: "Value",

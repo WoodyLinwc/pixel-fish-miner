@@ -26,7 +26,7 @@ export const ko = {
   costumesTitle: "코스튬",
   petsTitle: "펫",
   wallet: "지갑",
-  controls: "조작: 스페이스바 또는 클릭으로 낚시",
+  controls: "조작: 스페이스바 또는 화면 터치로 낚시",
   lvl: "Lv",
   caught: "어획",
   value: "가치",

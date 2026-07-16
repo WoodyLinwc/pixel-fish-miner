@@ -26,7 +26,7 @@ export const fr = {
   costumesTitle: "Costumes",
   petsTitle: "Animaux",
   wallet: "Portefeuille",
-  controls: "CONTRÔLES : Appuyez sur ESPACE ou CLIQUEZ pour pêcher",
+  controls: "CONTRÔLES : Appuyez sur ESPACE ou TOUCHEZ l'écran pour pêcher",
   lvl: "Niv",
   caught: "Pris",
   value: "Valeur",
