@@ -538,11 +538,11 @@ The fish rendering system is organized in a modular folder structure with entity
   - Includes fallback rendering for unknown entity types
 
 - **Individual Fish Category Files**:
-  - `commonFish.ts`: Sardine, Herring, Small Yellow Croaker, Mackerel, Cod, Boxfish, Pomfret, Pufferfish
+  - `commonFish.ts`: Sardine, Herring, Small Yellow Croaker, Mackerel, Cod, Boxfish, Pomfret, Pufferfish, Shrimp
   - **`migrationFish.ts`**: Pacific Saury, Mullet, Anchovy + King Saury, King Mullet, King Anchovy (only spawn during migration events). Contains `drawCrown` helper for king variants.
   - `uncommonFish.ts`: Clownfish, Squid, Fluorescent Squid, Sea Bass, Red Snapper, Salmon, Tuna, Needlefish, Phantom Perch, Spectral Sardine, Ghost Squid
   - `rareFish.ts`: Large Yellow Croaker, Turbot, Ribbonfish, Giant Grouper, Anglerfish, Wolffish, Crab, Electric Jelly
-  - `legendaryFish.ts`: Whale, Narwhal, Sailfish
+  - `legendaryFish.ts`: Whale, Narwhal, Sailfish, Ocean Sunfish
   - `weatherFish.ts`: Thunder Eel (Rain), Ice Fin (Snow), Wind Ray (Wind), Sea Turtle (Fog)
   - `staticItems.ts`: Shell, Sea Cucumber, Coral, Anchor, Mystery Bag, Supply Box
   - `trash.ts`: Old Boot, Rusty Can, Plastic Bottle, Straw
@@ -633,11 +633,11 @@ Intelligent entity spawning with weighted randomization.
 
 **Spawning Weights:**
 
-- **Common** (50% spawn weight): Sardine, Herring, Mackerel, etc.
+- **Common** (50% spawn weight): Sardine, Herring, Mackerel, Shrimp, etc.
 - **Uncommon** (30% spawn weight): Clownfish, Squid, Salmon, etc.
   - **Ghost Fish** (unlockable): Phantom Perch, Spectral Sardine, Ghost Squid (Kraken unlock)
 - **Rare** (15% spawn weight): Turbot, Giant Grouper, Anglerfish, etc.
-- **Legendary** (5% spawn weight): Whale, Narwhal (weather-dependent), Sailfish
+- **Legendary** (5% spawn weight): Whale, Narwhal (weather-dependent), Sailfish, Ocean Sunfish
 
 **Technical Details:**
 
@@ -934,11 +934,13 @@ React components for game interface.
   - Save export/import with encryption
   - Credits display
 - **`SlotMachineModal.tsx`**: Gambling mini-game
-  - Bet selection ($25, $50, $100, $250, $500)
+  - Bet selection ($100, $250, $500, $2000, ½ of current money)
   - Five-reel slot machine with sequential reel stopping
   - Payout multipliers: 2x (3-in-a-row), 5x (4-in-a-row), 20x (5-in-a-row)
   - Jackpot animation with sound
   - `onBet(betAmount)` deducts the selected bet; `onWin(winAmount)` adds winnings
+  - **High-stakes confirmation**: Selecting the $2000 or ½-money bet opens a confirm/cancel overlay (`t.confirmBetTitle`/`confirmBetMessage`/`confirmBetYes`/`confirmBetNo`) before the bet is actually applied to `betAmount`; the $100/$250/$500 options still apply instantly
+  - **½-money option gating**: The ½ bet button is disabled and shows a locked label (`t.halfBetLocked`) until `money >= 4000` (`HALF_BET_UNLOCK_THRESHOLD` in `SlotMachineModal.tsx`); its dollar value recomputes live from the current `money` prop each render
   - **Bug fixed**: `handleSlotBet` in `App.tsx` previously hardcoded `cost = 10` and ignored the `betAmount` argument. Fixed to accept and deduct the actual bet amount.
 
 ### Loading & System Components
@@ -1267,9 +1269,7 @@ To add new content:
 - **Narwhal Spawning**: During Rainbow weather, standard random spawning excludes Narwhal; it only spawns via timed injection (10s intervals)
 - **Migration Event**: Pacific Saury, Mullet, Anchovy, King Saury, King Mullet, and King Anchovy only spawn during 30-second migration events. All 6 IDs are centralised in `MIGRATION_FISH_IDS` in `utils/spawning/fish.ts`. A 20-second warning phase (`migrationPending`) precedes each migration. When active migration starts, ALL existing fish (except static decorations) are cleared and only migration fish spawn. Auto-triggers 5 minutes after game load. **Bug fixed**: `lastMigrationTime` was initialized to `0`, causing the `lastMigrationTime > 0` guard to permanently block migration on fresh installs — fixed by seeding to `Date.now()` on load.
 - **King Migration Fish**: King Saury, King Mullet, King Anchovy are Rare-weight entries that only appear in the migration pool. They use the same body art as their normal counterparts with a `drawCrown(ctx, topY, crownW, offsetX)` polygon crown drawn above the head (right side). Speeds are 5.5–7.0 — King Anchovy (7.0) is the fastest entity in the game.
-- **Sailfish**: Legendary fish ($350, 52x18, speed 4.0) that spawns randomly like the Whale (no weather requirement). Art in `legendaryFish.ts` uses flat `fillRect`/`beginPath` style matching the rest of the codebase — dark blue body, silver belly, lateral stripe, long bill, forked tail, tall sail dorsal fin, and downward-pointing bottom fin.
 - **Ghost Fish Unlock**: Phantom Perch, Spectral Sardine, and Ghost Squid only spawn after purchasing Kraken pet. Filtered in `getWeightedFishType` via `unlockedFish` check
-- **Fluorescent Squid**: Night-only (`isNightOnly: true`), spawns 19:00–05:00 same window as Anglerfish. No special injection logic — filtered automatically by the `isNight` guard in `getWeightedFishType`. Art in `uncommonFish.ts` uses the same squid silhouette with a bioluminescent cyan palette and random cross sparkles (3% per frame) on body spots and tentacle tips.
 - **Day/Night Promo Jump**: `night` and `day` promo codes use a standalone `useState<{ hour, requestedAt }>` (`jumpToGameHour`) in `App.tsx` that is NOT part of `GameState` — so it is never written to `localStorage`. `GameCanvas` applies the jump once (checked via `lastAppliedJumpRef`) then resumes normal ticking. This prevents the hour from being frozen or re-applied on session reload.
 - **Ghost Boat**: Flying Dutchman only spawns after Kraken purchase. Features fade effect (opacity 0.0-1.0) and glowing green lanterns
 - **Trash Suppression**: Mystery Bag creates 20s period where trash doesn't spawn (separate from Super Bait)
