@@ -127,6 +127,8 @@ export const ko = {
     spectral_sardine: "유령 정어리",
     ghost_squid: "유령 오징어",
     fluorescent_squid: "형광 오징어",
+    shrimp: "새우",
+    ocean_sunfish: "개복치",
   },
   upgrades: {
     clawSpeed: {

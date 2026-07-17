@@ -127,6 +127,8 @@ export const ar = {
     spectral_sardine: "سردين طيفي",
     ghost_squid: "حبّار شبح",
     fluorescent_squid: "حبّار مضيء",
+    shrimp: "روبيان",
+    ocean_sunfish: "سمكة القمر",
   },
   upgrades: {
     clawSpeed: {

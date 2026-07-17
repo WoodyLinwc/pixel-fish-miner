@@ -127,6 +127,8 @@ export const ru = {
     spectral_sardine: "Спектральная сардина",
     ghost_squid: "Кальмар-призрак",
     fluorescent_squid: "Флуоресцентный кальмар",
+    shrimp: "Креветка",
+    ocean_sunfish: "Рыба-луна",
   },
   upgrades: {
     clawSpeed: {

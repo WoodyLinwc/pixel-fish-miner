@@ -40,9 +40,10 @@ const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
     false,
   ]);
   const [spinning, setSpinning] = useState(false);
-  const [betAmount, setBetAmount] = useState(50);
+  const [betAmount, setBetAmount] = useState(100);
   const [message, setMessage] = useState<string>("");
   const [leverPulled, setLeverPulled] = useState(false);
+  const [pendingBet, setPendingBet] = useState<number | null>(null);
 
   const t = TRANSLATIONS[language];
 
@@ -214,7 +215,56 @@ const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
     }
   };
 
-  const betOptions = [25, 50, 100, 250, 500];
+  const halfMoney = Math.max(1, Math.floor(money / 2));
+  const HALF_BET_UNLOCK_THRESHOLD = 4000;
+  const halfBetLocked = money < HALF_BET_UNLOCK_THRESHOLD;
+
+  const betOptions: {
+    value: number;
+    label: string;
+    confirm: boolean;
+    locked?: boolean;
+  }[] = [
+    { value: 100, label: "$100", confirm: false },
+    { value: 250, label: "$250", confirm: false },
+    { value: 500, label: "$500", confirm: false },
+    { value: 2000, label: "$2000", confirm: true },
+    {
+      value: halfMoney,
+      label: halfBetLocked
+        ? t.halfBetLocked || "🔒 Half (Need $4,000)"
+        : `½ ($${halfMoney})`,
+      confirm: true,
+      locked: halfBetLocked,
+    },
+  ];
+
+  const handleSelectBet = (option: {
+    value: number;
+    confirm: boolean;
+    locked?: boolean;
+  }) => {
+    if (spinning || option.locked) return;
+    if (option.confirm) {
+      audioManager.playButtonSound();
+      setPendingBet(option.value);
+    } else {
+      setBetAmount(option.value);
+      audioManager.playButtonSound();
+    }
+  };
+
+  const confirmPendingBet = () => {
+    if (pendingBet === null) return;
+    setBetAmount(pendingBet);
+    setPendingBet(null);
+    audioManager.playButtonSound();
+  };
+
+  const cancelPendingBet = () => {
+    setPendingBet(null);
+    audioManager.playButtonSound();
+  };
 
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-[2px] p-2">
@@ -325,25 +375,27 @@ const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
                   {t.selectBet || "Select Bet"}:
                 </p>
                 <div className="flex gap-1 md:gap-2 justify-center flex-wrap">
-                  {betOptions.map((amount) => (
+                  {betOptions.map((option) => (
                     <button
-                      key={amount}
-                      onClick={() => {
-                        if (!spinning) {
-                          setBetAmount(amount);
-                          audioManager.playButtonSound();
-                        }
-                      }}
-                      disabled={spinning || money < amount}
+                      key={option.label}
+                      onClick={() => handleSelectBet(option)}
+                      disabled={
+                        spinning ||
+                        money < option.value ||
+                        option.value <= 0 ||
+                        option.locked
+                      }
                       className={`px-2 py-1 md:px-3 md:py-2 rounded font-bold text-xs md:text-sm border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
-                        betAmount === amount
-                          ? "bg-[#fbc02d] border-[#f57f17] text-[#5d4037]"
-                          : money >= amount
-                            ? "bg-[#fff3e0] border-[#c68c53] text-[#5d4037] hover:bg-[#ffe0b2]"
-                            : "bg-[#cfd8dc] border-[#90a4ae] text-[#90a4ae] cursor-not-allowed"
+                        option.locked
+                          ? "bg-[#e0e0e0] border-[#9e9e9e] text-[#9e9e9e] cursor-not-allowed"
+                          : betAmount === option.value
+                            ? "bg-[#fbc02d] border-[#f57f17] text-[#5d4037]"
+                            : money >= option.value
+                              ? "bg-[#fff3e0] border-[#c68c53] text-[#5d4037] hover:bg-[#ffe0b2]"
+                              : "bg-[#cfd8dc] border-[#90a4ae] text-[#90a4ae] cursor-not-allowed"
                       }`}
                     >
-                      ${amount}
+                      {option.label}
                     </button>
                   ))}
                 </div>
@@ -363,6 +415,37 @@ const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
             </div>
           </div>
         </div>
+
+        {/* High-Stakes Bet Confirmation Overlay */}
+        {pendingBet !== null && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60 rounded-lg p-4">
+            <div className="bg-[#e6c288] border-4 border-[#8d5524] rounded-lg p-4 shadow-[0_10px_20px_rgba(0,0,0,0.5)] max-w-xs w-full text-center animate-fade-in">
+              <p className="text-2xl mb-1">🎰💰</p>
+              <p className="text-sm md:text-base font-bold text-[#5d4037] mb-1">
+                {t.confirmBetTitle || "Whoa, Big Spender!"}
+              </p>
+              <p className="text-xs md:text-sm text-[#6d4c41] mb-4">
+                {t.confirmBetMessage
+                  ? t.confirmBetMessage.replace("{0}", pendingBet.toString())
+                  : `Are you sure you want to bet $${pendingBet} on one spin?`}
+              </p>
+              <div className="flex gap-2 justify-center">
+                <button
+                  onClick={cancelPendingBet}
+                  className="px-3 py-2 rounded font-bold text-xs md:text-sm bg-[#cfd8dc] border-b-4 border-[#90a4ae] text-[#5d4037] active:border-b-0 active:translate-y-1"
+                >
+                  {t.confirmBetNo || "Maybe Not"}
+                </button>
+                <button
+                  onClick={confirmPendingBet}
+                  className="px-3 py-2 rounded font-bold text-xs md:text-sm bg-[#fbc02d] border-b-4 border-[#f57f17] text-[#5d4037] active:border-b-0 active:translate-y-1"
+                >
+                  {t.confirmBetYes || "Let's Go!"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

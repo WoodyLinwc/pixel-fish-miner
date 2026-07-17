@@ -127,6 +127,8 @@ export const ja = {
     spectral_sardine: "幽光鰯（スペクトルイワシ）",
     ghost_squid: "幽霊烏賊（ゴーストイカ）",
     fluorescent_squid: "蛍光烏賊（ケイコウイカ）",
+    shrimp: "海老（エビ）",
+    ocean_sunfish: "翻車魚（マンボウ）",
   },
   upgrades: {
     clawSpeed: {

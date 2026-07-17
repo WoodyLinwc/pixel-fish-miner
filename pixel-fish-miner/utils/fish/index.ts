@@ -27,6 +27,7 @@ import {
   drawBoxfish,
   drawPomfret,
   drawPufferfish,
+  drawShrimp,
 } from "./commonFish";
 import {
   drawPacificSaury,
@@ -59,7 +60,12 @@ import {
   drawCrab,
   drawElectricJelly,
 } from "./rareFish";
-import { drawWhale, drawNarwhal, drawSailfish } from "./legendaryFish";
+import {
+  drawWhale,
+  drawNarwhal,
+  drawSailfish,
+  drawOceanSunfish,
+} from "./legendaryFish";
 import {
   drawThunderEel,
   drawIceFin,
@@ -130,8 +136,10 @@ export const drawEntity = (
   else if (type.id === "wolffish") drawWolffish(ctx, w, h);
   else if (type.id === "crab") drawCrab(ctx, w, h);
   else if (type.id === "electric_jelly") drawElectricJelly(ctx, w, h);
+  else if (type.id === "shrimp") drawShrimp(ctx, w, h);
   else if (type.id === "boxfish") drawBoxfish(ctx, w, h);
   else if (type.id === "whale") drawWhale(ctx, w, h);
+  else if (type.id === "ocean_sunfish") drawOceanSunfish(ctx, w, h);
   else if (type.id === "narwhal") drawNarwhal(ctx, w, h, time);
   else if (type.id === "sailfish") drawSailfish(ctx, w, h, time);
   else if (type.id === "thunder_eel") drawThunderEel(ctx, w, h);

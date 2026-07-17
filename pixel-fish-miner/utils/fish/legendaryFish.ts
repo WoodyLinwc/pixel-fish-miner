@@ -211,3 +211,82 @@ export const drawNarwhal = (
   ctx.arc(w / 4, 4, 3, 0, Math.PI * 2);
   ctx.fill();
 };
+
+export const drawOceanSunfish = (
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+) => {
+  const gray = "#b0bec5";
+  const lightGray = "#eceff1";
+  const darkGray = "#78909c";
+
+  // Dorsal fin — shifted toward the tail, drawn first so the body overlaps its base
+  ctx.fillStyle = darkGray;
+  ctx.beginPath();
+  ctx.moveTo(-w / 3, -h / 3.2);
+  ctx.lineTo(-w / 2.5, -h / 2 - h / 3);
+  ctx.lineTo(-w / 8, -h / 3.2);
+  ctx.fill();
+
+  // Anal fin (mirrored below, also shifted back)
+  ctx.beginPath();
+  ctx.moveTo(-w / 3, h / 3.2);
+  ctx.lineTo(-w / 2.5, h / 2 + h / 3);
+  ctx.lineTo(-w / 8, h / 3.2);
+  ctx.fill();
+
+  // Round disc body (drawn on top of the fin bases) — shorter, more compact oval
+  ctx.fillStyle = gray;
+  ctx.beginPath();
+  if (ctx.ellipse) {
+    ctx.ellipse(0, 0, w / 2.2, h / 2.3, 0, 0, Math.PI * 2);
+  } else {
+    ctx.fillRect(-w / 2, -h / 2.4, w, h / 1.2);
+  }
+  ctx.fill();
+
+  // Lighter belly patch
+  ctx.fillStyle = lightGray;
+  ctx.beginPath();
+  if (ctx.ellipse) {
+    ctx.ellipse(0, h / 8, w / 3.2, h / 3.6, 0, 0, Math.PI * 2);
+  }
+  ctx.fill();
+
+  // Small equilateral-triangle pectoral fin on the body side
+  ctx.fillStyle = darkGray;
+  {
+    const finCx = w / 6;
+    const finCy = -h / 20;
+    const finSize = w / 4.2;
+    const R = finSize / Math.sqrt(3);
+    const rot = 0; // flat vertical edge on the left, point aiming right
+    ctx.beginPath();
+    ctx.moveTo(finCx + R * Math.cos(rot), finCy + R * Math.sin(rot));
+    ctx.lineTo(
+      finCx + R * Math.cos(rot + (2 * Math.PI) / 3),
+      finCy + R * Math.sin(rot + (2 * Math.PI) / 3),
+    );
+    ctx.lineTo(
+      finCx + R * Math.cos(rot + (4 * Math.PI) / 3),
+      finCy + R * Math.sin(rot + (4 * Math.PI) / 3),
+    );
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Stubby scalloped clavus (tail)
+  ctx.fillStyle = lightGray;
+  ctx.fillRect(-w / 2.2 - 3, -h / 8, 5, h / 4);
+
+  // Small puckered mouth
+  ctx.fillStyle = darkGray;
+  ctx.fillRect(w / 2.2 - 2, -2, 4, 4);
+
+  // Beady surprised eye, positioned closer toward the mouth
+  ctx.fillStyle = "white";
+  ctx.fillRect(w / 3.2, -h / 8, 4, 4);
+  ctx.fillStyle = "black";
+  ctx.fillRect(w / 3.2 + 2, -h / 8 + 1, 2, 2);
+};

@@ -338,3 +338,33 @@ export const drawPufferfish = (
   ctx.fillStyle = "#8d6e63";
   ctx.fillRect(w / 2 - 2, 2, 3, 2);
 };
+
+export const drawShrimp = (
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+) => {
+  const shrimpPink = "#ff7043";
+  const shellHighlight = "#ffab91";
+  const deepOrange = "#e64a19";
+  const eyeColor = "#1a237e";
+  ctx.fillStyle = shrimpPink;
+  ctx.fillRect(-w / 6, -h / 4, w / 2, h / 2);
+  ctx.fillRect(w / 4, -h / 5, w / 4, h * 0.4);
+  ctx.fillRect(-w / 2, -h / 8, w / 3, h / 4);
+  ctx.fillRect(-w / 2 - 4, h / 8 - 2, 6, 6);
+  ctx.fillStyle = shellHighlight;
+  ctx.fillRect(-w / 2 - 8, h / 8 + 2, 5, 5);
+  ctx.fillStyle = deepOrange;
+  ctx.fillRect(-w / 8, h / 4, 2, 4);
+  ctx.fillRect(0, h / 4, 2, 4);
+  ctx.fillRect(w / 8, h / 4, 2, 4);
+  ctx.strokeStyle = shellHighlight;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(w / 2, -h / 5);
+  ctx.quadraticCurveTo(w / 4, -h / 2, -w / 4, -h / 3);
+  ctx.stroke();
+  ctx.fillStyle = eyeColor;
+  ctx.fillRect(w / 3, -h / 5, 3, 3);
+};

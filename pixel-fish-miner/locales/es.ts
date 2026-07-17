@@ -127,6 +127,8 @@ export const es = {
     spectral_sardine: "Sardina Espectral",
     ghost_squid: "Calamar Fantasma",
     fluorescent_squid: "Calamar Fluorescente",
+    shrimp: "Camarón",
+    ocean_sunfish: "Pez Luna",
   },
   upgrades: {
     clawSpeed: {

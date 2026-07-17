@@ -127,6 +127,8 @@ export const zh = {
     spectral_sardine: "光谱沙丁鱼",
     ghost_squid: "幽灵鱿鱼",
     fluorescent_squid: "荧光鱿鱼",
+    shrimp: "虾",
+    ocean_sunfish: "翻车鱼",
   },
   upgrades: {
     clawSpeed: {

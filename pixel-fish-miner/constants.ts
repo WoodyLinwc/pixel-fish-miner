@@ -284,6 +284,19 @@ export const FISH_TYPES: FishType[] = [
     maxDepth: 0.9,
   },
   {
+    id: "shrimp",
+    name: "Shrimp",
+    rarity: FishRarity.COMMON,
+    weight: 15,
+    value: 40,
+    speed: 1.8,
+    color: "#ff7043",
+    width: 30,
+    height: 18,
+    minDepth: 0.5,
+    maxDepth: 0.9,
+  },
+  {
     id: "boxfish",
     name: "Boxfish",
     rarity: FishRarity.UNCOMMON,
@@ -317,8 +330,8 @@ export const FISH_TYPES: FishType[] = [
     value: 45,
     speed: 3.5, // Fast
     color: "#80deea", // Cyan/Light Blue
-    width: 80, // Long
-    height: 10, // Thin (slender body, fins extend 6px above/below)
+    width: 56, // Long, scaled down proportionally from 80
+    height: 7, // Thin (slender body, fins extend 6px above/below)
     minDepth: 0.1, // Surface dweller usually
     maxDepth: 0.4,
   },
@@ -544,6 +557,19 @@ export const FISH_TYPES: FishType[] = [
     height: 60,
     minDepth: 0.6,
     maxDepth: 0.95,
+  },
+  {
+    id: "ocean_sunfish",
+    name: "Ocean Sunfish",
+    rarity: FishRarity.LEGENDARY,
+    weight: 130,
+    value: 500,
+    speed: 1.0,
+    color: "#b0bec5",
+    width: 70,
+    height: 60,
+    minDepth: 0.5,
+    maxDepth: 0.9,
   },
   // Dangerous Fish
   {
