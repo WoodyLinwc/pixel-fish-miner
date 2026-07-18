@@ -55,8 +55,22 @@ export async function showRewardedAd(): Promise<boolean> {
   if (!window.Capacitor) return false;
   return new Promise(async (resolve) => {
     let rewarded = false;
+    let settled = false;
     let rewardListener: any;
     let dismissListener: any;
+    let failListener: any;
+
+    // Single exit point: remove all listeners and resolve exactly once.
+    // Without this, an ad that fails to show (no Dismissed event) would
+    // leak all listeners and leave the promise pending forever.
+    const settle = (result: boolean) => {
+      if (settled) return;
+      settled = true;
+      rewardListener?.remove();
+      dismissListener?.remove();
+      failListener?.remove();
+      resolve(result);
+    };
 
     try {
       // Set reward flag when user earns reward (watched enough of the ad)
@@ -71,9 +85,15 @@ export async function showRewardedAd(): Promise<boolean> {
       dismissListener = await AdMob.addListener(
         RewardAdPluginEvents.Dismissed,
         () => {
-          rewardListener?.remove();
-          dismissListener?.remove();
-          resolve(rewarded);
+          settle(rewarded);
+        },
+      );
+
+      // If the ad fails to show, Dismissed never fires — settle here instead
+      failListener = await AdMob.addListener(
+        RewardAdPluginEvents.FailedToShow,
+        () => {
+          settle(false);
         },
       );
 
@@ -86,9 +106,7 @@ export async function showRewardedAd(): Promise<boolean> {
       await AdMob.showRewardVideoAd();
     } catch (e) {
       console.warn("AdMob rewarded ad failed:", e);
-      rewardListener?.remove();
-      dismissListener?.remove();
-      resolve(false);
+      settle(false);
     }
   });
 }

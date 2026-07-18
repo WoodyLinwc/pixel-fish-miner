@@ -148,11 +148,37 @@ const App: React.FC = () => {
     { hour: number; requestedAt: number } | undefined
   >(undefined);
 
-  // Persist State — also keeps gameStateRef in sync for the Capacitor pause handler
+  // Persist State — also keeps gameStateRef in sync for the Capacitor pause handler.
+  // The localStorage write is debounced (2s trailing) because gameState changes
+  // every catch and every second while powerups are active; a full JSON.stringify
+  // + synchronous write on each change is wasteful, especially on mobile.
+  // The Capacitor "pause" handler force-saves from gameStateRef immediately,
+  // and we flush on unmount, so no progress is lost.
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     gameStateRef.current = gameState;
-    localStorage.setItem("pixel-fish-miner-save", JSON.stringify(gameState));
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => {
+      localStorage.setItem(
+        "pixel-fish-miner-save",
+        JSON.stringify(gameStateRef.current),
+      );
+      saveTimeoutRef.current = null;
+    }, 2000);
   }, [gameState]);
+
+  // Flush any pending save on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+        localStorage.setItem(
+          "pixel-fish-miner-save",
+          JSON.stringify(gameStateRef.current),
+        );
+      }
+    };
+  }, []);
 
   useEffect(() => {
     localStorage.setItem("pixel-fish-miner-lang", language);
@@ -187,6 +213,12 @@ const App: React.FC = () => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
         setIsAutoPaused(true);
+        // Force-save on hide — the debounced save may not have fired yet,
+        // and on web there is no Capacitor "pause" handler to catch it.
+        localStorage.setItem(
+          "pixel-fish-miner-save",
+          JSON.stringify(gameStateRef.current),
+        );
       }
     };
 
@@ -201,13 +233,14 @@ const App: React.FC = () => {
     // Only set up listeners on mobile
     if (!window.Capacitor) return;
 
+    let cancelled = false;
     let pauseListener: any;
     let resumeListener: any;
 
     const setupAppListeners = async () => {
       // App going to background — pause music and force-save state immediately
       // (React's useEffect save is async and may not fire before Android suspends the app)
-      pauseListener = await CapApp.addListener("pause", () => {
+      const pl = await CapApp.addListener("pause", () => {
         console.log("App going to background - pausing audio");
         audioManager.pauseMusic();
         localStorage.setItem(
@@ -219,15 +252,24 @@ const App: React.FC = () => {
       // App returning to foreground — ALWAYS call resumeMusic().
       // It resumes the AudioContext (needed for SFX) and only
       // restarts music playback if music is enabled.
-      resumeListener = await CapApp.addListener("resume", () => {
+      const rl = await CapApp.addListener("resume", () => {
         console.log("App resuming from background - resuming audio");
         audioManager.resumeMusic();
       });
+
+      if (cancelled) {
+        pl.remove();
+        rl.remove();
+      } else {
+        pauseListener = pl;
+        resumeListener = rl;
+      }
     };
 
     setupAppListeners();
 
     return () => {
+      cancelled = true;
       pauseListener?.remove();
       resumeListener?.remove();
     };
@@ -365,13 +407,11 @@ const App: React.FC = () => {
   }, [isAutoPaused, isStoreOpen, isBagOpen, isAchievementsOpen]);
 
   // Android Native Handlers (Capacitor)
+  // One-time native setup (status bar, keyboard) — must not re-run on modal toggles
   useEffect(() => {
-    // Only run on mobile (Capacitor)
     if (!window.Capacitor) return;
 
-    let backButtonListener: any;
-
-    const setupCapacitor = async () => {
+    const setupNative = async () => {
       // Hide status bar for fullscreen
       try {
         await StatusBar.hide();
@@ -385,9 +425,24 @@ const App: React.FC = () => {
       } catch (error) {
         console.warn("Keyboard setScroll failed:", error);
       }
+    };
 
+    setupNative();
+  }, []);
+
+  useEffect(() => {
+    // Only run on mobile (Capacitor)
+    if (!window.Capacitor) return;
+
+    // Guard against the async race: if cleanup runs before addListener
+    // resolves, remove the listener as soon as it arrives instead of
+    // leaking it (this effect re-runs on every modal toggle).
+    let cancelled = false;
+    let backButtonListener: any;
+
+    const setupCapacitor = async () => {
       // Handle Android back button
-      backButtonListener = await CapApp.addListener("backButton", () => {
+      const listener = await CapApp.addListener("backButton", () => {
         // If any modal is open, close it instead of exiting
         if (isStoreOpen) {
           setIsStoreOpen(false);
@@ -409,11 +464,19 @@ const App: React.FC = () => {
           }
         }
       });
+
+      if (cancelled) {
+        // Cleanup already ran while we were awaiting — remove immediately
+        listener.remove();
+      } else {
+        backButtonListener = listener;
+      }
     };
 
     setupCapacitor();
 
     return () => {
+      cancelled = true;
       backButtonListener?.remove();
     };
   }, [
@@ -1250,6 +1313,15 @@ const App: React.FC = () => {
     setIsLoading(false);
   }, []);
 
+  // Stable references for GameCanvas audio callbacks — inline arrows would
+  // get a new identity every App render, defeating GameCanvas's React.memo.
+  const handleClawRelease = useCallback(() => {
+    audioManager.playClawRelease();
+  }, []);
+  const handleCatchNothingSound = useCallback(() => {
+    audioManager.playCatchNothing();
+  }, []);
+
   // Calculate multipliers based on levels
   const clawSpeedMultiplier = 1 + ((gameState.clawSpeedLevel || 1) - 1) * 0.2;
   const clawThrowSpeedMultiplier =
@@ -1315,8 +1387,8 @@ const App: React.FC = () => {
                 migrationEndTime={gameState.migrationEndTime}
                 migrationPending={gameState.migrationPending}
                 migrationPendingEndTime={gameState.migrationPendingEndTime}
-                onClawRelease={() => audioManager.playClawRelease()}
-                onCatchNothing={() => audioManager.playCatchNothing()}
+                onClawRelease={handleClawRelease}
+                onCatchNothing={handleCatchNothingSound}
               />
 
               {/* Auto Pause Overlay */}

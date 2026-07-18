@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Language } from "../types";
 import { TRANSLATIONS } from "../locales/translations";
 import { X } from "lucide-react";
@@ -44,6 +44,22 @@ const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
   const [message, setMessage] = useState<string>("");
   const [leverPulled, setLeverPulled] = useState(false);
   const [pendingBet, setPendingBet] = useState<number | null>(null);
+
+  // Track every interval/timeout created by a spin so they can be cleared
+  // on unmount (otherwise a spin in progress keeps firing setState on an
+  // unmounted component) and so a new spin can cancel the previous
+  // message-clear timeout instead of having it wipe the new message.
+  const spinIntervalsRef = useRef<ReturnType<typeof setInterval>[]>([]);
+  const spinTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const messageTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      spinIntervalsRef.current.forEach(clearInterval);
+      spinTimeoutsRef.current.forEach(clearTimeout);
+      if (messageTimeoutRef.current) clearTimeout(messageTimeoutRef.current);
+    };
+  }, []);
 
   const t = TRANSLATIONS[language];
 
@@ -131,7 +147,11 @@ const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
 
     if (money < betAmount) {
       setMessage(t.notEnoughMoney || "Not enough money!");
-      setTimeout(() => setMessage(""), 3000);
+      if (messageTimeoutRef.current) clearTimeout(messageTimeoutRef.current);
+      messageTimeoutRef.current = setTimeout(() => {
+        setMessage("");
+        messageTimeoutRef.current = null;
+      }, 3000);
       return;
     }
 
@@ -143,7 +163,16 @@ const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
     setStoppedReels([false, false, false, false, false]);
     audioManager.playButtonSound();
 
-    setTimeout(() => setLeverPulled(false), 300);
+    // Cancel any pending message-clear from a previous spin, and drop
+    // references to that spin's (already-finished) timers
+    if (messageTimeoutRef.current) {
+      clearTimeout(messageTimeoutRef.current);
+      messageTimeoutRef.current = null;
+    }
+    spinIntervalsRef.current = [];
+    spinTimeoutsRef.current = [];
+
+    spinTimeoutsRef.current.push(setTimeout(() => setLeverPulled(false), 300));
 
     // Generate final result
     const finalResult = generateResult();
@@ -159,11 +188,12 @@ const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
         });
       }, 100);
       spinIntervals.push(interval);
+      spinIntervalsRef.current.push(interval);
     });
 
     // Stop reels one by one with 400ms delay
     const stopReel = (index: number) => {
-      setTimeout(
+      const stopTimeout = setTimeout(
         () => {
           clearInterval(spinIntervals[index]);
           setReels((prev) => {
@@ -179,7 +209,7 @@ const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
 
           // After last reel stops, check for win
           if (index === 4) {
-            setTimeout(() => {
+            const winCheckTimeout = setTimeout(() => {
               const multiplier = checkConsecutiveWin(finalResult);
               const winnings = betAmount * multiplier;
 
@@ -201,12 +231,17 @@ const SlotMachineModal: React.FC<SlotMachineModalProps> = ({
 
               setSpinning(false);
               // Show message for 5 seconds
-              setTimeout(() => setMessage(""), 5000);
+              messageTimeoutRef.current = setTimeout(() => {
+                setMessage("");
+                messageTimeoutRef.current = null;
+              }, 5000);
             }, 500);
+            spinTimeoutsRef.current.push(winCheckTimeout);
           }
         },
         800 + index * 400,
       ); // Each reel stops 400ms after the previous
+      spinTimeoutsRef.current.push(stopTimeout);
     };
 
     // Stop each reel sequentially

@@ -195,10 +195,27 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   migrationPendingRef.current = migrationPending;
   migrationPendingEndTimeRef.current = migrationPendingEndTime;
 
+  // Unlock lists mirrored to refs — these are read inside `update` (spawning,
+  // Kraken check) but were NOT in its dependency array, so `update` could hold
+  // a stale copy until an unrelated dep changed (e.g. newly unlocked ghost
+  // fish wouldn't spawn until a powerup toggled). Refs are always current.
+  const unlockedFishRef = useRef<string[]>(unlockedFish);
+  const unlockedPetsRef = useRef<string[]>(unlockedPets);
+  unlockedFishRef.current = unlockedFish;
+  unlockedPetsRef.current = unlockedPets;
+
   // Pet Income Timer
   const lastPetIncomeTime = useRef<number>(Date.now());
 
   const [isShaking, setIsShaking] = useState(false);
+  // Track the shake timeout so it can't fire setState after unmount and
+  // repeated wall hits don't stack timeouts
+  const shakeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    return () => {
+      if (shakeTimeoutRef.current) clearTimeout(shakeTimeoutRef.current);
+    };
+  }, []);
 
   // Reset Narwhal Spawn Timer when weather changes to Rainbow
   useEffect(() => {
@@ -490,7 +507,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       }
 
       // --- Update Background Boats ---
-      const hasKraken = unlockedPets.includes("kraken");
+      const hasKraken = unlockedPetsRef.current.includes("kraken");
       spawnBackgroundBoatEntities(backgroundBoatsRef.current, hasKraken);
       backgroundBoatsRef.current = updateBackgroundBoatEntities(
         backgroundBoatsRef.current,
@@ -585,7 +602,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             isFishFrenzyActive,
             trashSuppressionUntil.current,
             lastNarwhalSpawnTime.current,
-            unlockedFish, // NEW: Pass unlocked fish list
+            unlockedFishRef.current, // Always-current unlocked fish list (via ref)
             isMigrationActuallyActive, // NEW: Pass ACTUAL migration state based on Date.now()
           );
 
@@ -771,7 +788,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
               if (hitWallOrMax && index === 0) {
                 // Only shake on main claw hit for sanity
                 setIsShaking(true);
-                setTimeout(() => setIsShaking(false), 500);
+                if (shakeTimeoutRef.current)
+                  clearTimeout(shakeTimeoutRef.current);
+                shakeTimeoutRef.current = setTimeout(() => {
+                  setIsShaking(false);
+                  shakeTimeoutRef.current = null;
+                }, 500);
                 // Play catch nothing sound
                 if (onCatchNothing) onCatchNothing();
               }
@@ -1256,4 +1278,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   );
 };
 
-export default GameCanvas;
+// Memoized: App re-renders on every money change / achievement / plane request,
+// but this component only needs to re-render when its own props change.
+// (Requires the audio callbacks passed from App to be stable useCallbacks.)
+export default React.memo(GameCanvas);
