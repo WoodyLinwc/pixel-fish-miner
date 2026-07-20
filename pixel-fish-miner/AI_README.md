@@ -219,7 +219,8 @@ npx cap open android
 # Or run directly on device
 npx cap run android
 
-npm run build && npx cap sync && npx cap run android
+npm run build && npx cap sync
+npx cap open android
 ```
 
 #### Convenience Scripts (package.json)
