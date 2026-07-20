@@ -563,7 +563,7 @@ export const FISH_TYPES: FishType[] = [
     name: "Ocean Sunfish",
     rarity: FishRarity.LEGENDARY,
     weight: 130,
-    value: 500,
+    value: 350,
     speed: 1.0,
     color: "#b0bec5",
     width: 70,
