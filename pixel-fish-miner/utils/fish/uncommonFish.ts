@@ -100,6 +100,10 @@ export const drawSeaBass = (
   ctx.fillStyle = darkColor;
   ctx.fillRect(-w / 2 + 5, 0, w - 10, 2);
 
+  // Belly patch (lighter cream color block, spans full body width)
+  ctx.fillStyle = "#f0f4c3";
+  ctx.fillRect(-w / 2, h / 4, w, h / 4);
+
   // Eye
   ctx.fillStyle = "white";
   ctx.fillRect(w / 3, -5, 4, 4);
@@ -117,6 +121,10 @@ export const drawRedSnapper = (
   // Body
   ctx.fillRect(-w / 2, -h / 2, w, h);
 
+  // Darker top shading (two-tone body, breaks up the flat red)
+  ctx.fillStyle = "#e53935";
+  ctx.fillRect(-w / 2, -h / 2, w, h / 3);
+
   // Spiky dorsal fin
   ctx.fillStyle = "#c62828";
   ctx.beginPath();
@@ -129,11 +137,32 @@ export const drawRedSnapper = (
   ctx.fillStyle = "#c62828";
   ctx.fillRect(-w / 2 - 6, -8, 6, 16);
 
-  // Eye
+  // Pectoral fin
+  ctx.fillStyle = "#c62828";
+  ctx.beginPath();
+  ctx.moveTo(w / 6, 2);
+  ctx.lineTo(w / 6 + 8, 6);
+  ctx.lineTo(w / 6, 10);
+  ctx.fill();
+
+  // Scale texture (small darker flecks across the body)
+  ctx.fillStyle = "rgba(183, 28, 28, 0.5)";
+  ctx.fillRect(-w / 4, -h / 4, 2, 2);
+  ctx.fillRect(-w / 8, -h / 6, 2, 2);
+  ctx.fillRect(0, -h / 4, 2, 2);
+  ctx.fillRect(-w / 3, -2, 2, 2);
+  ctx.fillRect(-w / 10, 2, 2, 2);
+  ctx.fillRect(w / 8, -h / 5, 2, 2);
+
+  // Belly patch (lighter pink/white color block, spans full body width)
+  ctx.fillStyle = "#ffcdd2";
+  ctx.fillRect(-w / 2, h / 4, w, h / 4);
+
+  // Eye (shifted forward, closer to the nose)
   ctx.fillStyle = "white";
-  ctx.fillRect(w / 4, -6, 4, 4);
+  ctx.fillRect(w / 2.6, -6, 4, 4);
   ctx.fillStyle = "black";
-  ctx.fillRect(w / 4 + 1, -5, 2, 2);
+  ctx.fillRect(w / 2.6 + 2, -5, 2, 2);
 };
 
 export const drawSalmon = (
