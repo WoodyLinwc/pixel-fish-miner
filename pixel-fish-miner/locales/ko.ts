@@ -134,6 +134,12 @@ export const ko = {
     fluorescent_squid: "형광 오징어",
     shrimp: "새우",
     ocean_sunfish: "개복치",
+    milkfish: "밀크피쉬",
+    amberjack: "방어",
+    blobfish: "블롭피쉬",
+    tarpon: "타폰",
+    mahi_mahi: "만새기",
+    nautilus: "앵무조개",
   },
   upgrades: {
     clawSpeed: {

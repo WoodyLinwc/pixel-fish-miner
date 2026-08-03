@@ -28,6 +28,7 @@ import {
   drawPomfret,
   drawPufferfish,
   drawShrimp,
+  drawMilkfish,
 } from "./commonFish";
 import {
   drawPacificSaury,
@@ -49,6 +50,7 @@ import {
   drawPhantomPerch,
   drawSpectralSardine,
   drawGhostSquid,
+  drawAmberjack,
 } from "./uncommonFish";
 import {
   drawLargeYellowCroaker,
@@ -59,12 +61,16 @@ import {
   drawWolffish,
   drawCrab,
   drawElectricJelly,
+  drawBlobfish,
+  drawTarpon,
 } from "./rareFish";
 import {
   drawWhale,
   drawNarwhal,
   drawSailfish,
   drawOceanSunfish,
+  drawMahiMahi,
+  drawNautilus,
 } from "./legendaryFish";
 import {
   drawThunderEel,
@@ -146,6 +152,12 @@ export const drawEntity = (
   else if (type.id === "ice_fin") drawIceFin(ctx, w, h);
   else if (type.id === "wind_ray") drawWindRay(ctx, w, h);
   else if (type.id === "sea_turtle") drawSeaTurtle(ctx, w, h, time, entity);
+  else if (type.id === "milkfish") drawMilkfish(ctx, w, h);
+  else if (type.id === "amberjack") drawAmberjack(ctx, w, h);
+  else if (type.id === "blobfish") drawBlobfish(ctx, w, h);
+  else if (type.id === "tarpon") drawTarpon(ctx, w, h);
+  else if (type.id === "mahi_mahi") drawMahiMahi(ctx, w, h);
+  else if (type.id === "nautilus") drawNautilus(ctx, w, h);
   else {
     // Fallback
     ctx.fillStyle = type.color;

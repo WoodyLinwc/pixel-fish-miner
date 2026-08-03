@@ -28,6 +28,16 @@ const MIGRATION_FISH_IDS = [
   "king_anchovy",
 ];
 
+// Fish IDs gated behind owning a specific costume (checked against unlockedCostumes)
+const COSTUME_UNLOCK_FISH: Record<string, string> = {
+  blobfish: "diver",
+  milkfish: "sailor",
+  amberjack: "sushi_master",
+  mahi_mahi: "captain",
+  tarpon: "lifeguard",
+  nautilus: "marine_scientist",
+};
+
 /**
  * Get weighted random fish type based on conditions
  */
@@ -39,6 +49,7 @@ export const getWeightedFishType = (
   isFishFrenzyActive: boolean,
   unlockedFish: string[], // NEW PARAMETER
   migrationActive: boolean = false, // NEW: Migration parameter
+  unlockedCostumes: string[] = [], // NEW: Costume-gated fish (e.g. Blobfish/Diver)
 ): FishType => {
   // CHEAT: Fish Frenzy - Force spawn special weather fish
   if (isFishFrenzyActive) {
@@ -114,6 +125,15 @@ export const getWeightedFishType = (
     return true;
   });
 
+  // NEW: Filter out costume-gated fish (e.g. Blobfish) unless the required costume is owned
+  availableFish = availableFish.filter((f) => {
+    const requiredCostume = COSTUME_UNLOCK_FISH[f.id];
+    if (requiredCostume) {
+      return unlockedCostumes.includes(requiredCostume);
+    }
+    return true;
+  });
+
   // MIGRATION - Only migration fish spawn (normal + king), all others filtered out
   if (migrationActive) {
     // During migration, ONLY the 6 migration fish can spawn (3 normal + 3 kings).
@@ -157,6 +177,7 @@ export const spawnFish = (
   lastNarwhalSpawnTime: number,
   unlockedFish: string[], // NEW PARAMETER
   migrationActive: boolean = false, // NEW: Migration parameter
+  unlockedCostumes: string[] = [], // NEW: Costume-gated fish (e.g. Blobfish/Diver)
 ): { shouldUpdateNarwhalTime: boolean } => {
   const now = Date.now();
   let type = getWeightedFishType(
@@ -167,6 +188,7 @@ export const spawnFish = (
     isFishFrenzyActive,
     unlockedFish, // PASS THE NEW PARAMETER
     migrationActive, // PASS MIGRATION PARAMETER
+    unlockedCostumes, // PASS THE NEW PARAMETER
   );
 
   let shouldUpdateNarwhalTime = false;

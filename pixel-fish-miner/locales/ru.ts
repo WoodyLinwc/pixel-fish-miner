@@ -134,6 +134,12 @@ export const ru = {
     fluorescent_squid: "Флуоресцентный кальмар",
     shrimp: "Креветка",
     ocean_sunfish: "Рыба-луна",
+    milkfish: "Молочная рыба",
+    amberjack: "Лихия",
+    blobfish: "Рыба-капля",
+    tarpon: "Тарпон",
+    mahi_mahi: "Корифена",
+    nautilus: "Наутилус",
   },
   upgrades: {
     clawSpeed: {

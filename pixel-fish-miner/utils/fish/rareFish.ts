@@ -335,3 +335,215 @@ export const drawElectricJelly = (
     ctx.fillRect(-w / 2 - 3, 5, 2, 2);
   }
 };
+
+// Blobfish - front view: half-circle body + curved mouth line + trapezoid nose (over the curve) + eyes
+export const drawBlobfish = (
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+) => {
+  const skin = "#e8ada0";
+  const darkSkin = "#c98876";
+  const mouthColor = "#8a5347";
+
+  const bodyRx = w / 2; // Half-circle radius (width direction)
+  const bodyRy = bodyRx * 1.15; // Taller arch, not too flat
+  const baseY = 0; // Flat bottom edge of the half-circle
+
+  // Two triangular side fins, drawn behind the body, peeking out slightly on each side
+  ctx.fillStyle = darkSkin;
+  ctx.beginPath();
+  ctx.moveTo(-bodyRx - 9, baseY);
+  ctx.lineTo(-bodyRx + 13, baseY);
+  ctx.lineTo(-bodyRx + 5, baseY - 7);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(bodyRx + 9, baseY);
+  ctx.lineTo(bodyRx - 13, baseY);
+  ctx.lineTo(bodyRx - 5, baseY - 7);
+  ctx.closePath();
+  ctx.fill();
+
+  // Half-circle body (flat bottom, dome on top, arched a bit higher)
+  ctx.fillStyle = skin;
+  ctx.beginPath();
+  ctx.ellipse(0, baseY, bodyRx, bodyRy, 0, Math.PI, Math.PI * 2);
+  ctx.closePath();
+  ctx.fill();
+
+  // Curved mouth line from bottom-left to bottom-right (pulled in slightly so the stroke stays inside the body)
+  const arcSpan = bodyRx * 0.92;
+  ctx.strokeStyle = mouthColor;
+  ctx.lineWidth = Math.max(2, bodyRx * 0.08);
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(-arcSpan, baseY - 1);
+  ctx.quadraticCurveTo(0, baseY - bodyRy * 0.65, arcSpan, baseY - 1);
+  ctx.stroke();
+
+  // Trapezoid nose, sitting over the middle of the mouth line (narrow top, wide bottom, base on the body edge)
+  const noseTopW = w * 0.36;
+  const noseBottomW = w * 0.22;
+  const noseH = bodyRy * 0.48;
+  ctx.fillStyle = darkSkin;
+  ctx.beginPath();
+  ctx.moveTo(-noseTopW / 2, baseY - noseH);
+  ctx.lineTo(noseTopW / 2, baseY - noseH);
+  ctx.lineTo(noseBottomW / 2, baseY);
+  ctx.lineTo(-noseBottomW / 2, baseY);
+  ctx.closePath();
+  ctx.fill();
+
+  // Eyes (sized relative to bodyRx so they scale with the fish instead of staying a fixed pixel size)
+  const eyeY = baseY - noseH - 1;
+  const eyeSize = bodyRx * 0.2;
+  const pupilSize = bodyRx * 0.1;
+  ctx.fillStyle = "white";
+  ctx.fillRect(-bodyRx * 0.42 - eyeSize / 2, eyeY, eyeSize, eyeSize);
+  ctx.fillRect(bodyRx * 0.42 - eyeSize / 2, eyeY, eyeSize, eyeSize);
+  ctx.fillStyle = "black";
+  ctx.fillRect(
+    -bodyRx * 0.42 - pupilSize / 2,
+    eyeY + eyeSize / 4,
+    pupilSize,
+    pupilSize,
+  );
+  ctx.fillRect(
+    bodyRx * 0.42 - pupilSize / 2,
+    eyeY + eyeSize / 4,
+    pupilSize,
+    pupilSize,
+  );
+};
+
+// Milkfish - pale cyan-blue spindle body, deep forked tail, triangular dorsal fin
+export const drawMilkfish = (
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+) => {
+  const top = "#4a90a4";
+  const body = "#9fd6e0";
+
+  // Body
+  ctx.fillStyle = body;
+  ctx.fillRect(-w / 2, -h / 2, w, h);
+  ctx.fillStyle = top;
+  ctx.fillRect(-w / 2, -h / 2, w, h / 3);
+
+  // Deeply forked tail
+  ctx.fillStyle = top;
+  ctx.beginPath();
+  ctx.moveTo(-w / 2, 0);
+  ctx.lineTo(-w / 2 - 13, -11);
+  ctx.lineTo(-w / 2 - 5, 0);
+  ctx.lineTo(-w / 2 - 13, 11);
+  ctx.fill();
+
+  // Tall triangular dorsal fin
+  ctx.beginPath();
+  ctx.moveTo(-w / 8, -h / 2);
+  ctx.lineTo(0, -h / 2 - 10);
+  ctx.lineTo(w / 10, -h / 2);
+  ctx.fill();
+
+  // Small pectoral fin
+  ctx.beginPath();
+  ctx.moveTo(w / 6, h / 4);
+  ctx.lineTo(w / 6 - 6, h / 2 + 2);
+  ctx.lineTo(w / 6 + 2, h / 3);
+  ctx.fill();
+
+  // Large eye
+  ctx.fillStyle = "white";
+  ctx.fillRect(w / 3, -4, 5, 5);
+  ctx.fillStyle = "black";
+  ctx.fillRect(w / 3 + 1, -3, 3, 3);
+};
+
+// Tarpon - large silver-grey scaled body, upturned mouth, trailing tail filament
+export const drawTarpon = (
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+) => {
+  const back = "#5b7280";
+  const body = "#b7c4cc";
+  const scaleColor = "#8fa0aa";
+
+  const bw = w * 1.4; // Body stretched longer
+
+  // Body is a trapezoid, narrow at the front and wide at the back; all four edges are slanted,
+  // so compute the actual edge position for each x
+  const lerpT = (x: number) => (bw / 2 - x) / bw; // 0 = front, 1 = back
+  const topEdgeY = (x: number) => {
+    const t = lerpT(x);
+    return -h / 4 + t * (-h / 2 + 2 - -h / 4);
+  };
+  const bottomEdgeY = (x: number) => {
+    const t = lerpT(x);
+    return h / 3 + t * (h / 2 - 2 - h / 3);
+  };
+  const backBottomY = (x: number) => {
+    const t = lerpT(x);
+    return -h / 12 + t * (-h / 8 - -h / 12);
+  };
+
+  const bodyPath = () => {
+    ctx.beginPath();
+    ctx.moveTo(bw / 2, -h / 4);
+    ctx.lineTo(-bw / 2, -h / 2 + 2);
+    ctx.lineTo(-bw / 2, h / 2 - 2);
+    ctx.lineTo(bw / 2, h / 3);
+    ctx.closePath();
+  };
+
+  // Draw the dorsal fin and tail first, body layer covers their bases so nothing appears to float
+  ctx.fillStyle = back;
+  ctx.beginPath();
+  ctx.moveTo(4, topEdgeY(4) + 4);
+  ctx.lineTo(-6, topEdgeY(-6) - 9);
+  ctx.lineTo(-14, topEdgeY(-14) + 4);
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(-bw / 2, 0);
+  ctx.lineTo(-bw / 2 - 15, -13);
+  ctx.lineTo(-bw / 2 - 6, 0);
+  ctx.lineTo(-bw / 2 - 15, 13);
+  ctx.fill();
+
+  // Body (trapezoid)
+  bodyPath();
+  ctx.fillStyle = body;
+  ctx.fill();
+
+  ctx.fillStyle = back;
+  ctx.beginPath();
+  ctx.moveTo(bw / 2, -h / 4);
+  ctx.lineTo(-bw / 2, -h / 2 + 2);
+  ctx.lineTo(-bw / 2, -h / 8);
+  ctx.lineTo(bw / 2, -h / 12);
+  ctx.fill();
+
+  // Large scale texture: compute each column's real top/bottom bounds from x so every scale stays inside the body
+  ctx.fillStyle = scaleColor;
+  for (let col = 0; col < 7; col++) {
+    const x = -bw / 2.3 + col * 10;
+    const topBound = backBottomY(x) + 2;
+    const bottomBound = bottomEdgeY(x) - 3;
+    const span = bottomBound - topBound;
+    [0.25, 0.55, 0.85].forEach((frac, row) => {
+      const offsetX = row % 2 === 0 ? 0 : 4;
+      ctx.fillRect(x + offsetX, topBound + span * frac, 2, 2);
+    });
+  }
+
+  // Large eye
+  ctx.fillStyle = "white";
+  ctx.fillRect(bw / 2.5, -4, 5, 5);
+  ctx.fillStyle = "black";
+  ctx.fillRect(bw / 2.5 + 2, -3, 2, 2);
+};

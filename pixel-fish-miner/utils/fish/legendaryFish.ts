@@ -290,3 +290,203 @@ export const drawOceanSunfish = (
   ctx.fillStyle = "black";
   ctx.fillRect(w / 3.2 + 2, -h / 8 + 1, 2, 2);
 };
+
+// Mahi-Mahi - steep forehead, blue-teal fading to gold, dorsal fin running the length of the back
+export const drawMahiMahi = (
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+) => {
+  const blue = "#1c3f6e";
+  const teal = "#1f9e8f";
+  const gold = "#e8b94a";
+  const finColor = "#6cabdb"; // Fins in a lighter blue
+
+  const bw = w * 1.9; // Body stretched longer
+  const headW = h * 0.65; // Smaller blunt-head proportion, not too square
+  const headX = bw / 2 - headW; // Where the blunt head meets the tapered body
+  const chamfer = headW * 0.4; // Soften the head's front corners with a chamfer
+
+  // Body outline in three segments: tapered tail transition / flat head section / chamfered front corner
+  const topEdgeY = (x: number) => {
+    if (x <= headX) return ((-h / 2) * (x + bw / 2)) / (headX + bw / 2);
+    if (x <= bw / 2 - chamfer) return -h / 2;
+    return -h / 2 + (x - (bw / 2 - chamfer));
+  };
+  const bottomEdgeY = (x: number) => {
+    if (x <= headX) return ((h / 2) * (x + bw / 2)) / (headX + bw / 2);
+    if (x <= bw / 2 - chamfer) return h / 2;
+    return h / 2 - (x - (bw / 2 - chamfer));
+  };
+
+  const bodyPath = () => {
+    ctx.beginPath();
+    ctx.moveTo(-bw / 2, 0); // Tapered tail
+    ctx.lineTo(headX, -h / 2); // Body narrows into the head's top-left corner
+    ctx.lineTo(bw / 2 - chamfer, -h / 2); // Head top edge
+    ctx.lineTo(bw / 2, -h / 2 + chamfer); // Chamfer softening the front-top of the head
+    ctx.lineTo(bw / 2, h / 2 - chamfer); // Head right side
+    ctx.lineTo(bw / 2 - chamfer, h / 2); // Chamfer softening the front-bottom of the head
+    ctx.lineTo(headX, h / 2); // Head bottom edge
+    ctx.closePath(); // Back to the tapered tail
+  };
+
+  // Draw all fins first so the body layer covers their bases
+
+  // Dorsal fin running along the back: a simple obtuse triangle, peak leaning toward the head
+  const finBaseStartX = -bw / 2.4; // Extends almost to the tail
+  const finBaseEndX = bw / 2 - 4; // Near the head
+  const finPeakT = 0.68; // Peak position, leaning toward the head
+  const finPeakX = finBaseStartX + (finBaseEndX - finBaseStartX) * finPeakT;
+  const finPeakHeight = 21;
+  const finBaseY = (x: number) => topEdgeY(x) + 6;
+
+  ctx.fillStyle = finColor;
+  ctx.beginPath();
+  ctx.moveTo(finBaseStartX, finBaseY(finBaseStartX));
+  ctx.lineTo(finPeakX, topEdgeY(finPeakX) - finPeakHeight);
+  ctx.lineTo(finBaseEndX, finBaseY(finBaseEndX));
+  ctx.fill();
+
+  // Pectoral fin (side fin, extends where the head meets the body)
+  {
+    const x1 = headX - 8;
+    const x2 = headX + 4;
+    ctx.beginPath();
+    ctx.moveTo(x1, bottomEdgeY(x1) - 6);
+    ctx.lineTo(x2, bottomEdgeY(x2) - 6);
+    ctx.lineTo((x1 + x2) / 2 - 2, h / 2 + 11);
+    ctx.fill();
+  }
+
+  // Anal fin (long fin under the belly, mirroring the dorsal fin)
+  {
+    const analStartX = -bw / 6;
+    const analEndX = bw / 6;
+    const analStartY = bottomEdgeY(analStartX);
+    const analEndY = bottomEdgeY(analEndX);
+
+    ctx.beginPath();
+    ctx.moveTo(analStartX, analStartY - 6);
+    ctx.lineTo(analStartX + 5, analStartY + 11);
+    ctx.lineTo(analStartX + 18, analStartY + 13);
+    ctx.lineTo(analEndX - 3, analEndY + 6);
+    ctx.lineTo(analEndX, analEndY - 6);
+    ctx.lineTo(analStartX + 9, analStartY - 1);
+    ctx.fill();
+  }
+
+  // Deeply forked tail (attached at the tapered tail point)
+  ctx.beginPath();
+  ctx.moveTo(-bw / 2, 0);
+  ctx.lineTo(-bw / 2 - 14, -12);
+  ctx.lineTo(-bw / 2 - 6, 0);
+  ctx.lineTo(-bw / 2 - 14, 12);
+  ctx.fill();
+
+  // Softened blunt head + long tapered body, drawn over the fin bases (the classic Mahi-Mahi silhouette)
+  bodyPath();
+  ctx.fillStyle = blue;
+  ctx.fill();
+
+  // Clip to the body outline so the color bands follow the body shape
+  ctx.save();
+  bodyPath();
+  ctx.clip();
+
+  ctx.fillStyle = teal;
+  ctx.fillRect(-bw / 2, -h / 8, bw, h * 0.4);
+
+  ctx.fillStyle = gold;
+  ctx.fillRect(-bw / 2, h / 8, bw, h / 2);
+
+  ctx.fillStyle = gold;
+  ctx.fillRect(-bw / 5, -h / 8, 2, 2);
+  ctx.fillRect(0, -h / 10, 2, 2);
+  ctx.fillRect(bw / 6, -h / 6, 2, 2);
+  ctx.fillRect(-bw / 3, 0, 2, 2);
+  ctx.fillRect(bw / 3, h / 10, 2, 2);
+
+  ctx.restore();
+
+  // Eye (on the squared-off head, positioned slightly lower)
+  ctx.fillStyle = "white";
+  ctx.fillRect(headX + headW * 0.68, h / 12, 4, 4);
+  ctx.fillStyle = "black";
+  ctx.fillRect(headX + headW * 0.68 + 1, h / 12 + 1, 2, 2);
+};
+
+// Nautilus - spiral-chambered shell disc with a fan of short tentacles at the aperture
+export const drawNautilus = (
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+) => {
+  const shell = "#e8dcc8";
+  const shellDark = "#c9a876";
+  const bodyColor = "#d98c56";
+  const apertureColor = "#8a5a35";
+
+  const R = h / 2;
+
+  // --- Tentacles first (Method A) — short triangular fronds fanning out from the shell opening ---
+  ctx.fillStyle = bodyColor;
+  const tentacleCount = 7;
+  for (let i = 0; i < tentacleCount; i++) {
+    const angle = -0.55 + (i / (tentacleCount - 1)) * 1.1; // fan spread around +x
+    const baseX = R * 0.55;
+    const baseY = Math.sin(angle) * R * 0.3;
+    const tipX = baseX + Math.cos(angle) * R * 0.95;
+    const tipY = baseY + Math.sin(angle) * R * 0.95;
+    ctx.beginPath();
+    ctx.moveTo(baseX, baseY - 2);
+    ctx.lineTo(tipX, tipY);
+    ctx.lineTo(baseX, baseY + 2);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // --- Shell body: large circular disc ---
+  ctx.fillStyle = shell;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, R, R, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Aperture wedge where the body emerges, covers the tentacle bases
+  ctx.fillStyle = apertureColor;
+  ctx.beginPath();
+  ctx.moveTo(R * 0.2, -R * 0.35);
+  ctx.lineTo(R * 0.8, -R * 0.15);
+  ctx.lineTo(R * 0.8, R * 0.15);
+  ctx.lineTo(R * 0.2, R * 0.35);
+  ctx.closePath();
+  ctx.fill();
+
+  // Spiral chamber lines, clipped to the shell outline so they never spill outside
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(0, 0, R, R, 0, 0, Math.PI * 2);
+  ctx.clip();
+
+  ctx.strokeStyle = shellDark;
+  ctx.lineWidth = 1.5;
+  let cx = R * 0.1;
+  let cy = 0;
+  let rad = R * 0.75;
+  let rot = 0;
+  for (let i = 0; i < 4; i++) {
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rad, rad * 0.9, rot, 0.3, Math.PI * 1.8);
+    ctx.stroke();
+    cx -= rad * 0.35;
+    rad *= 0.55;
+    rot += 0.4;
+  }
+  ctx.restore();
+
+  // Eye, on a small stalk near the tentacle base
+  ctx.fillStyle = "white";
+  ctx.fillRect(R * 0.45, -R * 0.14, 4, 4);
+  ctx.fillStyle = "black";
+  ctx.fillRect(R * 0.45 + 2, -R * 0.13, 2, 2);
+};

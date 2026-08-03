@@ -134,6 +134,12 @@ export const fr = {
     fluorescent_squid: "Calmar Fluorescent",
     shrimp: "Crevette",
     ocean_sunfish: "Poisson-lune",
+    milkfish: "Chanos",
+    amberjack: "Sériole",
+    blobfish: "Poisson-goutte",
+    tarpon: "Tarpon",
+    mahi_mahi: "Dorade coryphène",
+    nautilus: "Nautile",
   },
   upgrades: {
     clawSpeed: {

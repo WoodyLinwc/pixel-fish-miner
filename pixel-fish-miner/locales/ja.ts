@@ -134,6 +134,12 @@ export const ja = {
     fluorescent_squid: "蛍光烏賊（ケイコウイカ）",
     shrimp: "海老（エビ）",
     ocean_sunfish: "翻車魚（マンボウ）",
+    milkfish: "サバヒー",
+    amberjack: "間八（カンパチ）",
+    blobfish: "ニュウドウカジカ",
+    tarpon: "ターポン",
+    mahi_mahi: "鱰（シイラ）",
+    nautilus: "鸚鵡貝（オウムガイ）",
   },
   upgrades: {
     clawSpeed: {

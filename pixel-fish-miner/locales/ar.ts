@@ -134,6 +134,12 @@ export const ar = {
     fluorescent_squid: "حبّار مضيء",
     shrimp: "روبيان",
     ocean_sunfish: "سمكة القمر",
+    milkfish: "سمكة الحليب",
+    amberjack: "سمكة الأمبرجاك",
+    blobfish: "السمكة الهلامية",
+    tarpon: "سمكة التاربون",
+    mahi_mahi: "ماهي ماهي",
+    nautilus: "النوتيلوس",
   },
   upgrades: {
     clawSpeed: {

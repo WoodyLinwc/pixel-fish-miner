@@ -134,6 +134,12 @@ export const zh = {
     fluorescent_squid: "荧光鱿鱼",
     shrimp: "虾",
     ocean_sunfish: "翻车鱼",
+    milkfish: "虱目鱼",
+    amberjack: "红甘鱼",
+    blobfish: "水滴鱼",
+    tarpon: "大海鲢",
+    mahi_mahi: "鲯鳅",
+    nautilus: "鹦鹉螺",
   },
   upgrades: {
     clawSpeed: {

@@ -368,3 +368,48 @@ export const drawShrimp = (
   ctx.fillStyle = eyeColor;
   ctx.fillRect(w / 3, -h / 5, 3, 3);
 };
+
+// Milkfish - pale cyan-blue spindle body, deep forked tail, triangular dorsal fin
+export const drawMilkfish = (
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+) => {
+  const top = "#4a90a4";
+  const body = "#9fd6e0";
+
+  // Body
+  ctx.fillStyle = body;
+  ctx.fillRect(-w / 2, -h / 2, w, h);
+  ctx.fillStyle = top;
+  ctx.fillRect(-w / 2, -h / 2, w, h / 3);
+
+  // Deeply forked tail
+  ctx.fillStyle = top;
+  ctx.beginPath();
+  ctx.moveTo(-w / 2, 0);
+  ctx.lineTo(-w / 2 - 13, -11);
+  ctx.lineTo(-w / 2 - 5, 0);
+  ctx.lineTo(-w / 2 - 13, 11);
+  ctx.fill();
+
+  // Tall triangular dorsal fin
+  ctx.beginPath();
+  ctx.moveTo(-w / 8, -h / 2);
+  ctx.lineTo(0, -h / 2 - 10);
+  ctx.lineTo(w / 10, -h / 2);
+  ctx.fill();
+
+  // Small pectoral fin
+  ctx.beginPath();
+  ctx.moveTo(w / 6, h / 4);
+  ctx.lineTo(w / 6 - 6, h / 2 + 2);
+  ctx.lineTo(w / 6 + 2, h / 3);
+  ctx.fill();
+
+  // Large eye
+  ctx.fillStyle = "white";
+  ctx.fillRect(w / 3, -4, 5, 5);
+  ctx.fillStyle = "black";
+  ctx.fillRect(w / 3 + 1, -3, 3, 3);
+};

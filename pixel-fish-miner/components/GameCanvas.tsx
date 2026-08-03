@@ -78,6 +78,7 @@ interface GameCanvasProps {
   equippedPet: string | null; // Current pet ID
   unlockedPets: string[]; // NEW: List of unlocked pet IDs
   unlockedFish: string[]; // NEW: List of unlocked fish IDs
+  unlockedCostumes: string[]; // NEW: List of unlocked costume IDs (gates costume-unlocked fish, e.g. Blobfish/Diver)
   lastPlaneRequestTime?: number; // Trigger for promo code plane
   migrationActive: boolean; // NEW: Migration active state
   migrationEndTime: number; // NEW: Migration end timestamp
@@ -119,6 +120,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   equippedPet,
   unlockedPets,
   unlockedFish,
+  unlockedCostumes,
   lastPlaneRequestTime,
   migrationActive,
   migrationEndTime,
@@ -201,8 +203,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   // fish wouldn't spawn until a powerup toggled). Refs are always current.
   const unlockedFishRef = useRef<string[]>(unlockedFish);
   const unlockedPetsRef = useRef<string[]>(unlockedPets);
+  const unlockedCostumesRef = useRef<string[]>(unlockedCostumes);
   unlockedFishRef.current = unlockedFish;
   unlockedPetsRef.current = unlockedPets;
+  unlockedCostumesRef.current = unlockedCostumes;
 
   // Pet Income Timer
   const lastPetIncomeTime = useRef<number>(Date.now());
@@ -604,6 +608,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             lastNarwhalSpawnTime.current,
             unlockedFishRef.current, // Always-current unlocked fish list (via ref)
             isMigrationActuallyActive, // NEW: Pass ACTUAL migration state based on Date.now()
+            unlockedCostumesRef.current, // Always-current unlocked costume list (via ref)
           );
 
           if (shouldUpdateNarwhalTime) {

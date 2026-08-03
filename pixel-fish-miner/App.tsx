@@ -1381,6 +1381,7 @@ const App: React.FC = () => {
                 equippedPet={gameState.equippedPet}
                 unlockedPets={gameState.unlockedPets}
                 unlockedFish={gameState.unlockedFish}
+                unlockedCostumes={gameState.unlockedCostumes}
                 lastPlaneRequestTime={lastPlaneRequestTime}
                 forcedGameHour={jumpToGameHour}
                 migrationActive={gameState.migrationActive}

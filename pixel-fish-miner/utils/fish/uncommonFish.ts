@@ -538,3 +538,52 @@ export const drawFluorescentSquid = (
     ctx.fillRect(px - 3, py - 1, 6, 2);
   }
 };
+
+// Amberjack - olive-green back / silver belly, diagonal eye mask, small yellow fins
+export const drawAmberjack = (
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+) => {
+  const top = "#5b6b3e";
+  const belly = "#c7cdd1";
+  const yellow = "#e8c94a";
+  const mask = "#3a4327";
+
+  // Body
+  ctx.fillStyle = top;
+  ctx.fillRect(-w / 2, -h / 2, w, h * 0.55);
+  ctx.fillStyle = belly;
+  ctx.fillRect(-w / 2, -h * 0.05, w, h * 0.55);
+
+  // Diagonal eye mask (the signature feature), kept within the body's right edge so it doesn't poke out
+  ctx.fillStyle = mask;
+  ctx.beginPath();
+  ctx.moveTo(w / 3 - 2, -h / 2);
+  ctx.lineTo(w / 3 + 4, -h / 2);
+  ctx.lineTo(w / 2, 4);
+  ctx.lineTo(w / 2 - 6, 4);
+  ctx.fill();
+
+  // Tail
+  ctx.fillStyle = top;
+  ctx.beginPath();
+  ctx.moveTo(-w / 2, 0);
+  ctx.lineTo(-w / 2 - 9, -9);
+  ctx.lineTo(-w / 2 - 4, 0);
+  ctx.lineTo(-w / 2 - 9, 9);
+  ctx.fill();
+
+  // Small yellow fins (row along the back)
+  ctx.fillStyle = yellow;
+  for (let i = 0; i < 3; i++) {
+    ctx.fillRect(-w / 3 + i * 10, -h / 2 - 2, 4, 2);
+  }
+  ctx.fillRect(w / 6, h / 3, 4, 3);
+
+  // Eye
+  ctx.fillStyle = "white";
+  ctx.fillRect(w / 3, -4, 4, 4);
+  ctx.fillStyle = "black";
+  ctx.fillRect(w / 3 + 1, -3, 2, 2);
+};
