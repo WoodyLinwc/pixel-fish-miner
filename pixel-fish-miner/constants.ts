@@ -177,6 +177,20 @@ export const FISH_TYPES: FishType[] = [
     minDepth: 0.15,
     maxDepth: 0.5,
   },
+  // Costume-unlocked (Sailor Boy)
+  {
+    id: "milkfish",
+    name: "Milkfish",
+    rarity: FishRarity.COMMON, // Unlocked by owning the Sailor Boy costume
+    weight: 14,
+    value: 22,
+    speed: 2.6,
+    color: "#9fd6e0",
+    width: 46,
+    height: 22,
+    minDepth: 0.2,
+    maxDepth: 0.6,
+  },
   // Migration Fish (spawn during migration events)
   {
     id: "pacific_saury",
@@ -200,19 +214,6 @@ export const FISH_TYPES: FishType[] = [
     speed: 2.3,
     color: "#78909c", // Blue-grey
     width: 36,
-    height: 16,
-    minDepth: 0.2,
-    maxDepth: 0.6,
-  },
-  {
-    id: "milkfish",
-    name: "Milkfish",
-    rarity: FishRarity.COMMON, // Unlocked by owning the Sailor Boy costume
-    weight: 14,
-    value: 22,
-    speed: 2.6,
-    color: "#9fd6e0",
-    width: 42,
     height: 16,
     minDepth: 0.2,
     maxDepth: 0.6,
@@ -309,6 +310,7 @@ export const FISH_TYPES: FishType[] = [
     minDepth: 0.5,
     maxDepth: 0.9,
   },
+
   {
     id: "boxfish",
     name: "Boxfish",
@@ -334,20 +336,6 @@ export const FISH_TYPES: FishType[] = [
     height: 28, // Tall body
     minDepth: 0.3,
     maxDepth: 0.7,
-  },
-
-  {
-    id: "amberjack",
-    name: "Amberjack",
-    rarity: FishRarity.UNCOMMON, // Unlocked by owning the Sushi Master costume
-    weight: 38,
-    value: 85,
-    speed: 2.4,
-    color: "#5b6b3e",
-    width: 48,
-    height: 22,
-    minDepth: 0.3,
-    maxDepth: 0.75,
   },
   {
     id: "needlefish",
@@ -454,19 +442,21 @@ export const FISH_TYPES: FishType[] = [
     maxDepth: 0.9,
     isNightOnly: true,
   },
+  // Costume-unlocked (Sushi Master)
   {
-    id: "salmon",
-    name: "Salmon",
-    rarity: FishRarity.UNCOMMON,
-    weight: 45,
-    value: 105,
-    speed: 2.8,
-    color: "#ff8a65", // Deep Orange
-    width: 55,
+    id: "amberjack",
+    name: "Amberjack",
+    rarity: FishRarity.UNCOMMON, // Unlocked by owning the Sushi Master costume
+    weight: 38,
+    value: 85,
+    speed: 2.4,
+    color: "#5b6b3e",
+    width: 50,
     height: 26,
     minDepth: 0.3,
-    maxDepth: 0.8,
+    maxDepth: 0.75,
   },
+
   {
     id: "wolffish",
     name: "Wolffish",
@@ -481,6 +471,19 @@ export const FISH_TYPES: FishType[] = [
     maxDepth: 0.95,
   },
   {
+    id: "salmon",
+    name: "Salmon",
+    rarity: FishRarity.UNCOMMON,
+    weight: 45,
+    value: 105,
+    speed: 2.8,
+    color: "#ff8a65", // Deep Orange
+    width: 55,
+    height: 26,
+    minDepth: 0.3,
+    maxDepth: 0.8,
+  },
+  {
     id: "tuna",
     name: "Tuna",
     rarity: FishRarity.UNCOMMON,
@@ -493,6 +496,7 @@ export const FISH_TYPES: FishType[] = [
     minDepth: 0.4,
     maxDepth: 0.9,
   },
+
   {
     id: "large_yellow_croaker",
     name: "Large Yellow Croaker",
@@ -545,6 +549,36 @@ export const FISH_TYPES: FishType[] = [
     minDepth: 0.5,
     maxDepth: 0.85,
   },
+  // Costume-unlocked (Lifeguard)
+  {
+    id: "tarpon",
+    name: "Tarpon",
+    rarity: FishRarity.RARE, // Unlocked by owning the Lifeguard costume
+    weight: 55,
+    value: 210,
+    speed: 2.6,
+    color: "#b7c4cc",
+    width: 70,
+    height: 32,
+    minDepth: 0.3,
+    maxDepth: 0.75,
+  },
+
+  // Costume-unlocked (Diver)
+  {
+    id: "blobfish",
+    name: "Blobfish",
+    rarity: FishRarity.RARE, // Unlocked by owning the Diver costume
+    weight: 40,
+    value: 240,
+    speed: 0.9, // Slow, gelatinous deep-sea drifter
+    color: "#e8ada0",
+    width: 40,
+    height: 40,
+    minDepth: 0.75,
+    maxDepth: 0.98, // Deep-sea dweller
+    isNightOnly: true,
+  },
   {
     id: "anglerfish",
     name: "Anglerfish",
@@ -558,33 +592,6 @@ export const FISH_TYPES: FishType[] = [
     minDepth: 0.7, // Deep
     maxDepth: 0.95,
     isNightOnly: true,
-  },
-  {
-    id: "blobfish",
-    name: "Blobfish",
-    rarity: FishRarity.RARE, // Unlocked by owning the Diver costume
-    weight: 40,
-    value: 280,
-    speed: 0.9, // Slow, gelatinous deep-sea drifter
-    color: "#e8ada0",
-    width: 36,
-    height: 34,
-    minDepth: 0.75,
-    maxDepth: 0.98, // Deep-sea dweller
-    isNightOnly: true,
-  },
-  {
-    id: "tarpon",
-    name: "Tarpon",
-    rarity: FishRarity.RARE, // Unlocked by owning the Lifeguard costume
-    weight: 55,
-    value: 300,
-    speed: 2.6,
-    color: "#b7c4cc",
-    width: 50,
-    height: 26,
-    minDepth: 0.3,
-    maxDepth: 0.75,
   },
   {
     id: "sailfish",
@@ -625,31 +632,33 @@ export const FISH_TYPES: FishType[] = [
     minDepth: 0.5,
     maxDepth: 0.9,
   },
-  {
-    id: "nautilus",
-    name: "Nautilus",
-    rarity: FishRarity.LEGENDARY, // Unlocked by owning the Marine Scientist costume
-    weight: 60,
-    value: 400,
-    speed: 1.0, // Ancient, slow-drifting deep-sea mollusk
-    color: "#e8dcc8",
-    width: 54,
-    height: 40,
-    minDepth: 0.7,
-    maxDepth: 0.98,
-  },
+  // Costume-unlocked (Sea Captain)
   {
     id: "mahi_mahi",
     name: "Mahi-Mahi",
     rarity: FishRarity.LEGENDARY, // Unlocked by owning the Sea Captain costume
     weight: 75,
-    value: 500,
+    value: 420,
     speed: 3.6, // Fast pelagic sprinter
     color: "#1c3f6e",
-    width: 46,
-    height: 30,
+    width: 62,
+    height: 32,
     minDepth: 0.2,
     maxDepth: 0.6,
+  },
+  // Costume-unlocked (Marine Scientist)
+  {
+    id: "nautilus",
+    name: "Nautilus",
+    rarity: FishRarity.LEGENDARY, // Unlocked by owning the Marine Scientist costume
+    weight: 60,
+    value: 500,
+    speed: 1.0, // Ancient, slow-drifting deep-sea mollusk
+    color: "#e8dcc8",
+    width: 52,
+    height: 40,
+    minDepth: 0.7,
+    maxDepth: 0.98,
   },
 
   // Dangerous Fish
@@ -780,8 +789,6 @@ export const FISH_TYPES: FishType[] = [
     minDepth: 0, // Spawns from sky
     maxDepth: 1, // Sinks to bottom
   },
-
-  // Costume-Unlocked Fish (see fish.ts getWeightedFishType — gated by owned costume)
 ];
 
 export const UPGRADES: Record<string, Upgrade> = {
