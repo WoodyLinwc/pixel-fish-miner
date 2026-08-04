@@ -30,20 +30,6 @@ const FishIcon: React.FC<{ type: FishType }> = ({ type }) => {
     const availableWidth = canvas.width - padding;
     const availableHeight = canvas.height - padding;
 
-    // Calculate scale to fit nicely
-    const maxDim = Math.max(type.width, type.height);
-    const scale = Math.min(
-      availableWidth / type.width,
-      availableHeight / type.height,
-    );
-
-    ctx.save();
-    ctx.translate(canvas.width / 2, canvas.height / 2);
-    ctx.scale(scale, scale);
-
-    // Disable smoothing for pixel art look
-    ctx.imageSmoothingEnabled = false;
-
     // Construct a dummy entity for the drawing function
     const dummyEntity: EntityFish = {
       x: 0,
@@ -52,6 +38,79 @@ const FishIcon: React.FC<{ type: FishType }> = ({ type }) => {
       type: type,
       facingRight: true,
     };
+
+    // Some fish are drawn well outside their nominal type.width/type.height
+    // box on purpose (e.g. Mahi-Mahi's body is drawn at width*1.9, Sailfish's
+    // sail towers above height*1.9, Narwhal's tusk extends width*0.7 past the
+    // body, Blobfish/Tarpon/Anglerfish/Sea Turtle all do similar things for
+    // their art). Scaling against the nominal width/height clips those parts.
+    // Instead, render once to an offscreen probe canvas, measure the actual
+    // non-transparent pixel bounds, and scale/center against THAT — this
+    // works for every fish automatically without touching any art.
+    const probeSize = 400; // generous headroom relative to any fish's max extent
+    const probeCanvas = document.createElement("canvas");
+    probeCanvas.width = probeSize;
+    probeCanvas.height = probeSize;
+    const probeCtx = probeCanvas.getContext("2d");
+
+    let contentWidth = type.width;
+    let contentHeight = type.height;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    if (probeCtx) {
+      probeCtx.save();
+      probeCtx.translate(probeSize / 2, probeSize / 2);
+      drawEntity(probeCtx, dummyEntity);
+      probeCtx.restore();
+
+      const { data } = probeCtx.getImageData(0, 0, probeSize, probeSize);
+      let minX = probeSize,
+        minY = probeSize,
+        maxX = 0,
+        maxY = 0;
+      let found = false;
+
+      for (let y = 0; y < probeSize; y++) {
+        for (let x = 0; x < probeSize; x++) {
+          const alpha = data[(y * probeSize + x) * 4 + 3];
+          if (alpha > 0) {
+            found = true;
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+          }
+        }
+      }
+
+      if (found) {
+        contentWidth = Math.max(1, maxX - minX);
+        contentHeight = Math.max(1, maxY - minY);
+        // How far the drawn content's center sits from the probe canvas's
+        // center (which is where drawEntity's own origin/pivot is)
+        offsetX = (minX + maxX) / 2 - probeSize / 2;
+        offsetY = (minY + maxY) / 2 - probeSize / 2;
+      }
+    }
+
+    // Calculate scale to fit the ACTUAL drawn content nicely
+    const scale = Math.min(
+      availableWidth / contentWidth,
+      availableHeight / contentHeight,
+    );
+
+    ctx.save();
+    // Shift by -offset*scale so the drawn content's bounding-box center lands
+    // in the middle of the icon canvas, instead of the fish's nominal origin
+    ctx.translate(
+      canvas.width / 2 - offsetX * scale,
+      canvas.height / 2 - offsetY * scale,
+    );
+    ctx.scale(scale, scale);
+
+    // Disable smoothing for pixel art look
+    ctx.imageSmoothingEnabled = false;
 
     drawEntity(ctx, dummyEntity);
     ctx.restore();
