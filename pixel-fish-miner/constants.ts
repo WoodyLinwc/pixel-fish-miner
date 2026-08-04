@@ -338,6 +338,19 @@ export const FISH_TYPES: FishType[] = [
     maxDepth: 0.7,
   },
   {
+    id: "electric_jelly",
+    name: "Electric Jelly",
+    rarity: FishRarity.UNCOMMON,
+    weight: 20,
+    value: 15,
+    speed: 1.0,
+    color: "#e040fb",
+    width: 25,
+    height: 30,
+    minDepth: 0.3,
+    maxDepth: 0.8,
+  },
+  {
     id: "needlefish",
     name: "Needlefish",
     rarity: FishRarity.UNCOMMON,
@@ -676,19 +689,7 @@ export const FISH_TYPES: FishType[] = [
     maxDepth: 0.8,
     showInBag: false, // Don't show in bag since it can't be caught
   },
-  {
-    id: "electric_jelly",
-    name: "Electric Jelly",
-    rarity: FishRarity.UNCOMMON,
-    weight: 20,
-    value: 15,
-    speed: 1.0,
-    color: "#e040fb",
-    width: 25,
-    height: 30,
-    minDepth: 0.3,
-    maxDepth: 0.8,
-  },
+
   // Weather Specials (Deep)
   {
     id: "thunder_eel",
