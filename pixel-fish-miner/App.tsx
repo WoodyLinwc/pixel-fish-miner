@@ -949,6 +949,8 @@ const App: React.FC = () => {
     });
   };
 
+  const GHOST_FISH_IDS = ["phantom_perch", "spectral_sardine", "ghost_squid"];
+
   const handleBuyPet = (petId: string) => {
     setGameState((prev) => {
       const pet = PETS.find((p) => p.id === petId);
@@ -966,10 +968,16 @@ const App: React.FC = () => {
 
       audioManager.playButtonSound();
 
+      const newUnlockedFish =
+        petId === "kraken"
+          ? Array.from(new Set([...prev.unlockedFish, ...GHOST_FISH_IDS]))
+          : prev.unlockedFish;
+
       return {
         ...prev,
         money: prev.money - pet.cost,
         unlockedPets: [...prev.unlockedPets, petId],
+        unlockedFish: newUnlockedFish,
       };
     });
   };
