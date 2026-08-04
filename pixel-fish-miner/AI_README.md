@@ -541,11 +541,11 @@ The fish rendering system is organized in a modular folder structure with entity
   - Includes fallback rendering for unknown entity types
 
 - **Individual Fish Category Files**:
-  - `commonFish.ts`: Sardine, Herring, Small Yellow Croaker, Mackerel, Cod, Boxfish, Pomfret, Pufferfish, Shrimp
+  - `commonFish.ts`: Sardine, Herring, Small Yellow Croaker, Mackerel, Cod, Boxfish, Pomfret, Pufferfish, Shrimp, Milkfish
   - **`migrationFish.ts`**: Pacific Saury, Mullet, Anchovy + King Saury, King Mullet, King Anchovy (only spawn during migration events). Contains `drawCrown` helper for king variants.
-  - `uncommonFish.ts`: Clownfish, Squid, Fluorescent Squid, Sea Bass, Red Snapper, Salmon, Tuna, Needlefish, Phantom Perch, Spectral Sardine, Ghost Squid
-  - `rareFish.ts`: Large Yellow Croaker, Turbot, Ribbonfish, Giant Grouper, Anglerfish, Wolffish, Crab, Electric Jelly
-  - `legendaryFish.ts`: Whale, Narwhal, Sailfish, Ocean Sunfish
+  - `uncommonFish.ts`: Clownfish, Squid, Fluorescent Squid, Sea Bass, Red Snapper, Salmon, Tuna, Needlefish, Phantom Perch, Spectral Sardine, Ghost Squid, Amberjack
+  - `rareFish.ts`: Large Yellow Croaker, Turbot, Ribbonfish, Giant Grouper, Anglerfish, Wolffish, Crab, Electric Jelly, Blobfish, Tarpon
+  - `legendaryFish.ts`: Whale, Narwhal, Sailfish, Ocean Sunfish, Mahi-Mahi, Nautilus
   - `weatherFish.ts`: Thunder Eel (Rain), Ice Fin (Snow), Wind Ray (Wind), Sea Turtle (Fog)
   - `staticItems.ts`: Shell, Sea Cucumber, Coral, Anchor, Mystery Bag, Supply Box
   - `trash.ts`: Old Boot, Rusty Can, Plastic Bottle, Straw
@@ -637,10 +637,14 @@ Intelligent entity spawning with weighted randomization.
 **Spawning Weights:**
 
 - **Common** (50% spawn weight): Sardine, Herring, Mackerel, Shrimp, etc.
+  - **Costume-Unlocked**: Milkfish (Sailor Boy costume required)
 - **Uncommon** (30% spawn weight): Clownfish, Squid, Salmon, etc.
   - **Ghost Fish** (unlockable): Phantom Perch, Spectral Sardine, Ghost Squid (Kraken unlock)
+  - **Costume-Unlocked**: Amberjack (Sushi Master costume required)
 - **Rare** (15% spawn weight): Turbot, Giant Grouper, Anglerfish, etc.
+  - **Costume-Unlocked**: Blobfish (Diver costume required, also night-only), Tarpon (Lifeguard costume required)
 - **Legendary** (5% spawn weight): Whale, Narwhal (weather-dependent), Sailfish, Ocean Sunfish
+  - **Costume-Unlocked**: Mahi-Mahi (Sea Captain costume required), Nautilus (Marine Scientist costume required)
 
 **Technical Details:**
 
@@ -649,6 +653,7 @@ Intelligent entity spawning with weighted randomization.
 - Velocity and direction variation for natural movement
 - Special conditions (night-only, weather-specific) enforced
 - **Unlock filtering**: Ghost fish only spawn if `unlockedFish` includes their ID
+- **Costume unlock filtering**: Milkfish, Amberjack, Blobfish, Tarpon, Mahi-Mahi, and Nautilus only spawn if the player owns the required costume. Checked via a `COSTUME_UNLOCK_FISH` map (fish ID → required costume ID) in `utils/spawning/fish.ts`, tested against an `unlockedCostumes: string[]` param threaded through `spawnFish`/`getWeightedFishType` (sourced from `gameState.unlockedCostumes`, passed `App.tsx` → `GameCanvas.tsx` → `spawnFish`). Unlike Ghost Fish's `unlockedFish` check, this is ownership-based (costume purchased), not encounter-based (fish previously caught) — so there's no chicken-and-egg problem.
 
 ---
 
@@ -685,12 +690,20 @@ Defines all catchable entities with properties:
   - Auto-triggers every 5 minutes
   - Visual indicator: "Migration Xs" countdown text below player boat
   - **King fish rarity within migration**: Rare weight (10) vs Common weight (50) — roughly 1-in-6 chance relative to normal variants
-- **Ghost Fish** (Unlockable via Kraken purchase):
+- **Ghost Fish** (Unlocked via Kraken pet purchase):
   - `phantom_perch`: Pale blue translucent fish ($85, 42x22, Uncommon)
   - `spectral_sardine`: Pale purple wispy fish ($70, 38x16, Uncommon)
   - `ghost_squid`: Pale blue-white ethereal squid ($75, 40x24, Uncommon)
-  - Only spawn after purchasing Kraken pet ($500,000)
-  - Filtered from spawn pool via `unlockedFish` check
+  - Filtered from spawn pool via `unlockedFish` check in `getWeightedFishType`
+- **Costume-Unlocked Fish** (Only spawn if the required costume is owned):
+  - `milkfish`: Requires **Sailor Boy** (`sailor`) costume
+  - `amberjack`: Requires **Sushi Master** (`sushi_master`) costume
+  - `blobfish`: Requires **Diver** (`diver`) costume
+  - `tarpon`: Requires **Lifeguard** (`lifeguard`) costume
+  - `mahi_mahi`: Requires **Sea Captain** (`captain`) costume
+  - `nautilus`: Requires **Marine Scientist** (`marine_scientist`) costume
+  - Gated via `COSTUME_UNLOCK_FISH` map + `unlockedCostumes` param in `utils/spawning/fish.ts` (see Spawning System section above)
+  - Unlike Ghost Fish, this unlock path is fully wired: `App.tsx` → `GameCanvas.tsx` → `spawnFish`/`getWeightedFishType`
 - `showInBag`: Whether to display in encyclopedia
 
 ### Upgrades (`UPGRADES`)
@@ -734,13 +747,13 @@ Note: Purchase counts tracked per powerup in `gameState.powerupPurchaseCounts`
 Cosmetic character skins:
 
 - **Fisherman** (Default): $0
-- **Sailor Boy** (`sailor`): $5,000
-- **Diver** (`diver`): $15,000
+- **Sailor Boy** (`sailor`): $5,000 - Unlocks **Milkfish** spawns
+- **Diver** (`diver`): $15,000 - Unlocks **Blobfish** spawns (also night-only)
 - **Dread Pirate** (`pirate`): $25,000
-- **Lifeguard** (`lifeguard`): $35,000
-- **Sushi Master** (`sushi_master`): $50,000
-- **Sea Captain** (`captain`): $75,000
-- **Marine Scientist** (`marine_scientist`): $60,000 - Female scientist with lab coat, long hair, clipboard
+- **Lifeguard** (`lifeguard`): $35,000 - Unlocks **Tarpon** spawns
+- **Sushi Master** (`sushi_master`): $50,000 - Unlocks **Amberjack** spawns
+- **Sea Captain** (`captain`): $75,000 - Unlocks **Mahi-Mahi** spawns
+- **Marine Scientist** (`marine_scientist`): $60,000 - Female scientist with lab coat, long hair, clipboard. Unlocks **Nautilus** spawns
 - **Polar Explorer** (`polar_explorer`): $100,000 - Female explorer with parka, ice axe, ski goggles
 - **Captain Luna** (`captain_luna`): $200,000 - Moon-themed magical sailor with twin gems
 
@@ -757,8 +770,8 @@ Companion animals with passive income generation:
 - **Pelican** (`pelican`): $50,000, $3 per 30s (throat pouch animation)
 - **Gentleman Octopus** (`gentleman_octopus`): $80,000, $3 per 30s - Refined octopus with top hat, monocle, bow tie, and cane
 - **Kraken** (`kraken`): $500,000, $10 per 30s - Massive sea monster with 8 enormous tentacles (15-12px thick) wrapping around the boat
-  - **Special Unlock**: Purchasing Kraken unlocks:
-    - 3 Ghost Fish (Phantom Perch, Spectral Sardine, Ghost Squid)
+  - **Special Unlock** (see Known Quirks for wiring details): Purchasing Kraken unlocks:
+    - 3 Ghost Fish (Phantom Perch, Spectral Sardine, Ghost Squid) — revealed in encyclopedia and made spawn-eligible via `handleBuyPet` in `App.tsx`
     - Flying Dutchman ghost boat (background element)
     - "Tame the Kraken" achievement (🐙)
 
@@ -1201,14 +1214,16 @@ To add new content:
 1. **New Fish**:
    - Add entry to `FISH_TYPES` in `constants.ts` (set `isNightOnly: true` for night-only fish)
    - Add translation in all locale files (`locales/en.ts`, `es.ts`, `zh.ts`, `ja.ts`, `ko.ts`, `ru.ts`, `fr.ts`, `ar.ts`)
-   - Create draw function in appropriate `utils/fish/*.ts` file:
-     - Common/cheap fish → `commonFish.ts`
-     - Mid-tier fish → `uncommonFish.ts` (e.g. Fluorescent Squid)
-     - Night/rare fish → `rareFish.ts`
+   - Create draw function in appropriate `utils/fish/*.ts` file, matching the fish's `rarity`:
+     - Common → `commonFish.ts`
+     - Uncommon → `uncommonFish.ts` (e.g. Fluorescent Squid, Amberjack)
+     - Rare → `rareFish.ts` (e.g. Blobfish, Tarpon)
+     - Legendary → `legendaryFish.ts` (e.g. Mahi-Mahi, Nautilus)
      - Weather-gated fish → `weatherFish.ts`
    - Import and add `else if (type.id === "your_id")` case in `utils/fish/index.ts`
    - Use `showInBag: false` to hide from encyclopedia if needed
    - Night-only fish (`isNightOnly: true`) are filtered automatically by `getWeightedFishType` — no special injection needed
+   - **To gate a fish behind owning a costume** (like Milkfish/Blobfish/Amberjack/Tarpon/Mahi-Mahi/Nautilus): add an entry to the `COSTUME_UNLOCK_FISH` map in `utils/spawning/fish.ts` (`fishId: costumeId`). No changes needed elsewhere — `unlockedCostumes` is already threaded through `App.tsx` → `GameCanvas.tsx` → `spawnFish`/`getWeightedFishType`. This ownership-based pattern has no chicken-and-egg problem (unlike the encounter-based `unlockedFish` approach used for Ghost Fish, which requires special-casing at the purchase site — see `GHOST_FISH_IDS` in `handleBuyPet`, `App.tsx` — to avoid a fish that can't spawn until it's caught)
 
 2. **New Powerup**:
    - Add to `POWERUPS` in `constants.ts`
@@ -1272,7 +1287,8 @@ To add new content:
 - **Narwhal Spawning**: During Rainbow weather, standard random spawning excludes Narwhal; it only spawns via timed injection (10s intervals)
 - **Migration Event**: Pacific Saury, Mullet, Anchovy, King Saury, King Mullet, and King Anchovy only spawn during 30-second migration events. All 6 IDs are centralised in `MIGRATION_FISH_IDS` in `utils/spawning/fish.ts`. A 20-second warning phase (`migrationPending`) precedes each migration. When active migration starts, ALL existing fish (except static decorations) are cleared and only migration fish spawn. Auto-triggers 5 minutes after game load. **Bug fixed**: `lastMigrationTime` was initialized to `0`, causing the `lastMigrationTime > 0` guard to permanently block migration on fresh installs — fixed by seeding to `Date.now()` on load.
 - **King Migration Fish**: King Saury, King Mullet, King Anchovy are Rare-weight entries that only appear in the migration pool. They use the same body art as their normal counterparts with a `drawCrown(ctx, topY, crownW, offsetX)` polygon crown drawn above the head (right side). Speeds are 5.5–7.0 — King Anchovy (7.0) is the fastest entity in the game.
-- **Ghost Fish Unlock**: Phantom Perch, Spectral Sardine, and Ghost Squid only spawn after purchasing Kraken pet. Filtered in `getWeightedFishType` via `unlockedFish` check
+- **Ghost Fish Unlock**: Phantom Perch, Spectral Sardine, and Ghost Squid are filtered in `getWeightedFishType` via `unlockedFish.includes(f.id)`.
+- **Costume-Unlocked Fish**: Milkfish, Amberjack, Blobfish, Tarpon, Mahi-Mahi, and Nautilus only spawn if the player owns a specific costume (Sailor Boy, Sushi Master, Diver, Lifeguard, Sea Captain, Marine Scientist respectively). This uses a different, ownership-based mechanism than Ghost Fish: `gameState.unlockedCostumes` → `App.tsx` passes `unlockedCostumes` prop → `GameCanvas.tsx` mirrors it to `unlockedCostumesRef` (avoids stale closures in the render loop, same pattern as `unlockedFishRef`/`unlockedPetsRef`) → passed into `spawnFish`/`getWeightedFishType` in `utils/spawning/fish.ts`, which checks each fish ID against the `COSTUME_UNLOCK_FISH` map. Since unlocking is ownership-based (costume purchased) rather than encounter-based (fish previously caught), there's no chicken-and-egg problem — unlike Ghost Fish had before the fix above. Note: unlocking only affects _future_ spawns going forward — it is not retroactively applied to save files, but since the check runs on every spawn tick, a player who already owns the costume sees the fish start appearing on their very next spawn cycle.
 - **Day/Night Promo Jump**: `night` and `day` promo codes use a standalone `useState<{ hour, requestedAt }>` (`jumpToGameHour`) in `App.tsx` that is NOT part of `GameState` — so it is never written to `localStorage`. `GameCanvas` applies the jump once (checked via `lastAppliedJumpRef`) then resumes normal ticking. This prevents the hour from being frozen or re-applied on session reload.
 - **Ghost Boat**: Flying Dutchman only spawns after Kraken purchase. Features fade effect (opacity 0.0-1.0) and glowing green lanterns
 - **Trash Suppression**: Mystery Bag creates 20s period where trash doesn't spawn (separate from Super Bait)
